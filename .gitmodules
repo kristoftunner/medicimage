@@ -4,3 +4,9 @@
 [submodule "ext/spdlog"]
 	path = ext/spdlog
 	url = git@github.com:gabime/spdlog.git
+[submodule "ext/imgui"]
+	path = ext/imgui
+	url = git@github.com:kristoftunner/imgui.git
+[submodule "ext/sdl"]
+	path = ext/sdl
+	url = git@github.com:libsdl-org/SDL.git
