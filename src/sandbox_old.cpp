@@ -154,13 +154,14 @@ int main(int, char**)
     // Rendering
     ImGui::Render();
 
-    //const float clear_color_with_alpha[4] = { clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w };
-    g_pd3dDeviceContext->OMSetRenderTargets(1, &g_mainRenderTargetView, NULL);
-    //g_pd3dDeviceContext->ClearRenderTargetView(g_mainRenderTargetView, clear_color_with_alpha);
     
-    ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 
+    //const float clear_color_with_alpha[4] = { clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w };
+    //g_pd3dDeviceContext->ClearRenderTargetView(g_mainRenderTargetView, clear_color_with_alpha);
+    ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
     g_pSwapChain->Present(1, 0); // Present with vsync
+    g_pd3dDeviceContext->OMSetRenderTargets(1, &g_mainRenderTargetView, NULL);
+
     //g_pSwapChain->Present(0, 0); // Present without vsync
   }
 
@@ -224,8 +225,6 @@ void CreateTexture()
   int matrixElementType = image.type();
 
   cv::resize(image, image, cv::Size(1280, 720));
-  cv::imshow("window_name", image);
-  cv::waitKey(0);
   cv::cvtColor(image, image, cv::COLOR_BGR2RGBA);
 
   const int channelNumber = image.channels();
@@ -267,10 +266,8 @@ void CleanupDeviceD3D()
 
 void CreateRenderTarget()
 {
-  ID3D11Texture2D* pBackBuffer;
-  g_pSwapChain->GetBuffer(0, IID_PPV_ARGS(&pBackBuffer));
-  g_pd3dDevice->CreateRenderTargetView(pBackBuffer, NULL, &g_mainRenderTargetView);
-  pBackBuffer->Release();
+  g_pSwapChain->GetBuffer(0, IID_PPV_ARGS(&g_backBuffer));
+  g_pd3dDevice->CreateRenderTargetView(g_backBuffer, NULL, &g_mainRenderTargetView);
 }
 
 void CleanupRenderTarget()

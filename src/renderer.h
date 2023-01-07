@@ -2,47 +2,39 @@
 
 #include <d3d11.h>
 #include <d3dcompiler.h>
-#include <memory>
 #include <Windows.h>
-#include <SDL.h>
-#include <SDL_syswm.h>
+#include "layer.h"
 #include <stdexcept>
-#include "imgui.h"
 
 namespace medicimage
 {
 
-class Renderer
+class Renderer 
+// TODO: create a renderer API class and move swapchain->Present() and init to there
 {
 public:
-  Renderer() = default;
-  ~Renderer(){} // TODO: do some unique_ptr or ComPtr magic on the destruction
-  void OnAttach();
-  void OnDetach();
-  void OnRender();
+  Renderer() = default;  
+  void Init(HWND window);
+  void SwapBuffers();
+  void Cleanup();
+
+  ID3D11Device* GetDevice(){return m_device;}
+  ID3D11DeviceContext* GetDeviceContext() {return m_deviceContext; }
+  IDXGISwapChain* GetSwapChain(){return m_swapchain;}
+  static Renderer& GetInstance(); // TODO: think about this singleton design concept once more
 private:
   void CreateDevice(HWND hwnd);
   void CreateRenderTarget();
   void CleanupDevice();
   void CleanupRenderTarget();
    
-// TODO: these should be as well exported somewhere
-  void RenderBackground();
-  void LoadTexture(); 
 private:
+  static Renderer s_instance;
   ID3D11Device* m_device = nullptr;
   ID3D11DeviceContext* m_deviceContext = nullptr;
   IDXGISwapChain*      m_swapchain = nullptr;
   ID3D11RenderTargetView*  m_renderTargetView = nullptr;
   ID3D11Texture2D* m_backBuffer = nullptr;
-
-  ID3D11Texture2D* m_imageTexture = nullptr;
-
-  SDL_Window* m_window;
-  // gui specific variables, TODO: move these later into some GUI class
-  bool m_showDemoWindow = false;
-  bool m_showAnotherWindow = false;
-  ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 };
 
 inline std::string HrToString(HRESULT hr)
@@ -70,3 +62,4 @@ inline void ThrowIfFailed(HRESULT hr)
 }
 
 } // namespace medicimage
+
