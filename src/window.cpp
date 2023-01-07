@@ -1,11 +1,12 @@
 #include "window.h"
 #include "renderer.h"
 #include <iostream>
+#include <SDL_syswm.h>
 
 namespace medicimage
 {
 
-Window* Window::Create(const WindowProps& windowProperties)
+Window* Window::Create(const WindowProps& windowProperties = WindowProps())
 {
   Window* window = new Window(windowProperties);
   std::cout << "Window created" << std::endl; //TODO: better logging
