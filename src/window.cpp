@@ -32,7 +32,7 @@ void Window::Init(const WindowProps& windowProperties)
   SDL_GetWindowWMInfo(m_window, &wmInfo);
   HWND hwnd = (HWND)wmInfo.info.win.window;
 
-  Renderer::GetInstance().Init(hwnd); 
+  Renderer::GetInstance().Init(hwnd, windowProperties); 
 }
 
 void Window::ShutDown()

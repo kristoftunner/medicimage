@@ -28,6 +28,7 @@ private:
   void ShutDown();
 private:
   SDL_Window* m_window;
+  WindowProps m_windowProperties;
 };
 
 } // namespace medicimage

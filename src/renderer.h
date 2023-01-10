@@ -5,6 +5,7 @@
 #include <Windows.h>
 #include "layer.h"
 #include <stdexcept>
+#include "window.h"
 
 namespace medicimage
 {
@@ -14,16 +15,20 @@ class Renderer
 {
 public:
   Renderer() = default;  
-  void Init(HWND window);
+  void Init(HWND window, const WindowProps& windowProperties);
   void SwapBuffers();
   void Cleanup();
 
   ID3D11Device* GetDevice(){return m_device;}
   ID3D11DeviceContext* GetDeviceContext() {return m_deviceContext; }
   IDXGISwapChain* GetSwapChain(){return m_swapchain;}
+  void Draw();
+  //void Resize(int width, int height); TODO: implement this
   static Renderer& GetInstance(); // TODO: think about this singleton design concept once more
 private:
-  void CreateDevice(HWND hwnd);
+  void InitShaders();
+  void SetupBuffers();
+  void CreateDevice(HWND hwnd, const WindowProps& windowProperties);
   void CreateRenderTarget();
   void CleanupDevice();
   void CleanupRenderTarget();
@@ -34,7 +39,16 @@ private:
   ID3D11DeviceContext* m_deviceContext = nullptr;
   IDXGISwapChain*      m_swapchain = nullptr;
   ID3D11RenderTargetView*  m_renderTargetView = nullptr;
-  ID3D11Texture2D* m_backBuffer = nullptr;
+  D3D11_VIEWPORT m_viewPort;
+
+  // shader specific variables
+  ID3D11VertexShader* m_vs = nullptr;
+  ID3D10Blob* m_vsBlob = nullptr;
+  ID3D11PixelShader* m_ps = nullptr; 
+  ID3D10Blob* m_psBlob = nullptr;
+  ID3D11InputLayout* m_inputLayout = nullptr;
+  ID3D11Buffer* m_vertexBuffer = nullptr;
+  unsigned int m_vertices, m_stride, m_offset;
 };
 
 inline std::string HrToString(HRESULT hr)

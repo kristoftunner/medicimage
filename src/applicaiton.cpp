@@ -1,4 +1,5 @@
 #include "application.h"
+#include "texture.h"
 
 namespace medicimage
 {
@@ -42,12 +43,17 @@ bool Application::OnWindowClosed(WindowCloseEvent* e)
 
 void Application::Run()
 {
+  auto& renderer = Renderer::GetInstance();
   m_imguiLayer->OnAttach();
   while(m_running)
   {
     // Event handling
     m_inputHandler->PollEvents();
     auto events = m_inputHandler->GetCollectedEvents();
+    auto texture = Texture2D("checkerboard", "Checkerboard.png");
+    texture.Bind(0);
+    renderer.Draw();
+
     for(auto event : events)
     {
       OnEvent(event); 
@@ -56,6 +62,8 @@ void Application::Run()
     //Timestep timestep = time - m_lastFrameTime; 
     //m_lastFrameTime = time;   
     //for(Layer* layer : m_layerStack)
+    // 
+    // 
     //{
     //  layer->OnUpdate(timestep);
     //}
@@ -68,7 +76,7 @@ void Application::Run()
     //  layer->OnImguiRender();
     //}
     m_imguiLayer->End();
-    Renderer::GetInstance().SwapBuffers(); // this should be integrated into m_window ???
+    renderer.SwapBuffers(); // this should be integrated into m_window ???
     //m_window->OnUpdate(); 
   }
 }

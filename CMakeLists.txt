@@ -18,5 +18,6 @@ foreach(opencv_package ${OpenCV_LIBS})
 endforeach()
 add_subdirectory(ext/sdl)
 add_subdirectory(ext/imgui)
+add_subdirectory(ext/stb)
 
 add_subdirectory(src)
