@@ -161,12 +161,12 @@ int main(int, char**)
 
     //const float clear_color_with_alpha[4] = { clear_color.x * clear_color.w, clear_color.y * clear_color.w, clear_color.z * clear_color.w, clear_color.w };
     //g_pd3dDeviceContext->ClearRenderTargetView(g_mainRenderTargetView, clear_color_with_alpha);
+		if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+		{
+			ImGui::UpdatePlatformWindows();
+			ImGui::RenderPlatformWindowsDefault();
+		}
     ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
-    if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
-    {
-      ImGui::UpdatePlatformWindows();
-      ImGui::RenderPlatformWindowsDefault();
-    }
     g_pSwapChain->Present(1, 0); // Present with vsync
     g_pd3dDeviceContext->OMSetRenderTargets(1, &g_mainRenderTargetView, NULL);
 

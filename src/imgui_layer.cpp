@@ -31,7 +31,6 @@ void ImguiLayer::OnAttach()
 
   // Setup Dear ImGui style
   ImGui::StyleColorsDark();
-
   // Setup Platform/Renderer backends
   bool ret = ImGui_ImplSDL2_InitForD3D(m_window);
   ret = ImGui_ImplDX11_Init(m_device, m_deviceContext);
@@ -46,49 +45,12 @@ void ImguiLayer::OnDetach()
 
 void ImguiLayer::OnImguiRender()
 {
-  
-	// Note: Switch this to true to enable dockspace
+  // DockSpace
 	static bool dockspaceOpen = true;
-	static bool opt_fullscreen_persistant = false;
-	bool opt_fullscreen = opt_fullscreen_persistant;
-	static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_None;
-
-	// We are using the ImGuiWindowFlags_NoDocking flag to make the parent window not dockable into,
-	// because it would be confusing to have two docking targets within each others.
-	ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
-	if (opt_fullscreen)
-	{
-		ImGuiViewport* viewport = ImGui::GetMainViewport();
-		ImGui::SetNextWindowPos(viewport->Pos);
-		ImGui::SetNextWindowSize(viewport->Size);
-		ImGui::SetNextWindowViewport(viewport->ID);
-		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
-		ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-		window_flags |= ImGuiWindowFlags_NoTitleBar;
-    window_flags |= ImGuiWindowFlags_NoCollapse;
-    window_flags |= ImGuiWindowFlags_NoResize;
-    window_flags |= ImGuiWindowFlags_NoMove;
-		window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus;
-    window_flags |= ImGuiWindowFlags_NoNavFocus;
-	}
-
-	// When using ImGuiDockNodeFlags_PassthruCentralNode, DockSpace() will render our background and handle the pass-thru hole, so we ask Begin() to not render a background.
-	if (dockspace_flags & ImGuiDockNodeFlags_PassthruCentralNode)
-		window_flags |= ImGuiWindowFlags_NoBackground;
-
-	// Important: note that we proceed even if Begin() returns false (aka window is collapsed).
-	// This is because we want to keep our DockSpace() active. If a DockSpace() is inactive, 
-	// all active windows docked into it will lose their parent and become undocked.
-	// We cannot preserve the docking relationship between an active window and an inactive docking, otherwise 
-	// any change of dockspace/settings would lead to windows being stuck in limbo and never being visible.
 	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
-	ImGui::Begin("DockSpace Demo", &dockspaceOpen, window_flags);
+	ImGui::Begin("DockSpace Demo", &dockspaceOpen, ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking);
 	ImGui::PopStyleVar();
 
-	if (opt_fullscreen)
-		ImGui::PopStyleVar(2);
-
-	// DockSpace
 	ImGuiIO& io = ImGui::GetIO();
 	ImGuiStyle& style = ImGui::GetStyle();
 	float minWinSizeX = style.WindowMinSize.x;
@@ -96,11 +58,11 @@ void ImguiLayer::OnImguiRender()
 	if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable)
 	{
 		ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
-		ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
+		ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_None);
 	}
-
   ImGui::End();
 
+  // Currently captured frame editing
   ImGui::Begin("Currently captured frame window");   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
   auto texture = Texture2D("checkerboard","Checkerboard.png"); 
   ImVec2 uv_min = ImVec2(0.0f, 0.0f);                 // Top-left
@@ -109,6 +71,18 @@ void ImguiLayer::OnImguiRender()
   ImVec4 border_col = ImVec4(1.0f, 1.0f, 1.0f, 0.5f); // 50% opaque white
   ImVec2 canvas_sz = ImGui::GetContentRegionAvail();   // Resize canvas to what's available
   ImGui::Image(texture.GetShaderResourceView(), canvas_sz, uv_min, uv_max, tint_col, border_col);
+  ImGui::End();
+
+  // Picture thumbnails
+  ImGuiWindowFlags window_flags = ImGuiWindowFlags_HorizontalScrollbar;
+  bool openScrollingArea = true;
+  ImGui::Begin("ChildL", &openScrollingArea , window_flags);
+  for (int i = 0; i < 30; i++)
+  {
+    ImVec2 canvasSize = ImGui::GetContentRegionAvail();
+    float aspectRatio = texture.GetWidth() / texture.GetHeight();
+    ImGui::Image(texture.GetShaderResourceView(), ImVec2{canvasSize.x, canvasSize.x / aspectRatio}, uv_min, uv_max, tint_col, border_col);
+  }
   ImGui::End();
   
 } 
