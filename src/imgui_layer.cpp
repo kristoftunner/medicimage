@@ -2,7 +2,7 @@
 
 #include "backends/imgui_impl_sdl.h"
 #include "backends/imgui_impl_dx11.h"
-
+#include "texture.h"
 namespace medicimage
 {
 
@@ -26,6 +26,8 @@ void ImguiLayer::OnAttach()
   ImGui::CreateContext();
   ImGuiIO& io = ImGui::GetIO(); (void)io;
   io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;   // Enable Keyboard Controls
+	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;           // Enable Docking
+	io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;         // Enable Multi-Viewport / Platform Windows
 
   // Setup Dear ImGui style
   ImGui::StyleColorsDark();
@@ -44,41 +46,71 @@ void ImguiLayer::OnDetach()
 
 void ImguiLayer::OnImguiRender()
 {
-  if (m_showDemoWindow)
-    ImGui::ShowDemoWindow(&m_showDemoWindow);
+  
+	// Note: Switch this to true to enable dockspace
+	static bool dockspaceOpen = true;
+	static bool opt_fullscreen_persistant = false;
+	bool opt_fullscreen = opt_fullscreen_persistant;
+	static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_None;
 
-  // 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
-  {
-    static float f = 0.0f;
-    static int counter = 0;
+	// We are using the ImGuiWindowFlags_NoDocking flag to make the parent window not dockable into,
+	// because it would be confusing to have two docking targets within each others.
+	ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
+	if (opt_fullscreen)
+	{
+		ImGuiViewport* viewport = ImGui::GetMainViewport();
+		ImGui::SetNextWindowPos(viewport->Pos);
+		ImGui::SetNextWindowSize(viewport->Size);
+		ImGui::SetNextWindowViewport(viewport->ID);
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+		ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+		window_flags |= ImGuiWindowFlags_NoTitleBar;
+    window_flags |= ImGuiWindowFlags_NoCollapse;
+    window_flags |= ImGuiWindowFlags_NoResize;
+    window_flags |= ImGuiWindowFlags_NoMove;
+		window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus;
+    window_flags |= ImGuiWindowFlags_NoNavFocus;
+	}
 
-    ImGui::Begin("Hello, world!");              // Create a window called "Hello, world!" and append into it.
+	// When using ImGuiDockNodeFlags_PassthruCentralNode, DockSpace() will render our background and handle the pass-thru hole, so we ask Begin() to not render a background.
+	if (dockspace_flags & ImGuiDockNodeFlags_PassthruCentralNode)
+		window_flags |= ImGuiWindowFlags_NoBackground;
 
-    ImGui::Text("This is some useful text.");         // Display some text (you can use a format strings too)
-    ImGui::Checkbox("Demo Window", &m_showDemoWindow);    // Edit bools storing our window open/close state
-    ImGui::Checkbox("Another Window", &m_showAnotherWindow);
+	// Important: note that we proceed even if Begin() returns false (aka window is collapsed).
+	// This is because we want to keep our DockSpace() active. If a DockSpace() is inactive, 
+	// all active windows docked into it will lose their parent and become undocked.
+	// We cannot preserve the docking relationship between an active window and an inactive docking, otherwise 
+	// any change of dockspace/settings would lead to windows being stuck in limbo and never being visible.
+	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+	ImGui::Begin("DockSpace Demo", &dockspaceOpen, window_flags);
+	ImGui::PopStyleVar();
 
-    ImGui::SliderFloat("float", &f, 0.0f, 1.0f);      // Edit 1 float using a slider from 0.0f to 1.0f
-    ImGui::ColorEdit3("clear color", (float*)&m_clearColor); // Edit 3 floats representing a color
+	if (opt_fullscreen)
+		ImGui::PopStyleVar(2);
 
-    if (ImGui::Button("Button"))              // Buttons return true when clicked (most widgets return true when edited/activated)
-      counter++;
-    ImGui::SameLine();
-    ImGui::Text("counter = %d", counter);
+	// DockSpace
+	ImGuiIO& io = ImGui::GetIO();
+	ImGuiStyle& style = ImGui::GetStyle();
+	float minWinSizeX = style.WindowMinSize.x;
+	style.WindowMinSize.x = 370.0f;
+	if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable)
+	{
+		ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
+		ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), dockspace_flags);
+	}
 
-    ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-    ImGui::End();
-  }
+  ImGui::End();
 
-  // 3. Show another simple window.
-  if (m_showAnotherWindow)
-  {
-    ImGui::Begin("Another Window", &m_showAnotherWindow);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
-    ImGui::Text("Hello from another window!");
-    if (ImGui::Button("Close Me"))
-      m_showAnotherWindow = false;
-    ImGui::End();
-  }
+  ImGui::Begin("Currently captured frame window");   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
+  auto texture = Texture2D("checkerboard","Checkerboard.png"); 
+  ImVec2 uv_min = ImVec2(0.0f, 0.0f);                 // Top-left
+  ImVec2 uv_max = ImVec2(1.0f, 1.0f);                 // Lower-right
+  ImVec4 tint_col = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);   // No tint
+  ImVec4 border_col = ImVec4(1.0f, 1.0f, 1.0f, 0.5f); // 50% opaque white
+  ImVec2 canvas_sz = ImGui::GetContentRegionAvail();   // Resize canvas to what's available
+  ImGui::Image(texture.GetShaderResourceView(), canvas_sz, uv_min, uv_max, tint_col, border_col);
+  ImGui::End();
+  
 } 
 
 void ImguiLayer::Begin()
@@ -92,6 +124,12 @@ void ImguiLayer::End()
 {
   ImGui::Render();
   ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
+	ImGuiIO& io = ImGui::GetIO();
+  if (io.ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+  {
+      ImGui::UpdatePlatformWindows();
+      ImGui::RenderPlatformWindowsDefault();
+  }
 }
 
 } // namespace medicimage

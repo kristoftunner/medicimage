@@ -127,6 +127,8 @@ void Renderer::CreateDevice(HWND hwnd, const WindowProps& windowProperties)
 
 void Renderer::Draw()
 {
+  CleanupRenderTarget();
+  CreateRenderTarget();
   float color[4] = {0.3f, 0.3f, 0.3f, 1.0f};
   m_deviceContext->ClearRenderTargetView(m_renderTargetView, color);
         

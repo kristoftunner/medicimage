@@ -20,4 +20,8 @@ add_subdirectory(ext/sdl)
 add_subdirectory(ext/imgui)
 add_subdirectory(ext/stb)
 
+# the actual library build
 add_subdirectory(src)
+
+# sandbox and test applications
+add_subdirectory(sandbox)

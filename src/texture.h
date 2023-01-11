@@ -32,6 +32,8 @@ public:
 
 	inline const std::string& GetName() const { return m_name; }
 	inline const std::string& GetFilepath() const { return m_fileName; }
+
+  ID3D11ShaderResourceView* GetShaderResourceView(){return m_resourceView;}
 public:
   void CreateShaderResourceView();
   void CreateSamplerState();

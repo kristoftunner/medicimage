@@ -11,7 +11,7 @@ struct WindowProps{
   unsigned int width;
   unsigned int heigth;
 
-  WindowProps(const std::string& title = "Gameng engine",
+  WindowProps(const std::string& title = "Medical imaging",
               unsigned int width = 1280, unsigned int heigth = 720)
             : title(title), width(width), heigth(heigth){}
 };
