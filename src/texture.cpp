@@ -1,6 +1,7 @@
 #include "texture.h"
 #include "image_loader.h"
 #include <iostream>
+#include <assert.h>
 
 namespace medicimage
 {
@@ -38,6 +39,7 @@ namespace medicimage
 	void Texture2D::Load()
 	{
     Image image(m_fileName);
+		assert(image.ImageLoaded());
 		m_width = image.Width();
 		m_height = image.Height();
 		

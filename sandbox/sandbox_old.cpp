@@ -191,7 +191,6 @@ void RenderBackground()
 {
   D3D11_TEXTURE2D_DESC desc;
   g_backBuffer->GetDesc(&desc);
-  std::cout << desc.Width << " " << desc.Height << std::endl;
   g_pd3dDeviceContext->CopyResource(g_backBuffer, ImageTexture);
 }
 
