@@ -3,6 +3,8 @@
 #include "backends/imgui_impl_sdl.h"
 #include "backends/imgui_impl_dx11.h"
 #include "texture.h"
+#include <iostream>
+
 namespace medicimage
 {
 
@@ -46,20 +48,19 @@ void ImguiLayer::OnDetach()
 void ImguiLayer::OnImguiRender()
 {
   // DockSpace
-	static bool dockspaceOpen = true;
-	ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
-	ImGui::Begin("DockSpace Demo", &dockspaceOpen, ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking);
-	ImGui::PopStyleVar();
-
-	ImGuiIO& io = ImGui::GetIO();
-	ImGuiStyle& style = ImGui::GetStyle();
-	float minWinSizeX = style.WindowMinSize.x;
-	style.WindowMinSize.x = 370.0f;
-	if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable)
-	{
-		ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
-		ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_None);
-	}
+  static bool dockspaceOpen = true;
+  ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
+  ImGui::Begin("DockSpace Demo", &dockspaceOpen, ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking);
+  ImGui::PopStyleVar();
+  ImGuiIO& io = ImGui::GetIO();
+  ImGuiStyle& style = ImGui::GetStyle();
+  //float minWinSizeX = style.WindowMinSize.x;
+  //style.WindowMinSize.x = 370.0f;
+  if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable)
+  {
+    ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
+    ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_None);
+  }
   ImGui::End();
 
   // Currently captured frame editing
@@ -74,9 +75,8 @@ void ImguiLayer::OnImguiRender()
   ImGui::End();
 
   // Picture thumbnails
-  ImGuiWindowFlags window_flags = ImGuiWindowFlags_HorizontalScrollbar;
-  bool openScrollingArea = true;
-  ImGui::Begin("ChildL", &openScrollingArea , window_flags);
+  bool openThumbnails = true;
+  ImGui::Begin("Thumbnails", &openThumbnails, ImGuiWindowFlags_HorizontalScrollbar);
   for (int i = 0; i < 30; i++)
   {
     ImVec2 canvasSize = ImGui::GetContentRegionAvail();
@@ -85,6 +85,28 @@ void ImguiLayer::OnImguiRender()
   }
   ImGui::End();
   
+  bool openTools = true;
+  ImGui::Begin("Tools", &openTools , ImGuiWindowFlags_HorizontalScrollbar);
+  for (int i = 0; i < 8; i++)
+  {
+    // UV coordinates are often (0.0f, 0.0f) and (1.0f, 1.0f) to display an entire textures.
+    // Here are trying to display only a 32x32 pixels area of the texture, hence the UV computation.
+    // Read about UV coordinates here: https://github.com/ocornut/imgui/wiki/Image-Loading-and-Displaying-Examples
+    ImGui::PushID(i);
+    if (i > 0)
+        ImGui::PushStyleVar(ImGuiStyleVar_FramePadding, ImVec2(i - 1.0f, i - 1.0f));
+    ImVec2 size = ImVec2(32.0f, 32.0f);                         // Size of the image we want to make visible
+    ImVec4 bg_col = ImVec4(0.0f, 0.0f, 0.0f, 1.0f);             // Black background
+    ImVec4 tint_col = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);           // No tint
+    style.WindowMinSize.x = size.x *1.5;
+    if (ImGui::ImageButton("", texture.GetShaderResourceView(), size, uv_min, uv_max, bg_col, tint_col))
+      std::cout << "Pressed my button" << std::endl;
+    if (i > 0)
+        ImGui::PopStyleVar();
+    ImGui::PopID();
+  }
+  
+  ImGui::End();
 } 
 
 void ImguiLayer::Begin()
