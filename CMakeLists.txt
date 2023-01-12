@@ -19,6 +19,9 @@ endforeach()
 add_subdirectory(ext/sdl)
 add_subdirectory(ext/imgui)
 add_subdirectory(ext/stb)
+add_subdirectory(ext/spdlog)
+set_property(TARGET spdlog PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+
 
 # the actual library build
 add_subdirectory(src)

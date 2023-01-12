@@ -9,7 +9,6 @@ namespace medicimage
 Window* Window::Create(const WindowProps& windowProperties = WindowProps())
 {
   Window* window = new Window(windowProperties);
-  std::cout << "Window created" << std::endl; //TODO: better logging
   return window;  
 }
 

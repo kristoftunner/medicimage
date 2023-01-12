@@ -1,5 +1,6 @@
 #include "application.h"
 #include "texture.h"
+#include "log.h"
 
 namespace medicimage
 {
@@ -43,6 +44,8 @@ bool Application::OnWindowClosed(WindowCloseEvent* e)
 
 void Application::Run()
 {
+  Logger::Init(); // TODO: add this to some entrypoint
+  APP_CORE_INFO("Started application");
   auto& renderer = Renderer::GetInstance();
   m_imguiLayer->OnAttach();
   while(m_running)
