@@ -21,7 +21,6 @@ public:
   void Begin();
   void End();
 private:
-  float m_time = 0.0f;
   bool m_showDemoWindow = true;
   bool m_showAnotherWindow = false;
   ImVec4 m_clearColor = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);

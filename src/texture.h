@@ -20,8 +20,9 @@ private:
 public:
 	Texture2D(unsigned int width, unsigned int height);
 	Texture2D(const std::string& name, const std::string& filename);
-  Texture2D(ID3D11Texture2D* srcTexture);
-
+  Texture2D(ID3D11Texture2D* srcTexture, const std::string& name);
+  Texture2D(Texture2D& texture);
+  Texture2D& operator=(const Texture2D& texture);
 	~Texture2D();
 
 	void Bind(unsigned int slot = 0) const;
@@ -33,7 +34,8 @@ public:
 	inline const std::string& GetName() const { return m_name; }
 	inline const std::string& GetFilepath() const { return m_fileName; }
 
-  ID3D11ShaderResourceView* GetShaderResourceView(){return m_resourceView;}
+  ID3D11ShaderResourceView* GetShaderResourceView() const {return m_resourceView;}
+  ID3D11Texture2D* GetTexturePtr() const {return m_texture;}
 public:
   void CreateShaderResourceView();
   void CreateSamplerState();

@@ -5,6 +5,7 @@
 #include "window.h"
 #include "backends/imgui_impl_sdl.h"
 #include "backends/imgui_impl_dx11.h"
+#include "log.h"
 
 namespace medicimage
 {
@@ -27,17 +28,17 @@ void EventInputHandler::PollEvents()
     ImGui_ImplSDL2_ProcessEvent(&event);
     if (event.type == SDL_QUIT)
     {
-      std::cout << "Quit event recieved" << std::endl;;
+      APP_CORE_INFO("Quit event recieved");
     }
     if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE && event.window.windowID == SDL_GetWindowID(m_window))
     {
-      std::cout << "Window close event revieved" << std::endl;
+      APP_CORE_INFO("Close event recieved");
       m_events.push_back(new WindowCloseEvent());
     }
     if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_RESIZED && event.window.windowID == SDL_GetWindowID(m_window))
     {
       // Release all outstanding references to the swap chain's buffers before resizing.
-      std::cout << "Window resize event recieved" << std::endl;
+      APP_CORE_INFO("Resize event recieved");
     }
   }
 }

@@ -5,6 +5,7 @@
 #include "window.h"
 #include "renderer.h"
 #include "event.h"
+#include "editor_ui.h"
 
 namespace medicimage
 {
@@ -20,6 +21,7 @@ namespace medicimage
     std::unique_ptr<EventInputHandler> m_inputHandler;
     std::unique_ptr<Window> m_window;
     std::shared_ptr<ImguiLayer> m_imguiLayer;
+    EditorUI m_editor;
     bool m_running = true;
     float m_lastFrameTime = 0;
   };

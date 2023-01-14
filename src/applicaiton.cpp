@@ -10,6 +10,7 @@ namespace medicimage
 
 Application::Application()
 {
+  Logger::Init(); // TODO: add this to some entrypoint
   m_window = std::unique_ptr<Window>(Window::Create(WindowProps()));
 
   Renderer& renderer = Renderer::GetInstance();
@@ -44,42 +45,34 @@ bool Application::OnWindowClosed(WindowCloseEvent* e)
 
 void Application::Run()
 {
-  Logger::Init(); // TODO: add this to some entrypoint
   APP_CORE_INFO("Started application");
   auto& renderer = Renderer::GetInstance();
   m_imguiLayer->OnAttach();
+  m_editor.OnAttach();
   while(m_running)
   {
     // Event handling
-    m_inputHandler->PollEvents();
-    auto events = m_inputHandler->GetCollectedEvents();
     auto texture = Texture2D("checkerboard", "Checkerboard.png");
     texture.Bind(0);
     renderer.Draw();
 
+    // event handling for every frame
+    m_inputHandler->PollEvents();
+    auto events = m_inputHandler->GetCollectedEvents();
     for(auto event : events)
     {
       OnEvent(event); 
     }
-    //float time = static_cast<float>(glfwGetTime()); // TODO REFACTOR: Platform::GetTime()
-    //Timestep timestep = time - m_lastFrameTime; 
-    //m_lastFrameTime = time;   
-    //for(Layer* layer : m_layerStack)
-    // 
-    // 
-    //{
-    //  layer->OnUpdate(timestep);
-    //}
 
+    // Update the layers
+    m_editor.OnUpdate();
+
+    // ImGui rendering
     m_imguiLayer->Begin();
-
-    m_imguiLayer->OnImguiRender();
-    //for(Layer* layer : m_layerStack)
-    //{
-    //  layer->OnImguiRender();
-    //}
+    m_editor.OnImguiRender();
     m_imguiLayer->End();
-    renderer.SwapBuffers(); // this should be integrated into m_window ???
+
+    renderer.SwapBuffers(); // this should be integrated into m_window->OnUpdate ??? idk..
     //m_window->OnUpdate(); 
   }
 }
