@@ -1,9 +1,8 @@
 #include "image_editor.h"
-#include "opencv2/core/directx.hpp"
-#include "opencv2/core/ocl.hpp"
-#include <opencv2/imgproc.hpp>
 #include "log.h"
 #include <fstream>
+#include <opencv2/imgcodecs.hpp>
+#include <opencv2/highgui.hpp>
 
 namespace medicimage
 {
@@ -31,12 +30,16 @@ static void DumpTexture(ID3D11Texture2D* texture)
 
   //APP_CORE_INFO("Dumped {%d}", mappedTexture.DepthPitch);
   Renderer::GetInstance().GetDeviceContext()->Unmap(texture, 0);
-  
 }
 
-void ImageEditor::SetTextureForEditing(Texture2D* texture)
+void ImageEditor::SetTextureForEditing(std::unique_ptr<Texture2D> texture)
 {
-  m_texture = texture;
+  m_texture = std::move(texture);
+  cv::directx::convertFromD3D11Texture2D(m_texture->GetTexturePtr(), m_opencvImage);
+  m_lines.clear();
+  m_circles.clear();
+  m_rectangles.clear();
+  m_arrows.clear();
 }
 
 void ImageEditor::Init(ID3D11Device* device)
@@ -47,41 +50,66 @@ void ImageEditor::Init(ID3D11Device* device)
     APP_CORE_ERR("Do not have OpenCL device!!");
 }
 
-void ImageEditor::DrawRectangle(ImVec2 topLeft, ImVec2 bottomRight)
+void ImageEditor::AddRectangle(ImVec2 topLeft, ImVec2 bottomRight)
 {
   auto checkInput = [&](float input) { return ((input <= 1) && (input >= 0)); };
-  if(!checkInput(topLeft.x) || !checkInput(topLeft.y) || !checkInput(bottomRight.x) || !checkInput(bottomRight.y))
+  if(!checkInput(topLeft.x) || !checkInput(topLeft.y) || !checkInput(bottomRight.x) || !checkInput(bottomRight.y) )
     return;
-
-  D3D11_TEXTURE2D_DESC inputDesc, outputDesc;
-  m_texture->GetTexturePtr()->GetDesc(&inputDesc);
-  cv::UMat textureOcv;
-  cv::directx::convertFromD3D11Texture2D(m_texture->GetTexturePtr(), textureOcv);
+  
   int textureWidth = m_texture->GetWidth();
   int textureHeight = m_texture->GetHeight();
   cv::Point rectangleTopLeft = {static_cast<int>(topLeft.x * textureWidth), static_cast<int>(topLeft.y * textureHeight)}; 
   cv::Point rectangleBottomRight = {static_cast<int>(bottomRight.x * textureWidth), static_cast<int>(bottomRight.y * textureHeight)}; 
-  cv::rectangle(textureOcv, rectangleTopLeft, rectangleBottomRight, cv::Scalar{0,255,255});
+  m_rectangles.push_back(Rectangle{rectangleTopLeft, rectangleBottomRight});
+  APP_CORE_TRACE("Added rectangle: topleft: {}:{} bottomRight:{}:{}", rectangleTopLeft.x, rectangleTopLeft.y, rectangleBottomRight.x, rectangleBottomRight.y);
+}
+
+void ImageEditor::AddCircle(ImVec2 center, float radius)
+{
+  auto checkInput = [&](float input) { return ((input <= 1) && (input >= 0)); };
+  if(!checkInput(center.x) || !checkInput(center.y))
+    return;
   
-  //cv::String strMode = cv::format("hello");
-  //cv::putText(textureOcv, strMode, cv::Point(0, 20), cv::FONT_HERSHEY_SIMPLEX, 0.8, cv::Scalar(0, 0, 200), 2);
-  cv::directx::convertToD3D11Texture2D(textureOcv, m_texture->GetTexturePtr());
-  m_texture->GetTexturePtr()->GetDesc(&outputDesc);
-  DumpTexture(m_texture->GetTexturePtr());
+  int textureWidth = m_texture->GetWidth();
+  int textureHeight = m_texture->GetHeight();
+  cv::Point circleCenter = {static_cast<int>(center.x * textureWidth), static_cast<int>(center.y * textureHeight)}; 
+  m_circles.push_back(Circle{circleCenter, radius * textureWidth}); // radius multiplied with texture widht for simplicity
+  APP_CORE_TRACE("Added circle: {}:{} r:{}", circleCenter.x, circleCenter.y, radius*textureWidth);
 }
 
-void ImageEditor::DrawCircle(ImVec2 orig, float radius)
+void ImageEditor::AddLine(ImVec2 begin, ImVec2 end)
 {
-
-}
-
-void ImageEditor::DrawLine(ImVec2 begin, ImVec2 end)
-{
-
-}
-void ImageEditor::DrawArrow(ImVec2 begin, ImVec2 end)
-{
-
-}
+  auto checkInput = [&](float input) { return ((input <= 1) && (input >= 0)); };
+  if(!checkInput(begin.x) || !checkInput(begin.y) || !checkInput(end.x) || !checkInput(end.y))
+    return;
   
+  int textureWidth = m_texture->GetWidth();
+  int textureHeight = m_texture->GetHeight();
+  cv::Point lineBegin = {static_cast<int>(begin.x * textureWidth), static_cast<int>(begin.y * textureHeight)}; 
+  cv::Point lineEnd = {static_cast<int>(end.x * textureWidth), static_cast<int>(end.y * textureHeight)}; 
+  m_lines.push_back(Line{lineBegin, lineEnd});
+  APP_CORE_TRACE("Added a line: begin: {}:{} end:{}:{}", lineBegin.x, lineBegin.y, lineEnd.x, lineEnd.y);
+}
+
+void ImageEditor::AddArrow(ImVec2 begin, ImVec2 end)
+{
+
+}
+
+std::shared_ptr<Texture2D> ImageEditor::Draw()
+{
+  for(auto& rectangle : m_rectangles)
+    cv::rectangle(m_opencvImage, rectangle.topLeft, rectangle.bottomRight, cv::Scalar{0,255,255});
+
+  for(auto& circle : m_circles)
+    cv::circle(m_opencvImage, circle.center, static_cast<int>(circle.radius), cv::Scalar{0, 0, 255}); 
+
+  for(auto& line : m_lines)
+    cv::line(m_opencvImage, line.begin, line.end, cv::Scalar{0, 0, 255});
+
+  std::shared_ptr<Texture2D> dstTexture = std::make_shared<Texture2D>(m_texture->GetTexturePtr(), "Edited texture");
+  cv::directx::convertToD3D11Texture2D(m_opencvImage, dstTexture->GetTexturePtr());
+  return dstTexture;
+}
+
 } // namespace medicimage
