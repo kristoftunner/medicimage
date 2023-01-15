@@ -12,11 +12,11 @@ namespace medicimage
 {
 
 enum class EditCommandType{DO_NOTHING, DRAW_LINE, DRAW_CIRCLE, DRAW_RECTANGLE, ADD_TEXT, START_EDITING_IMAGE, SAVE_IMAGE};
-
+enum class EditState{START_EDIT, FIRST_CLICK, MOUSE_DOWN, DONE};
 struct EditCommand
 {
   EditCommandType editType;
-  bool editing; // this is used for the drawing command for indicating that the second mouse click is done or not
+  EditState editState; // this is used for the drawing command for indicating that the second mouse click is done or not
 };
 
 class EditorUI : public Layer
@@ -42,7 +42,7 @@ private:
   int m_capturedImageIndex = 0;
   
   ImageEditor m_imageEditor; 
-  EditCommand m_currentCommand = {EditCommandType::DO_NOTHING, false};
+  EditCommand m_currentCommand = {EditCommandType::DO_NOTHING, EditState::DONE};
   bool m_inEditMode = false;
 
   // internal state variables for the drawing functions -> TODO: do some dispatching logic 
@@ -51,6 +51,8 @@ private:
   bool m_drawRectangleRequested = false;
   bool m_addTextRequested = false;
 
+  int m_thickness = 1;
+  Color m_color = {0,0,0};
   // for drawing a circle/rectangle/line/arrow we need only 2 points
   // for adding a text the topleft corner is enough 
   ImVector<ImVec2> m_cursorEditPoints;
