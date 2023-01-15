@@ -14,6 +14,9 @@ EditorUI::~EditorUI()
 void EditorUI::OnUpdate()
 {
   // TODO: get the frame from the CameraAPI in the future, for now loading a simple texture every frame
+  auto frame = std::move(m_camera.CaptureFrame());
+  if (frame)
+    m_currentFrame = std::move(frame.value());
   //m_currentFrame = std::make_shared<Texture2D>("checkerboard","assets/textures/Checkerboard.png");
 }
 
@@ -34,6 +37,8 @@ void EditorUI::OnAttach()
   m_currentEditedFrame = std::make_unique<Texture2D>("initial checkerboard", "Checkerboard.png"); // initialize the edited frame with the current frame and later update only the current frame in OnUpdate
 
   m_imageEditor.SetTextureForEditing(std::move(std::make_unique<Texture2D>(m_currentFrame->GetTexturePtr(), "currently edited texture"))); // initialize image editor as well
+
+  m_camera.Open();
 } 
 
 void EditorUI::OnDetach(){} 

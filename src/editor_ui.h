@@ -4,6 +4,7 @@
 #include "imgui.h"
 #include "texture.h"
 #include "image_editor.h"
+#include "opencv_camera.h"
 
 #include <memory>
 #include <vector>
@@ -37,6 +38,7 @@ private:
   std::unique_ptr<Texture2D> m_currentFrame;
   std::shared_ptr<Texture2D> m_currentEditedFrame;
   std::vector<std::unique_ptr<Texture2D>> m_capturedImages;
+  OpenCvCamera m_camera = OpenCvCamera(0);
   
   std::string m_uuid = "123456"; 
   int m_capturedImageIndex = 0;

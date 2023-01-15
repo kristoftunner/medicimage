@@ -12,7 +12,23 @@ namespace medicimage
   {
     m_width = width;
     m_height = height;
-    Load();
+    ZeroMemory(&m_desc, sizeof(D3D11_TEXTURE2D_DESC));
+    m_desc.Width = m_width;
+    m_desc.Height = m_height;
+    m_desc.MipLevels = 1;
+    m_desc.ArraySize = 1;
+    m_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    m_desc.Usage = D3D11_USAGE_DEFAULT;
+    m_desc.CPUAccessFlags     = 0;
+    m_desc.BindFlags = D3D11_BIND_SHADER_RESOURCE;
+    m_desc.SampleDesc.Count = 1;
+    m_desc.SampleDesc.Quality = 0;
+    m_desc.MiscFlags = D3D11_RESOURCE_MISC_SHARED;  // need the SHARED flag for OpenCV(OpenCL) - DirectX interop
+
+    ThrowIfFailed(Renderer::GetInstance().GetDevice()->CreateTexture2D(&m_desc, nullptr, &m_texture));
+    
+    CreateShaderResourceView();
+    CreateSamplerState();
   }
 
   Texture2D::Texture2D(const std::string& name, const std::string& filename)
