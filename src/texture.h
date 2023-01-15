@@ -34,6 +34,8 @@ public:
 	inline const std::string& GetName() const { return m_name; }
 	inline const std::string& GetFilepath() const { return m_fileName; }
 
+  void SetName(const std::string& name){m_name = name;}
+
   ID3D11ShaderResourceView* GetShaderResourceView() const {return m_resourceView;}
   ID3D11Texture2D* GetTexturePtr() const {return m_texture;}
 public:

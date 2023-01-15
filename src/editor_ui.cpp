@@ -14,10 +14,12 @@ EditorUI::~EditorUI()
 void EditorUI::OnUpdate()
 {
   // TODO: get the frame from the CameraAPI in the future, for now loading a simple texture every frame
-  auto frame = std::move(m_camera.CaptureFrame());
-  if (frame)
-    m_currentFrame = std::move(frame.value());
-  //m_currentFrame = std::make_shared<Texture2D>("checkerboard","assets/textures/Checkerboard.png");
+  if(!m_inEditMode)
+  {
+    auto frame = std::move(m_camera.CaptureFrame());
+    if (frame)
+      m_currentFrame = std::move(frame.value());
+  }
 }
 
 void EditorUI::OnAttach()
@@ -39,6 +41,8 @@ void EditorUI::OnAttach()
   m_imageEditor.SetTextureForEditing(std::move(std::make_unique<Texture2D>(m_currentFrame->GetTexturePtr(), "currently edited texture"))); // initialize image editor as well
 
   m_camera.Open();
+
+  m_imageSavers.push_back({123456});
 } 
 
 void EditorUI::OnDetach(){} 
@@ -67,7 +71,7 @@ void EditorUI::OnImguiRender()
   // Currently captured frame editing
   ImGui::Begin("Currently captured frame window", nullptr, ImGuiWindowFlags_NoMove);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
   static char buf2[32];
-  ImGui::InputText("Example text input", buf2, IM_ARRAYSIZE(buf2));
+  ImGui::InputText("asd", buf2, IM_ARRAYSIZE(buf2));
   ImVec2 uvMin = ImVec2(0.0f, 0.0f);                 // Top-left
   ImVec2 uvMax = ImVec2(1.0f, 1.0f);                 // Lower-right
   ImVec4 tintColor = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);   // No tint
@@ -75,10 +79,14 @@ void EditorUI::OnImguiRender()
   ImVec2 canvasSize = ImGui::GetContentRegionAvail();   // Resize canvas to what's available
   
   ImVec2 imageTopLeft = ImGui::GetCursorScreenPos();      // ImDrawList API uses screen coordinates!
-  ImGui::Image(m_currentEditedFrame->GetShaderResourceView(), canvasSize, uvMin, uvMax, tintColor, borderColor);
+  if(m_inEditMode)
+    ImGui::Image(m_currentEditedFrame->GetShaderResourceView(), canvasSize, uvMin, uvMax, tintColor, borderColor);
+  else
+    ImGui::Image(m_currentFrame->GetShaderResourceView(), canvasSize, uvMin, uvMax, tintColor, borderColor);
+
   ImVec2 imageSize = ImGui::GetItemRectSize();
 
-  // image editing logic
+  // BIG TODO: cleanup this messy control flow 
   if(m_currentCommand.editType == EditCommandType::DO_NOTHING)
   {
     ; // do actually nothing
@@ -86,10 +94,16 @@ void EditorUI::OnImguiRender()
   else if(m_currentCommand.editType == EditCommandType::SAVE_IMAGE)
   {
     if(m_currentEditedFrame.get() != nullptr)
+    {
+      m_imageSavers[0].SaveImage(std::make_shared<Texture2D>(m_currentEditedFrame->GetTexturePtr(), GenerateImageName()));
       m_capturedImages.push_back(std::move(std::make_unique<Texture2D>(m_currentEditedFrame->GetTexturePtr(), GenerateImageName())));
+    }
     
-    m_imageEditor.SetTextureForEditing(std::move(std::make_unique<Texture2D>(m_currentFrame->GetTexturePtr(),"currently edited texture")));
+    //m_imageEditor.SetTextureForEditing(std::move(std::make_unique<Texture2D>(m_currentFrame->GetTexturePtr(),"currently edited texture")));
     m_currentCommand = {EditCommandType::DO_NOTHING, EditState::DONE};
+    
+    // we can get out of edit mode only with saving the image
+    m_inEditMode = false;
   }
   else if(m_currentCommand.editType == EditCommandType::ADD_TEXT)
   {
@@ -97,6 +111,9 @@ void EditorUI::OnImguiRender()
   }
   else  // only the drawing commands left
   {
+    if(!m_inEditMode)
+      m_imageEditor.SetTextureForEditing(std::move(std::make_unique<Texture2D>(m_currentFrame->GetTexturePtr(), "currently edited texture")));
+
     m_inEditMode = true;
     const bool isImageHovered = ImGui::IsItemHovered(); // Hovered  
 

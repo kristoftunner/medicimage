@@ -5,6 +5,7 @@
 #include "texture.h"
 #include "image_editor.h"
 #include "opencv_camera.h"
+#include "image_saver.h"
 
 #include <memory>
 #include <vector>
@@ -58,6 +59,8 @@ private:
   // for drawing a circle/rectangle/line/arrow we need only 2 points
   // for adding a text the topleft corner is enough 
   ImVector<ImVec2> m_cursorEditPoints;
+
+  std::vector<ImageSaver> m_imageSavers;
 };
   
 } // namespace medicimage
