@@ -51,47 +51,68 @@ void EditorUI::DispatchDrawingCommand()
 
 }
 
+
 void EditorUI::OnImguiRender()
 {
   // DockSpace
   static bool dockspaceOpen = true;
   ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
-  ImGui::Begin("DockSpace Demo", &dockspaceOpen, ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking);
+  ImGui::Begin("DockSpace Demo", &dockspaceOpen, ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoTitleBar);
   ImGui::PopStyleVar();
   ImGuiIO& io = ImGui::GetIO();
   ImGuiStyle& style = ImGui::GetStyle();
   if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable)
   {
     ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
-    ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_None);
+    ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_None | ImGuiDockNodeFlags_AutoHideTabBar);
   }
   ImGui::End();
 
   // uuid input
-  ImGui::Begin("Currently captured frame window", nullptr, ImGuiWindowFlags_NoMove);
+  ImGui::Begin("Currently captured frame window", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar);
+  static bool enterPressed = false;
+  
+  struct Funcs
+  {
+    static int MyCallback(ImGuiInputTextCallbackData* data)
+    {
+      if (data->EventFlag == ImGuiInputTextFlags_CallbackCompletion)
+      {
+        if (data->EventKey == ImGuiKey_Tab)
+          enterPressed = true;
+      }
+      return 0;
+    }
+  };
+
   static char uuidInputBuffer[32];
   memset(uuidInputBuffer, 0, sizeof(uuidInputBuffer));
-  ImGui::InputText("asd", uuidInputBuffer, IM_ARRAYSIZE(uuidInputBuffer));
-
-  if (uuidInputBuffer[0] != '\0')
+  ImGui::PushItemWidth(-1);
+  ImGui::InputText("asd", uuidInputBuffer, IM_ARRAYSIZE(uuidInputBuffer), ImGuiInputTextFlags_CallbackCompletion, Funcs::MyCallback);
+  ImGui::PopItemWidth();
+  if(enterPressed)
   {
-    int uuid = std::stoi(uuidInputBuffer);
-    if(m_imageSavers.size() == 0)
+    if (uuidInputBuffer[0] != '\0')
     {
-      m_imageSavers.emplace_back(uuid);
-    }
-    else
-    {
-      auto isSameUuid = [&](ImageSaver saver) {return saver.GetUuid() == uuid; };
-      auto foundImageSaver = std::find_if(m_imageSavers.begin(), m_imageSavers.end(), isSameUuid);
-      if (foundImageSaver == m_imageSavers.end())
+      int uuid = std::stoi(uuidInputBuffer);
+      if(m_imageSavers.size() == 0)
       {
         m_imageSavers.emplace_back(uuid);
-        m_imageSaverIndex = m_imageSavers.size() - 1;
       }
       else
-        m_imageSaverIndex = foundImageSaver - m_imageSavers.begin();
+      {
+        auto isSameUuid = [&](ImageSaver saver) {return saver.GetUuid() == uuid; };
+        auto foundImageSaver = std::find_if(m_imageSavers.begin(), m_imageSavers.end(), isSameUuid);
+        if (foundImageSaver == m_imageSavers.end())
+        {
+          m_imageSavers.emplace_back(uuid);
+          m_imageSaverIndex = m_imageSavers.size() - 1;
+        }
+        else
+          m_imageSaverIndex = foundImageSaver - m_imageSavers.begin();
+      }
     }
+    enterPressed = false;
   }
 
   ImVec2 uvMin = ImVec2(0.0f, 0.0f);                 // Top-left
@@ -247,7 +268,7 @@ void EditorUI::OnImguiRender()
 
   // Picture thumbnails
   bool openThumbnails = true;
-  ImGui::Begin("Thumbnails", &openThumbnails, ImGuiWindowFlags_HorizontalScrollbar);
+  ImGui::Begin("Thumbnails", &openThumbnails, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoTitleBar);
   if (m_imageSavers.size() != 0)
   {
     for (const auto& image : m_imageSavers[m_imageSaverIndex].GetSavedImages())
@@ -261,8 +282,8 @@ void EditorUI::OnImguiRender()
   ImGui::End();
    
   bool openTools = true;
-  ImGui::Begin("Tools", &openTools , ImGuiWindowFlags_HorizontalScrollbar);
-  ImVec2 size = ImVec2(128.0f, 128.0f);                         // Size of the image we want to make visible
+  ImGui::Begin("Tools", &openTools , ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoTitleBar);
+  ImVec2 size = ImVec2(80.0f, 80.0f);                         // Size of the image we want to make visible
   ImVec4 iconBg = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);             // white background
   
   if (ImGui::ImageButton("save", m_saveIcon->GetShaderResourceView(), size, uvMin, uvMax, iconBg, tintColor))

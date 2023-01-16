@@ -149,7 +149,7 @@ std::shared_ptr<Texture2D> ImageEditor::Draw()
   for(auto& line : m_lines)
   {
     const Color& color = line.attributes.color;
-    cv::line(m_opencvImage, line.begin, line.end, cv::Scalar{0, 0, 255});
+    cv::line(m_opencvImage, line.begin, line.end, cv::Scalar(color.red,color.green,color.blue), line.attributes.thickness);
   }
   if(m_tempLine)
   {

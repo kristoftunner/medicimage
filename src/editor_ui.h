@@ -21,6 +21,8 @@ struct EditCommand
   EditState editState; // this is used for the drawing command for indicating that the second mouse click is done or not
 };
 
+
+
 class EditorUI : public Layer
 {
 public:

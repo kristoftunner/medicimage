@@ -29,13 +29,14 @@ void ImguiLayer::OnAttach()
   ImGui::CreateContext();
   ImGuiIO& io = ImGui::GetIO(); (void)io;
   io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;   // Enable Keyboard Controls
-	io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;           // Enable Docking
-	io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;         // Enable Multi-Viewport / Platform Windows
+  io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;           // Enable Docking
+  io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;         // Enable Multi-Viewport / Platform Windows
+  float fontSize = 18.0f;// *2.0f;
+  io.Fonts->AddFontFromFileTTF("assets/fonts/banschrift.ttf", fontSize);
+  io.FontDefault = io.Fonts->AddFontFromFileTTF("assets/fonts/banschrift.ttf", fontSize);
   io.MouseDrawCursor = true;
-  // Setup Dear ImGui style
-  //ImGui::StyleColorsDark();
-  ImGui::StyleColorsClassic();
-  //ImGui::StyleColorsLight();
+  ImGui::StyleColorsDark();
+  
   // Setup Platform/Renderer backends
   bool ret = ImGui_ImplSDL2_InitForD3D(m_window);
   ret = ImGui_ImplDX11_Init(m_device, m_deviceContext);

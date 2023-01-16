@@ -52,9 +52,9 @@ void Application::Run()
   while(m_running)
   {
     // Event handling
-    auto texture = Texture2D("checkerboard", "Checkerboard.png");
-    texture.Bind(0);
-    renderer.Draw();
+    //auto texture = Texture2D("checkerboard", "Checkerboard.png");
+    //texture.Bind(0);
+    //renderer.Draw();
 
     // event handling for every frame
     m_inputHandler->PollEvents();
