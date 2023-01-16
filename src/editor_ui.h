@@ -60,7 +60,9 @@ private:
   // for adding a text the topleft corner is enough 
   ImVector<ImVec2> m_cursorEditPoints;
 
+  // TODO: create a container class for this
   std::vector<ImageSaver> m_imageSavers;
+  int m_imageSaverIndex = 0;
 };
   
 } // namespace medicimage

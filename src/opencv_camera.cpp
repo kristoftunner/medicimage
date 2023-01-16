@@ -32,7 +32,6 @@ CameraAPI::Frame OpenCvCamera::CaptureFrame()
   int width  = static_cast<int>(m_cap.get(cv::CAP_PROP_FRAME_WIDTH));
   int height = static_cast<int>(m_cap.get(cv::CAP_PROP_FRAME_HEIGHT));
   int format = static_cast<int>(m_cap.get(cv::CAP_PROP_FORMAT));
-  APP_CORE_INFO("Capturing frame: h:w {}:{}, format:{}", width, height, format);
   
   cv::Mat frame;
   m_cap.read(frame);

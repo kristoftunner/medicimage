@@ -42,7 +42,6 @@ void EditorUI::OnAttach()
 
   m_camera.Open();
 
-  m_imageSavers.push_back({123456});
 } 
 
 void EditorUI::OnDetach(){} 
@@ -68,10 +67,33 @@ void EditorUI::OnImguiRender()
   }
   ImGui::End();
 
-  // Currently captured frame editing
-  ImGui::Begin("Currently captured frame window", nullptr, ImGuiWindowFlags_NoMove);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
-  static char buf2[32];
-  ImGui::InputText("asd", buf2, IM_ARRAYSIZE(buf2));
+  // uuid input
+  ImGui::Begin("Currently captured frame window", nullptr, ImGuiWindowFlags_NoMove);
+  static char uuidInputBuffer[32];
+  memset(uuidInputBuffer, 0, sizeof(uuidInputBuffer));
+  ImGui::InputText("asd", uuidInputBuffer, IM_ARRAYSIZE(uuidInputBuffer));
+
+  if (uuidInputBuffer[0] != '\0')
+  {
+    int uuid = std::stoi(uuidInputBuffer);
+    if(m_imageSavers.size() == 0)
+    {
+      m_imageSavers.emplace_back(uuid);
+    }
+    else
+    {
+      auto isSameUuid = [&](ImageSaver saver) {return saver.GetUuid() == uuid; };
+      auto foundImageSaver = std::find_if(m_imageSavers.begin(), m_imageSavers.end(), isSameUuid);
+      if (foundImageSaver == m_imageSavers.end())
+      {
+        m_imageSavers.emplace_back(uuid);
+        m_imageSaverIndex = m_imageSavers.size() - 1;
+      }
+      else
+        m_imageSaverIndex = foundImageSaver - m_imageSavers.begin();
+    }
+  }
+
   ImVec2 uvMin = ImVec2(0.0f, 0.0f);                 // Top-left
   ImVec2 uvMax = ImVec2(1.0f, 1.0f);                 // Lower-right
   ImVec4 tintColor = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);   // No tint
@@ -95,7 +117,15 @@ void EditorUI::OnImguiRender()
   {
     if(m_currentEditedFrame.get() != nullptr)
     {
-      m_imageSavers[0].SaveImage(std::make_shared<Texture2D>(m_currentEditedFrame->GetTexturePtr(), GenerateImageName()));
+      if (m_imageSavers.size() == 0)
+        APP_CORE_ERR("UUID not added");
+      else
+      {
+        if(m_inEditMode)
+          m_imageSavers[m_imageSaverIndex].SaveImage(std::make_shared<Texture2D>(m_currentEditedFrame->GetTexturePtr(), GenerateImageName()));
+        else
+          m_imageSavers[m_imageSaverIndex].SaveImage(std::make_shared<Texture2D>(m_currentFrame->GetTexturePtr(), GenerateImageName()));
+      }
       m_capturedImages.push_back(std::move(std::make_unique<Texture2D>(m_currentEditedFrame->GetTexturePtr(), GenerateImageName())));
     }
     
@@ -218,18 +248,21 @@ void EditorUI::OnImguiRender()
   // Picture thumbnails
   bool openThumbnails = true;
   ImGui::Begin("Thumbnails", &openThumbnails, ImGuiWindowFlags_HorizontalScrollbar);
-  for (auto& image : m_capturedImages)
+  if (m_imageSavers.size() != 0)
   {
-    ImGui::Text("%s",image->GetName().c_str());
-    ImVec2 canvasSize = ImGui::GetContentRegionAvail();
-    float aspectRatio = m_currentFrame->GetWidth() / m_currentFrame->GetHeight();
-    ImGui::Image(image->GetShaderResourceView(), ImVec2{canvasSize.x, canvasSize.x / aspectRatio}, uvMin, uvMax, tintColor, borderColor);
+    for (const auto& image : m_imageSavers[m_imageSaverIndex].GetSavedImages())
+    {
+      ImGui::Text("%s", image->GetName().c_str());
+      ImVec2 canvasSize = ImGui::GetContentRegionAvail();
+      float aspectRatio = m_currentFrame->GetWidth() / m_currentFrame->GetHeight();
+      ImGui::Image(image->GetShaderResourceView(), ImVec2{ canvasSize.x, canvasSize.x / aspectRatio }, uvMin, uvMax, tintColor, borderColor);
+    }
   }
   ImGui::End();
    
   bool openTools = true;
   ImGui::Begin("Tools", &openTools , ImGuiWindowFlags_HorizontalScrollbar);
-  ImVec2 size = ImVec2(64.0f, 64.0f);                         // Size of the image we want to make visible
+  ImVec2 size = ImVec2(128.0f, 128.0f);                         // Size of the image we want to make visible
   ImVec4 iconBg = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);             // white background
   
   if (ImGui::ImageButton("save", m_saveIcon->GetShaderResourceView(), size, uvMin, uvMax, iconBg, tintColor))

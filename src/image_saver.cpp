@@ -31,6 +31,7 @@ void ImageSaver::SaveImage(std::shared_ptr<Texture2D> texture)
   std::filesystem::path path = m_dirPath;
   path /= name; 
   cv::imwrite(path.string(), image);
+  m_savedImages.push_back(texture);
 }
 
 void ImageSaver::DeleteImage(const std::string& imageName)
