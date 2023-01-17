@@ -35,8 +35,8 @@ void EditorUI::OnAttach()
   m_arrowIcon  = std::move(std::make_unique<Texture2D>("arrow","assets/icons/arrow.png"));
   m_addTextIcon  = std::move(std::make_unique<Texture2D>("add-text","assets/icons/add-text.png"));
 
-  m_currentFrame = std::make_unique<Texture2D>("checkerboard", "Checkerboard.png"); 
-  m_currentEditedFrame = std::make_unique<Texture2D>("initial checkerboard", "Checkerboard.png"); // initialize the edited frame with the current frame and later update only the current frame in OnUpdate
+  m_currentFrame = std::make_unique<Texture2D>("checkerboard", "assets/textures/Checkerboard.png"); 
+  m_currentEditedFrame = std::make_unique<Texture2D>("initial checkerboard", "assets/textures/Checkerboard.png"); // initialize the edited frame with the current frame and later update only the current frame in OnUpdate
 
   m_imageEditor.SetTextureForEditing(std::move(std::make_unique<Texture2D>(m_currentFrame->GetTexturePtr(), "currently edited texture"))); // initialize image editor as well
 

@@ -12,17 +12,16 @@ message(STATUS "opencv libs: ${OpenCV_LIBS} includes:${OpenCV_INCLUDE_DIRS}")
 # this workaround is needed because of this OpenCV build issue: https://github.com/opencv/opencv/issues/22348
 foreach(opencv_package ${OpenCV_LIBS})
   set_target_properties(${opencv_package} PROPERTIES
-    MAP_IMPORTED_CONFIG_MINSIZEREL Debug
-    MAP_IMPORTED_CONFIG_RELWITHDEBINFO Debug 
+    MAP_IMPORTED_CONFIG_MINSIZEREL Release
+    MAP_IMPORTED_CONFIG_RELWITHDEBINFO Release 
   )
 endforeach()
 add_subdirectory(ext/sdl)
 add_subdirectory(ext/imgui)
 add_subdirectory(ext/stb)
 add_subdirectory(ext/spdlog)
-set_property(TARGET spdlog PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
-
-
+set_property(TARGET spdlog PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Release>:>")
+#set_property(TARGET spdlog PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 # the actual library build
 add_subdirectory(src)
 

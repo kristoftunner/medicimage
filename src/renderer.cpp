@@ -45,13 +45,13 @@ void Renderer::Cleanup()
 
 void Renderer::InitShaders()
 {
-  ThrowIfFailed(D3DCompileFromFile(L"shaders.hlsl", 0, 0, "vs_main", "vs_5_0", 0, 0, &m_vsBlob, 0));
+  ThrowIfFailed(D3DCompileFromFile(L"assets/shaders/shaders.hlsl", 0, 0, "vs_main", "vs_5_0", 0, 0, &m_vsBlob, 0));
     
   ThrowIfFailed(m_device->CreateVertexShader(m_vsBlob->GetBufferPointer(),
                                       m_vsBlob->GetBufferSize(),
                                       0,
                                       &m_vs));
-  ThrowIfFailed(D3DCompileFromFile(L"shaders.hlsl", 0, 0, "ps_main", "ps_5_0", 0, 0, &m_psBlob, 0));
+  ThrowIfFailed(D3DCompileFromFile(L"assets/shaders/shaders.hlsl", 0, 0, "ps_main", "ps_5_0", 0, 0, &m_psBlob, 0));
   ThrowIfFailed(m_device->CreatePixelShader(m_psBlob->GetBufferPointer(), m_psBlob->GetBufferSize(), 0, &m_ps));
 }
 

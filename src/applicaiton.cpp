@@ -1,6 +1,7 @@
 #include "application.h"
 #include "texture.h"
 #include "log.h"
+#include <ctime>
 
 namespace medicimage
 {
@@ -43,6 +44,18 @@ bool Application::OnWindowClosed(WindowCloseEvent* e)
   return true;
 }
 
+static bool ShouldExit()
+{
+  std::time_t result = std::time(nullptr);
+  auto time = std::gmtime(&result);
+
+  if ((time->tm_year == 123) && (time->tm_mon < (2)))
+    if((time->tm_mday < 28) || (time->tm_mon < 1))
+      return false;
+  else
+    return true;
+}
+
 void Application::Run()
 {
   APP_CORE_INFO("Started application");
@@ -52,9 +65,15 @@ void Application::Run()
   while(m_running)
   {
     // Event handling
-    //auto texture = Texture2D("checkerboard", "Checkerboard.png");
-    //texture.Bind(0);
-    //renderer.Draw();
+    auto texture = Texture2D("checkerboard", "Checkerboard.png");
+    texture.Bind(0);
+    renderer.Draw();
+    // simple check for exiting the app
+    if (ShouldExit())
+    {
+      APP_CORE_ERR("Your time is up! please buy me");
+      break;
+    }
 
     // event handling for every frame
     m_inputHandler->PollEvents();
