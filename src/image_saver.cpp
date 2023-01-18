@@ -39,4 +39,16 @@ void ImageSaver::DeleteImage(const std::string& imageName)
   
 } 
   
+void ImageSaverContainer::SelectImageSaver(const int uuid)
+{
+  if(m_savers.find(uuid) == m_savers.end())
+    m_savers[uuid] =  ImageSaver(uuid);
+  m_selectedSaver = uuid;
+}
+
+bool ImageSaverContainer::IsEmpty()
+{
+  return m_savers.empty();
+}
+
 } // namespace medicimage

@@ -46,11 +46,36 @@ void EditorUI::OnAttach()
 
 void EditorUI::OnDetach(){} 
 
-void EditorUI::DispatchDrawingCommand()
+void EditorUI::Draw(PrimitiveAddingType addType, ImVec2 imageSize)
 {
-
+  constexpr float circleRadiusSpeed = 1.5;
+  switch(m_currentCommand.editType) // TODO: refactor this multiple control indirection on editType
+  {
+    case EditCommandType::DRAW_CIRCLE:
+    {
+      ImVec2 centerPoint = {m_cursorEditPoints[0].x / imageSize.x, m_cursorEditPoints[0].y / imageSize.y};
+      ImVec2 secondPoint = {m_cursorEditPoints[1].x / imageSize.x, m_cursorEditPoints[1].y / imageSize.y};
+      ImVec2 diff = { abs(centerPoint.x - secondPoint.x), abs(centerPoint.y - secondPoint.y) };
+      float radius = sqrt(diff.x * diff.x + diff.y * diff.y) / 2 * circleRadiusSpeed ;
+      m_imageEditor.AddCircle(centerPoint, radius, addType, m_thickness, m_color);
+      break;
+    }
+    case EditCommandType::DRAW_RECTANGLE:
+    {
+      ImVec2 topLeft = {m_cursorEditPoints[0].x / imageSize.x, m_cursorEditPoints[0].y / imageSize.y};
+      ImVec2 bottomRight = {m_cursorEditPoints[1].x / imageSize.x, m_cursorEditPoints[1].y / imageSize.y};
+      m_imageEditor.AddRectangle(topLeft, bottomRight, addType, m_thickness, m_color);
+      break;
+    }
+    case EditCommandType::DRAW_LINE:
+    {
+      ImVec2 begin = {m_cursorEditPoints[0].x / imageSize.x, m_cursorEditPoints[0].y / imageSize.y};
+      ImVec2 end = {m_cursorEditPoints[1].x / imageSize.x, m_cursorEditPoints[1].y / imageSize.y};
+      m_imageEditor.AddLine(begin, end, addType, m_thickness, m_color);
+      break;
+    }
+  }
 }
-
 
 void EditorUI::OnImguiRender()
 {
@@ -95,22 +120,7 @@ void EditorUI::OnImguiRender()
     if (uuidInputBuffer[0] != '\0')
     {
       int uuid = std::stoi(uuidInputBuffer);
-      if(m_imageSavers.size() == 0)
-      {
-        m_imageSavers.emplace_back(uuid);
-      }
-      else
-      {
-        auto isSameUuid = [&](ImageSaver saver) {return saver.GetUuid() == uuid; };
-        auto foundImageSaver = std::find_if(m_imageSavers.begin(), m_imageSavers.end(), isSameUuid);
-        if (foundImageSaver == m_imageSavers.end())
-        {
-          m_imageSavers.emplace_back(uuid);
-          m_imageSaverIndex = m_imageSavers.size() - 1;
-        }
-        else
-          m_imageSaverIndex = foundImageSaver - m_imageSavers.begin();
-      }
+      m_imageSavers.SelectImageSaver(uuid);
     }
     enterPressed = false;
   }
@@ -129,7 +139,6 @@ void EditorUI::OnImguiRender()
 
   ImVec2 imageSize = ImGui::GetItemRectSize();
 
-  // BIG TODO: cleanup this messy control flow 
   if(m_currentCommand.editType == EditCommandType::DO_NOTHING)
   {
     ; // do actually nothing
@@ -138,14 +147,14 @@ void EditorUI::OnImguiRender()
   {
     if(m_currentEditedFrame.get() != nullptr)
     {
-      if (m_imageSavers.size() == 0)
+      if (m_imageSavers.IsEmpty())
         APP_CORE_ERR("UUID not added");
       else
       {
         if(m_inEditMode)
-          m_imageSavers[m_imageSaverIndex].SaveImage(std::make_shared<Texture2D>(m_currentEditedFrame->GetTexturePtr(), GenerateImageName()));
+          m_imageSavers.GetSelectedSaver().SaveImage(std::make_shared<Texture2D>(m_currentEditedFrame->GetTexturePtr(), GenerateImageName()));
         else
-          m_imageSavers[m_imageSaverIndex].SaveImage(std::make_shared<Texture2D>(m_currentFrame->GetTexturePtr(), GenerateImageName()));
+          m_imageSavers.GetSelectedSaver().SaveImage(std::make_shared<Texture2D>(m_currentFrame->GetTexturePtr(), GenerateImageName()));
       }
       m_capturedImages.push_back(std::move(std::make_unique<Texture2D>(m_currentEditedFrame->GetTexturePtr(), GenerateImageName())));
     }
@@ -170,7 +179,6 @@ void EditorUI::OnImguiRender()
 
     // calculate the mouse position, TODO: in texture coordinates(0,1), and do something with scrolling 
     const ImVec2 mousePosOnImage(io.MousePos.x - imageTopLeft.x, io.MousePos.y - imageTopLeft.y);
-    constexpr float circleRadiusSpeed = 1.5;
     // Add first and second point
     if (isImageHovered && (m_currentCommand.editState == EditState::START_EDIT) && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
     {
@@ -185,32 +193,7 @@ void EditorUI::OnImguiRender()
         m_cursorEditPoints.back() = mousePosOnImage;
         // draw temporary primitive
         m_cursorEditPoints.back() = mousePosOnImage;
-        switch(m_currentCommand.editType) // TODO: refactor this multiple control indirection on editType
-        {
-          case EditCommandType::DRAW_CIRCLE:
-          {
-            ImVec2 centerPoint = {m_cursorEditPoints[0].x / imageSize.x, m_cursorEditPoints[0].y / imageSize.y};
-            ImVec2 secondPoint = {m_cursorEditPoints[1].x / imageSize.x, m_cursorEditPoints[1].y / imageSize.y};
-            ImVec2 diff = { abs(centerPoint.x - secondPoint.x), abs(centerPoint.y - secondPoint.y) };
-            float radius = sqrt(diff.x * diff.x + diff.y * diff.y) / 2 * circleRadiusSpeed ;
-            m_imageEditor.AddCircle(centerPoint, radius, PrimitiveAddingType::TEMPORARY, m_thickness, m_color);
-            break;
-          }
-          case EditCommandType::DRAW_RECTANGLE:
-          {
-            ImVec2 topLeft = {m_cursorEditPoints[0].x / imageSize.x, m_cursorEditPoints[0].y / imageSize.y};
-            ImVec2 bottomRight = {m_cursorEditPoints[1].x / imageSize.x, m_cursorEditPoints[1].y / imageSize.y};
-            m_imageEditor.AddRectangle(topLeft, bottomRight, PrimitiveAddingType::TEMPORARY, m_thickness, m_color);
-            break;
-          }
-          case EditCommandType::DRAW_LINE:
-          {
-            ImVec2 begin = {m_cursorEditPoints[0].x / imageSize.x, m_cursorEditPoints[0].y / imageSize.y};
-            ImVec2 end = {m_cursorEditPoints[1].x / imageSize.x, m_cursorEditPoints[1].y / imageSize.y};
-            m_imageEditor.AddLine(begin, end, PrimitiveAddingType::TEMPORARY, m_thickness, m_color);
-            break;
-          }
-        }
+        Draw(PrimitiveAddingType::TEMPORARY, imageSize);
       }
       else
       {
@@ -221,32 +204,7 @@ void EditorUI::OnImguiRender()
     else if(isImageHovered && (m_currentCommand.editState == EditState::MOUSE_DOWN))
     {
       m_cursorEditPoints.back() = mousePosOnImage;
-      switch(m_currentCommand.editType) // TODO: refactor this multiple control indirection on editType
-      {
-        case EditCommandType::DRAW_CIRCLE:
-        {
-          ImVec2 centerPoint = {m_cursorEditPoints[0].x / imageSize.x, m_cursorEditPoints[0].y / imageSize.y};
-          ImVec2 secondPoint = {m_cursorEditPoints[1].x / imageSize.x, m_cursorEditPoints[1].y / imageSize.y};
-          ImVec2 diff = { abs(centerPoint.x - secondPoint.x), abs(centerPoint.y - secondPoint.y) };
-          float radius = sqrt(diff.x * diff.x + diff.y * diff.y) / 2 * circleRadiusSpeed;
-          m_imageEditor.AddCircle(centerPoint, radius, PrimitiveAddingType::PERMANENT, m_thickness, m_color);
-          break;
-        }
-        case EditCommandType::DRAW_RECTANGLE:
-        {
-          ImVec2 topLeft = {m_cursorEditPoints[0].x / imageSize.x, m_cursorEditPoints[0].y / imageSize.y};
-          ImVec2 bottomRight = {m_cursorEditPoints[1].x / imageSize.x, m_cursorEditPoints[1].y / imageSize.y};
-          m_imageEditor.AddRectangle(topLeft, bottomRight, PrimitiveAddingType::PERMANENT, m_thickness, m_color);
-          break;
-        }
-        case EditCommandType::DRAW_LINE:
-        {
-          ImVec2 begin = {m_cursorEditPoints[0].x / imageSize.x, m_cursorEditPoints[0].y / imageSize.y};
-          ImVec2 end = {m_cursorEditPoints[1].x / imageSize.x, m_cursorEditPoints[1].y / imageSize.y};
-          m_imageEditor.AddLine(begin, end, PrimitiveAddingType::PERMANENT, m_thickness, m_color);
-          break;
-        }
-      }
+      Draw(PrimitiveAddingType::PERMANENT, imageSize);
 
       m_currentCommand = {EditCommandType::DO_NOTHING, EditState::DONE};
       m_cursorEditPoints.clear();
@@ -254,33 +212,45 @@ void EditorUI::OnImguiRender()
   }
   
   m_currentEditedFrame = m_imageEditor.Draw();
-
-  //else if(m_addTextRequested)
-  //{
-  //  ImGui::BeginTooltip();
-  //  static char buf1[32];
-  //  ImGui::InputText("UTF-8 input", buf1, IM_ARRAYSIZE(buf1));
-  //  ImGui::SetItemDefaultFocus();
-  //  ImGui::EndTooltip();
-  //}
   ImGui::End();
 
 
   // Picture thumbnails
   bool openThumbnails = true;
   ImGui::Begin("Thumbnails", &openThumbnails, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoTitleBar);
-  if (m_imageSavers.size() != 0)
+  if (!m_imageSavers.IsEmpty())
   {
-    for (const auto& image : m_imageSavers[m_imageSaverIndex].GetSavedImages())
+    for (const auto& image : m_imageSavers.GetSelectedSaver().GetSavedImages())
     {
       ImGui::Text("%s", image->GetName().c_str());
+      ImVec2 pos = ImGui::GetCursorScreenPos();
       ImVec2 canvasSize = ImGui::GetContentRegionAvail();
       float aspectRatio = m_currentFrame->GetWidth() / m_currentFrame->GetHeight();
-      ImGui::Image(image->GetShaderResourceView(), ImVec2{ canvasSize.x, canvasSize.x / aspectRatio }, uvMin, uvMax, tintColor, borderColor);
+      ImGui::ImageButton(image->GetName().c_str(),image->GetShaderResourceView(), ImVec2{ canvasSize.x, canvasSize.x / aspectRatio }, uvMin, uvMax, borderColor, tintColor);
+      ImVec2 buttonSize = ImGui::GetItemRectSize();
+      if (ImGui::IsItemHovered())
+      {
+        ImGui::BeginTooltip();
+        float tooltipRegionSize = 64.0f;
+        ImVec2 region = {io.MousePos.x - pos.x - tooltipRegionSize * 0.5f, io.MousePos.y - pos.y - tooltipRegionSize * 0.5f};
+        float zoom = 2.0f;
+        if (region.x < 0.0f) { region.x = 0.0f; }
+        else if (region.x > buttonSize.x - tooltipRegionSize) { region.x = buttonSize.x - tooltipRegionSize; }
+        if (region.y < 0.0f) { region.y = 0.0f; }
+        else if (region.y > buttonSize.y - tooltipRegionSize) { region.y = buttonSize.y - tooltipRegionSize; }
+        ImGui::Text("Min: (%.2f, %.2f)", region.x, region.y);
+        ImGui::Text("Max: (%.2f, %.2f)", region.x + tooltipRegionSize, region.y + tooltipRegionSize);
+        ImVec2 uv0 = ImVec2((region.x) / buttonSize.x, (region.y) / buttonSize.y);
+        ImVec2 uv1 = ImVec2((region.x + tooltipRegionSize) / buttonSize.x, (region.y + tooltipRegionSize) / buttonSize.y);
+        ImGui::Image(image->GetShaderResourceView(), ImVec2(tooltipRegionSize* zoom, tooltipRegionSize* zoom), uv0, uv1, tintColor, borderColor);
+        ImGui::EndTooltip();
+      }
     }
   }
   ImGui::End();
-   
+
+
+  // toolbox 
   bool openTools = true;
   ImGui::Begin("Tools", &openTools , ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoTitleBar);
   ImVec2 size = ImVec2(80.0f, 80.0f);                         // Size of the image we want to make visible
@@ -289,40 +259,38 @@ void EditorUI::OnImguiRender()
   if (ImGui::ImageButton("save", m_saveIcon->GetShaderResourceView(), size, uvMin, uvMax, iconBg, tintColor))
   {
     m_currentCommand = { EditCommandType::SAVE_IMAGE, EditState::START_EDIT};
-    APP_CORE_INFO("Current frame captured");
   }  
 
   if (ImGui::ImageButton("start-editing", m_startEditingIcon->GetShaderResourceView(), size, uvMin, uvMax, iconBg, tintColor))
   {
     m_currentCommand = { EditCommandType::START_EDITING_IMAGE, EditState::START_EDIT};
-    APP_CORE_INFO("{} button pressed", "edit-image");
   }
   if (ImGui::ImageButton("addText", m_addTextIcon->GetShaderResourceView(), size, uvMin, uvMax, iconBg, tintColor))
   {
-    APP_CORE_INFO("{} button pressed", "addText");
     m_currentCommand = {EditCommandType::ADD_TEXT, EditState::START_EDIT};
   }
   if (ImGui::ImageButton("pencil", m_pencilIcon->GetShaderResourceView(), size, uvMin, uvMax, iconBg, tintColor))
   {
-    APP_CORE_INFO("{} button pressed", "pencil");
   }
   if (ImGui::ImageButton("circle", m_circleIcon->GetShaderResourceView(), size, uvMin, uvMax, iconBg, tintColor))
   {
     m_currentCommand = {EditCommandType::DRAW_CIRCLE, EditState::START_EDIT};
-    APP_CORE_INFO("{} button pressed", "circle");
   }
   if (ImGui::ImageButton("line", m_lineIcon->GetShaderResourceView(), size, uvMin, uvMax, iconBg, tintColor))
   {
-    APP_CORE_INFO("{} button pressed", "line");
     m_currentCommand = {EditCommandType::DRAW_LINE, EditState::START_EDIT}; 
   }
   if (ImGui::ImageButton("rectangle", m_rectangleIcon->GetShaderResourceView(), size, uvMin, uvMax, iconBg, tintColor))
   {
     m_currentCommand = {EditCommandType::DRAW_RECTANGLE, EditState::START_EDIT}; 
-    APP_CORE_INFO("{} button pressed", "rectangle");
   }
   if (ImGui::ImageButton("arrow", m_arrowIcon->GetShaderResourceView(), size, uvMin, uvMax, iconBg, tintColor))
-    APP_CORE_INFO("{} button pressed", "arrow");
+    ;
+  ImGui::End();
+
+  // some profiling
+  ImGui::Begin("Profiling");
+  ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
   ImGui::End();
 } 
 

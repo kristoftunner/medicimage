@@ -35,6 +35,7 @@ public:
 private:
   std::string GenerateImageName();
   void DispatchDrawingCommand();
+  void Draw(PrimitiveAddingType addType, ImVec2 imageSize);
   std::unique_ptr<Texture2D> m_circleIcon, m_startEditingIcon, m_lineIcon, m_pencilIcon, m_saveIcon,
     m_rectangleIcon, m_arrowIcon, m_addTextIcon;
 
@@ -62,9 +63,7 @@ private:
   // for adding a text the topleft corner is enough 
   ImVector<ImVec2> m_cursorEditPoints;
 
-  // TODO: create a container class for this
-  std::vector<ImageSaver> m_imageSavers;
-  int m_imageSaverIndex = 0;
+  ImageSaverContainer m_imageSavers;
 };
   
 } // namespace medicimage
