@@ -19,6 +19,7 @@ void EditorUI::OnUpdate()
     auto frame = std::move(m_camera.CaptureFrame());
     if (frame)
       m_currentFrame = std::move(frame.value());
+    frame.reset();
   }
 }
 

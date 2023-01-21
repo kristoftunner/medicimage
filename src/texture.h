@@ -13,7 +13,7 @@ private:
 	unsigned int m_width, m_height;
 
 	D3D11_TEXTURE2D_DESC m_desc;
-	ID3D11Texture2D* m_texture;
+	ID3D11Texture2D* m_texture; //TODO: possibly use windows comptr here
 	ID3D11ShaderResourceView* m_resourceView;
 	ID3D11SamplerState* m_samplerState;
 	D3D11_SAMPLER_DESC m_samplerDesc;

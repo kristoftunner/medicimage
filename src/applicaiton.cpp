@@ -66,8 +66,8 @@ void Application::Run()
   {
     // Event handling
     auto texture = Texture2D("checkerboard", "Checkerboard.png");
-    texture.Bind(0);
-    renderer.Draw();
+    //texture.Bind(0);
+    //renderer.Draw();
     // simple check for exiting the app
     if (ShouldExit())
     {

@@ -84,7 +84,9 @@ namespace medicimage
 
   Texture2D::~Texture2D()
   {
-    // TODO: release what can be released
+    m_samplerState->Release();
+    m_resourceView->Release();
+    m_texture->Release();
   }
 
   void Texture2D::Load()

@@ -20,6 +20,7 @@ add_subdirectory(ext/sdl)
 add_subdirectory(ext/imgui)
 add_subdirectory(ext/stb)
 add_subdirectory(ext/spdlog)
+add_subdirectory(ext/json)
 #set_property(TARGET spdlog PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Release>:>")
 set_property(TARGET spdlog PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 # the actual library build
