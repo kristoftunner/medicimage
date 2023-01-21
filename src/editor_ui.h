@@ -6,6 +6,7 @@
 #include "image_editor.h"
 #include "opencv_camera.h"
 #include "image_saver.h"
+#include "log.h"
 
 #include <memory>
 #include <vector>
@@ -21,8 +22,6 @@ struct EditCommand
   EditState editState; // this is used for the drawing command for indicating that the second mouse click is done or not
 };
 
-
-
 class EditorUI : public Layer
 {
 public:
@@ -33,37 +32,47 @@ public:
   void OnDetach() override;
   void OnImguiRender() override;
 private:
-  std::string GenerateImageName();
   void DispatchDrawingCommand();
   void Draw(PrimitiveAddingType addType, ImVec2 imageSize);
+  struct CallbackFunctions // for ImGui textinput callback 
+  {
+    static int EnterPressedCallback(ImGuiInputTextCallbackData* data)
+    {
+      if (data->EventFlag == ImGuiInputTextFlags_CallbackAlways)
+      {
+        if (data->EventKey == ImGuiKey_2)
+          APP_CORE_TRACE("Key 2 is clicked");
+        if (data->EventKey == ImGuiKey_Enter)
+          s_enterPressed = true;
+      }
+      return 0;
+    }
+  };
+
+private:
+
+  static bool s_enterPressed;
+
   std::unique_ptr<Texture2D> m_circleIcon, m_startEditingIcon, m_lineIcon, m_pencilIcon, m_saveIcon,
     m_rectangleIcon, m_arrowIcon, m_addTextIcon;
 
   std::unique_ptr<Texture2D> m_currentFrame;
   std::shared_ptr<Texture2D> m_currentEditedFrame;
-  std::vector<std::unique_ptr<Texture2D>> m_capturedImages;
   OpenCvCamera m_camera = OpenCvCamera(0);
-  
-  std::string m_uuid = "123456"; 
-  int m_capturedImageIndex = 0;
-  
+   
+  // UI editor state specific members
   ImageEditor m_imageEditor; 
   EditCommand m_currentCommand = {EditCommandType::DO_NOTHING, EditState::DONE};
   bool m_inEditMode = false;
 
-  // internal state variables for the drawing functions -> TODO: do some dispatching logic 
-  bool m_drawLineRequested = false;
-  bool m_drawCircleRequested = false;
-  bool m_drawRectangleRequested = false;
-  bool m_addTextRequested = false;
-
+  // drawing specific members
   int m_thickness = 1;
   Color m_color = {0,0,0};
   // for drawing a circle/rectangle/line/arrow we need only 2 points
   // for adding a text the topleft corner is enough 
   ImVector<ImVec2> m_cursorEditPoints;
 
-  ImageSaverContainer m_imageSavers;
+  std::unique_ptr<ImageSaverContainer> m_imageSavers;
 };
   
 } // namespace medicimage

@@ -11,7 +11,7 @@ namespace medicimage
     spdlog::set_pattern("%^[%T] %n: %v%$");
     s_coreLogger = spdlog::stdout_color_mt("core");  
     s_clientLogger = spdlog::stdout_color_mt("client"); 
-    s_coreLogger->set_level(spdlog::level::info);
+    s_coreLogger->set_level(spdlog::level::trace);
     s_clientLogger->set_level(spdlog::level::info); 
   } 
 } // namespace gameng

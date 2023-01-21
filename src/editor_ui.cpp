@@ -4,6 +4,8 @@
 namespace medicimage
 {
 
+  bool EditorUI::s_enterPressed = false;
+
 EditorUI::EditorUI() 
   : Layer("EditorUI")
 {}
@@ -25,8 +27,9 @@ void EditorUI::OnUpdate()
 
 void EditorUI::OnAttach()
 {
-  m_imageEditor.Init(Renderer::GetInstance().GetDevice());
+  m_imageSavers = std::move(std::make_unique<ImageSaverContainer>(std::filesystem::current_path()));
 
+  // loading in the icons
   m_circleIcon  = std::move(std::make_unique<Texture2D>("circle","assets/icons/circle.png"));
   m_startEditingIcon  = std::move(std::make_unique<Texture2D>("start-editing","assets/icons/start-editing.png"));
   m_lineIcon  = std::move(std::make_unique<Texture2D>("line","assets/icons/line.png"));
@@ -36,9 +39,11 @@ void EditorUI::OnAttach()
   m_arrowIcon  = std::move(std::make_unique<Texture2D>("arrow","assets/icons/arrow.png"));
   m_addTextIcon  = std::move(std::make_unique<Texture2D>("add-text","assets/icons/add-text.png"));
 
+  // initieliaze the frames 
   m_currentFrame = std::make_unique<Texture2D>("checkerboard", "assets/textures/Checkerboard.png"); 
   m_currentEditedFrame = std::make_unique<Texture2D>("initial checkerboard", "assets/textures/Checkerboard.png"); // initialize the edited frame with the current frame and later update only the current frame in OnUpdate
 
+  m_imageEditor.Init(Renderer::GetInstance().GetDevice());
   m_imageEditor.SetTextureForEditing(std::move(std::make_unique<Texture2D>(m_currentFrame->GetTexturePtr(), "currently edited texture"))); // initialize image editor as well
 
   m_camera.Open();
@@ -80,11 +85,30 @@ void EditorUI::Draw(PrimitiveAddingType addType, ImVec2 imageSize)
 
 void EditorUI::OnImguiRender()
 {
+
+  
   // DockSpace
   static bool dockspaceOpen = true;
   ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
   ImGui::Begin("DockSpace Demo", &dockspaceOpen, ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoTitleBar);
+  if (ImGui::BeginMenuBar())
+  {
+    if (ImGui::BeginMenu("Settings"))
+    {
+      if(ImGui::BeginMenu("Options"))
+      {
+        static char destFolderBuffer[32] = "workspace"; // todo: add to some std::string
+        ImGui::InputText("Destination folder", destFolderBuffer, IM_ARRAYSIZE(destFolderBuffer));
+        ImGui::EndMenu();
+      }
+      APP_CORE_TRACE("Menu bar opened");
+      ImGui::EndMenu();
+    }
+
+    ImGui::EndMenuBar();
+  }
   ImGui::PopStyleVar();
+
   ImGuiIO& io = ImGui::GetIO();
   ImGuiStyle& style = ImGui::GetStyle();
   if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable)
@@ -96,35 +120,32 @@ void EditorUI::OnImguiRender()
 
   // uuid input
   ImGui::Begin("Currently captured frame window", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar);
-  static bool enterPressed = false;
-  
-  struct Funcs
-  {
-    static int MyCallback(ImGuiInputTextCallbackData* data)
-    {
-      if (data->EventFlag == ImGuiInputTextFlags_CallbackCompletion)
-      {
-        if (data->EventKey == ImGuiKey_Tab)
-          enterPressed = true;
-      }
-      return 0;
-    }
-  };
 
-  static char uuidInputBuffer[32];
+
+  char uuidInputBuffer[32];
   memset(uuidInputBuffer, 0, sizeof(uuidInputBuffer));
   ImGui::PushItemWidth(-1);
-  ImGui::InputText("asd", uuidInputBuffer, IM_ARRAYSIZE(uuidInputBuffer), ImGuiInputTextFlags_CallbackCompletion, Funcs::MyCallback);
-  ImGui::PopItemWidth();
-  if(enterPressed)
+  if(ImGui::InputText("asd", uuidInputBuffer, IM_ARRAYSIZE(uuidInputBuffer), ImGuiInputTextFlags_EnterReturnsTrue))
   {
     if (uuidInputBuffer[0] != '\0')
     {
-      int uuid = std::stoi(uuidInputBuffer);
-      m_imageSavers.SelectImageSaver(uuid);
+      size_t pos;
+      try
+      {
+        int uuid = std::stoi(std::string(uuidInputBuffer), & pos);
+        m_imageSavers->SelectImageSaver(uuid);
+      }
+      catch (std::invalid_argument const& ex)
+      {
+        APP_CORE_WARN("Please write only numbers for a viable uuid!"); 
+      }
+      catch (std::out_of_range const& ex)
+      {
+        APP_CORE_WARN("Please add a number smaller for uuid!"); 
+      }
     }
-    enterPressed = false;
   }
+  ImGui::PopItemWidth();
 
   ImVec2 uvMin = ImVec2(0.0f, 0.0f);                 // Top-left
   ImVec2 uvMax = ImVec2(1.0f, 1.0f);                 // Lower-right
@@ -148,16 +169,12 @@ void EditorUI::OnImguiRender()
   {
     if(m_currentEditedFrame.get() != nullptr)
     {
-      if (m_imageSavers.IsEmpty())
+      if (m_imageSavers->IsEmpty())
         APP_CORE_ERR("UUID not added");
       else
       {
-        if(m_inEditMode)
-          m_imageSavers.GetSelectedSaver().SaveImage(std::make_shared<Texture2D>(m_currentEditedFrame->GetTexturePtr(), GenerateImageName()));
-        else
-          m_imageSavers.GetSelectedSaver().SaveImage(std::make_shared<Texture2D>(m_currentFrame->GetTexturePtr(), GenerateImageName()));
+        m_imageSavers->GetSelectedSaver().SaveImage(std::make_shared<Texture2D>(m_currentEditedFrame->GetTexturePtr(), ""), std::make_shared<Texture2D>(m_currentFrame->GetTexturePtr(), ""));
       }
-      m_capturedImages.push_back(std::move(std::make_unique<Texture2D>(m_currentEditedFrame->GetTexturePtr(), GenerateImageName())));
     }
     
     //m_imageEditor.SetTextureForEditing(std::move(std::make_unique<Texture2D>(m_currentFrame->GetTexturePtr(),"currently edited texture")));
@@ -219,15 +236,18 @@ void EditorUI::OnImguiRender()
   // Picture thumbnails
   bool openThumbnails = true;
   ImGui::Begin("Thumbnails", &openThumbnails, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoTitleBar);
-  if (!m_imageSavers.IsEmpty())
+  if (!m_imageSavers->IsEmpty())
   {
-    for (const auto& image : m_imageSavers.GetSelectedSaver().GetSavedImages())
+    for (const auto& image : m_imageSavers->GetSelectedSaver().GetSavedImages())
     {
       ImGui::Text("%s", image->GetName().c_str());
       ImVec2 pos = ImGui::GetCursorScreenPos();
       ImVec2 canvasSize = ImGui::GetContentRegionAvail();
       float aspectRatio = m_currentFrame->GetWidth() / m_currentFrame->GetHeight();
-      ImGui::ImageButton(image->GetName().c_str(),image->GetShaderResourceView(), ImVec2{ canvasSize.x, canvasSize.x / aspectRatio }, uvMin, uvMax, borderColor, tintColor);
+      if(ImGui::ImageButton(image->GetName().c_str(),image->GetShaderResourceView(), ImVec2{ canvasSize.x, canvasSize.x / aspectRatio }, uvMin, uvMax, borderColor, tintColor))
+      {
+        ;
+      }
       ImVec2 buttonSize = ImGui::GetItemRectSize();
       if (ImGui::IsItemHovered())
       {
@@ -294,12 +314,6 @@ void EditorUI::OnImguiRender()
   ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
   ImGui::End();
 } 
-
-std::string EditorUI::GenerateImageName()
-{
-  std::string dst = m_uuid + "_" + std::to_string(m_capturedImageIndex++);
-  return dst;
-}
 
 } // namespace medicimage
 
