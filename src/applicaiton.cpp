@@ -64,10 +64,7 @@ void Application::Run()
   m_editor.OnAttach();
   while(m_running)
   {
-    // Event handling
-    auto texture = Texture2D("checkerboard", "Checkerboard.png");
-    texture.Bind(0);
-    renderer.Draw();
+    // Event handling;
     // simple check for exiting the app
     if (ShouldExit())
     {

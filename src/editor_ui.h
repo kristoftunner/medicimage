@@ -7,6 +7,7 @@
 #include "opencv_camera.h"
 #include "image_saver.h"
 #include "log.h"
+#include "utils.h"
 
 #include <memory>
 #include <vector>
@@ -14,12 +15,16 @@
 namespace medicimage
 {
 
-enum class EditCommandType{DO_NOTHING, DRAW_LINE, DRAW_CIRCLE, DRAW_RECTANGLE, ADD_TEXT, START_EDITING_IMAGE, SAVE_IMAGE};
-enum class EditState{START_EDIT, FIRST_CLICK, MOUSE_DOWN, DONE};
-struct EditCommand
+//enum class EditCommandType{DO_NOTHING, DRAW_LINE, DRAW_CIRCLE, DRAW_RECTANGLE, ADD_TEXT, START_EDITING_IMAGE, SAVE_IMAGE};
+//enum class EditState{START_EDIT, FIRST_CLICK, MOUSE_DOWN, DONE};
+enum class EditorState{SHOW_CAMERA, EDITING, SCREENSHOT};
+enum class EditingCommandType{INITIAL, DRAWING};
+enum class DrawCommandType{DRAW_LINE, DRAW_CIRCLE, DRAW_RECTANGLE, DRAW_ARROW, ADD_TEXT};
+enum class DrawCommandState{INITIAL, FIRST_CLICK, MOUSE_DOWN, SECOND_CLICK};
+struct DrawCommand 
 {
-  EditCommandType editType;
-  EditState editState; // this is used for the drawing command for indicating that the second mouse click is done or not
+  DrawCommandType commandType;
+  DrawCommandState commandState; 
 };
 
 class EditorUI : public Layer
@@ -53,17 +58,19 @@ private:
 
   static bool s_enterPressed;
 
-  std::unique_ptr<Texture2D> m_circleIcon, m_startEditingIcon, m_lineIcon, m_pencilIcon, m_saveIcon,
-    m_rectangleIcon, m_arrowIcon, m_addTextIcon;
+  std::unique_ptr<Texture2D> m_circleIcon, m_lineIcon, m_pencilIcon, m_saveIcon,
+    m_rectangleIcon, m_arrowIcon, m_addTextIcon, m_screenshotIcon;
 
-  std::unique_ptr<Texture2D> m_currentFrame;
-  std::shared_ptr<Texture2D> m_currentEditedFrame;
+  std::unique_ptr<Texture2D> m_activeOriginalImage;
+  std::shared_ptr<Texture2D> m_activeEditedImage;
   OpenCvCamera m_camera = OpenCvCamera(0);
    
   // UI editor state specific members
   ImageEditor m_imageEditor; 
-  EditCommand m_currentCommand = {EditCommandType::DO_NOTHING, EditState::DONE};
-  bool m_inEditMode = false;
+  
+  EditorState m_editorState = EditorState::SHOW_CAMERA;
+  DrawCommand m_activeCommand;
+  Timer m_timer;
 
   // drawing specific members
   int m_thickness = 1;

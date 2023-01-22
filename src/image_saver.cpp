@@ -64,33 +64,43 @@ ImageSaver::ImageSaver(int uuid, const std::filesystem::path& baseFolder) : m_uu
   m_fileLogger = std::make_unique<FileLogger>(m_dirPath);
 }
 
-void ImageSaver::SaveImage(std::shared_ptr<Texture2D> annotatedTexture, std::shared_ptr<Texture2D> originalTexture)
+void ImageSaver::SaveImage(std::shared_ptr<Texture2D> texture, ImageType type)
 {
-  cv::UMat annotatedImage, originalImage;
-  cv::directx::convertFromD3D11Texture2D(annotatedTexture->GetTexturePtr(), annotatedImage);
-  cv::directx::convertFromD3D11Texture2D(originalTexture->GetTexturePtr(), originalImage);
-
-  cv::cvtColor(originalImage, originalImage, cv::COLOR_RGBA2BGR);
-  cv::cvtColor(annotatedImage, annotatedImage, cv::COLOR_RGBA2BGR);
-  
-  std::string originalName = std::to_string(m_uuid) + "_" + std::to_string(m_originalImages.size());
-  std::string annotatedName = originalName + "_annotated";
-  annotatedTexture->SetName(annotatedName);
-  originalTexture->SetName(originalName);
-  
-  originalName += ".jpeg";
-  annotatedName += ".jpeg";
-  std::filesystem::path originalImagePath = m_dirPath;
-  std::filesystem::path annotatedImagePath = m_dirPath;
-  originalImagePath /= originalName; 
-  annotatedImagePath /= annotatedName;
-  cv::imwrite(originalImagePath.string(), originalImage);
-  cv::imwrite(annotatedImagePath.string(), annotatedImage);
-  m_annotatedImages.push_back(annotatedTexture);
-  m_originalImages.push_back(originalTexture);
-
-  m_fileLogger->LogFilesave(originalName);
-  m_fileLogger->LogFilesave(annotatedName);
+  cv::UMat ocvImage;
+  cv::directx::convertFromD3D11Texture2D(texture->GetTexturePtr(), ocvImage);
+  cv::cvtColor(ocvImage, ocvImage, cv::COLOR_RGBA2BGR);
+  if(type == ImageType::ORIGINAL)
+  {
+    std::string name = std::to_string(m_uuid) + "_" + std::to_string(m_savedImagePairs.size());
+    SavedImagePair imagePair;
+    imagePair.name = name;
+    imagePair.originalImage = texture;
+    m_savedImagePairs.push_back(imagePair);
+    texture->SetName(name);
+    name += "_original.jpeg";
+    std::filesystem::path imagePath = m_dirPath;
+    imagePath /= name; 
+    cv::imwrite(imagePath.string(), ocvImage);
+  }
+  else if(type == ImageType::ANNOTATED)
+  {
+    std::string name = texture->GetName();
+    
+    auto findByName = [&](const SavedImagePair& imagePair){
+      return imagePair.originalImage.value()->GetName() == name;
+    };
+    auto it = std::find_if(m_savedImagePairs.begin(), m_savedImagePairs.end(), findByName);
+    if(it != m_savedImagePairs.end())
+    {
+      m_savedImagePairs[it - m_savedImagePairs.begin()].annotatedImage = texture; 
+      name += "_annotated.jpeg";
+      std::filesystem::path imagePath = m_dirPath;
+      imagePath /= name; 
+      cv::imwrite(imagePath.string(), ocvImage);
+    }
+    else
+      APP_CORE_ERR("Failed to save image:{}", name);
+  }
 }
 
 void ImageSaver::DeleteImage(const std::string& imageName)

@@ -15,12 +15,20 @@ EditorUI::~EditorUI()
 
 void EditorUI::OnUpdate()
 {
-  // TODO: get the frame from the CameraAPI in the future, for now loading a simple texture every frame
-  if(!m_inEditMode)
+  if(m_editorState == EditorState::SCREENSHOT)
   {
+    if(m_timer.Done())
+    {
+      APP_CORE_INFO("Screenshot added!");
+      m_editorState = EditorState::SHOW_CAMERA;
+    }
+  }
+  else if(m_editorState == EditorState::SHOW_CAMERA)
+  {
+    // load a frame from the camera
     auto frame = std::move(m_camera.CaptureFrame());
     if (frame)
-      m_currentFrame = std::move(frame.value());
+      m_activeOriginalImage = std::move(frame.value());
     frame.reset();
   }
 }
@@ -31,7 +39,7 @@ void EditorUI::OnAttach()
 
   // loading in the icons
   m_circleIcon  = std::move(std::make_unique<Texture2D>("circle","assets/icons/circle.png"));
-  m_startEditingIcon  = std::move(std::make_unique<Texture2D>("start-editing","assets/icons/start-editing.png"));
+  m_screenshotIcon  = std::move(std::make_unique<Texture2D>("screenshot","assets/icons/screenshot.png"));
   m_lineIcon  = std::move(std::make_unique<Texture2D>("line","assets/icons/line.png"));
   m_pencilIcon  = std::move(std::make_unique<Texture2D>("pencil","assets/icons/pencil.png"));
   m_saveIcon  = std::move(std::make_unique<Texture2D>("save","assets/icons/save.png"));
@@ -40,11 +48,11 @@ void EditorUI::OnAttach()
   m_addTextIcon  = std::move(std::make_unique<Texture2D>("add-text","assets/icons/add-text.png"));
 
   // initieliaze the frames 
-  m_currentFrame = std::make_unique<Texture2D>("checkerboard", "assets/textures/Checkerboard.png"); 
-  m_currentEditedFrame = std::make_unique<Texture2D>("initial checkerboard", "assets/textures/Checkerboard.png"); // initialize the edited frame with the current frame and later update only the current frame in OnUpdate
+  m_activeOriginalImage = std::make_unique<Texture2D>("checkerboard", "assets/textures/Checkerboard.png"); 
+  m_activeEditedImage = std::make_unique<Texture2D>("initial checkerboard", "assets/textures/Checkerboard.png"); // initialize the edited frame with the current frame and later update only the current frame in OnUpdate
 
   m_imageEditor.Init(Renderer::GetInstance().GetDevice());
-  m_imageEditor.SetTextureForEditing(std::move(std::make_unique<Texture2D>(m_currentFrame->GetTexturePtr(), "currently edited texture"))); // initialize image editor as well
+  m_imageEditor.SetTextureForEditing(std::move(std::make_unique<Texture2D>(m_activeOriginalImage->GetTexturePtr(), "currently edited texture"))); // initialize image editor as well
 
   m_camera.Open();
 
@@ -55,9 +63,9 @@ void EditorUI::OnDetach(){}
 void EditorUI::Draw(PrimitiveAddingType addType, ImVec2 imageSize)
 {
   constexpr float circleRadiusSpeed = 1.5;
-  switch(m_currentCommand.editType) // TODO: refactor this multiple control indirection on editType
+  switch(m_activeCommand.commandType) // TODO: refactor this multiple control indirection on editType
   {
-    case EditCommandType::DRAW_CIRCLE:
+    case DrawCommandType::DRAW_CIRCLE:
     {
       ImVec2 centerPoint = {m_cursorEditPoints[0].x / imageSize.x, m_cursorEditPoints[0].y / imageSize.y};
       ImVec2 secondPoint = {m_cursorEditPoints[1].x / imageSize.x, m_cursorEditPoints[1].y / imageSize.y};
@@ -66,14 +74,14 @@ void EditorUI::Draw(PrimitiveAddingType addType, ImVec2 imageSize)
       m_imageEditor.AddCircle(centerPoint, radius, addType, m_thickness, m_color);
       break;
     }
-    case EditCommandType::DRAW_RECTANGLE:
+    case DrawCommandType::DRAW_RECTANGLE:
     {
       ImVec2 topLeft = {m_cursorEditPoints[0].x / imageSize.x, m_cursorEditPoints[0].y / imageSize.y};
       ImVec2 bottomRight = {m_cursorEditPoints[1].x / imageSize.x, m_cursorEditPoints[1].y / imageSize.y};
       m_imageEditor.AddRectangle(topLeft, bottomRight, addType, m_thickness, m_color);
       break;
     }
-    case EditCommandType::DRAW_LINE:
+    case DrawCommandType::DRAW_LINE:
     {
       ImVec2 begin = {m_cursorEditPoints[0].x / imageSize.x, m_cursorEditPoints[0].y / imageSize.y};
       ImVec2 end = {m_cursorEditPoints[1].x / imageSize.x, m_cursorEditPoints[1].y / imageSize.y};
@@ -150,61 +158,27 @@ void EditorUI::OnImguiRender()
   ImVec2 uvMin = ImVec2(0.0f, 0.0f);                 // Top-left
   ImVec2 uvMax = ImVec2(1.0f, 1.0f);                 // Lower-right
   ImVec4 tintColor = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);   // No tint
-  ImVec4 borderColor = ImVec4(1.0f, 1.0f, 1.0f, 0.5f); // 50% opaque white
+  ImVec4 backgroundColor = ImVec4(1.0f, 1.0f, 1.0f, 0.5f); // 50% opaque white
   ImVec2 canvasSize = ImGui::GetContentRegionAvail();   // Resize canvas to what's available
   
-  ImVec2 imageTopLeft = ImGui::GetCursorScreenPos();      // ImDrawList API uses screen coordinates!
-  if(m_inEditMode)
-    ImGui::Image(m_currentEditedFrame->GetShaderResourceView(), canvasSize, uvMin, uvMax, tintColor, borderColor);
-  else
-    ImGui::Image(m_currentFrame->GetShaderResourceView(), canvasSize, uvMin, uvMax, tintColor, borderColor);
-
-  ImVec2 imageSize = ImGui::GetItemRectSize();
-
-  if(m_currentCommand.editType == EditCommandType::DO_NOTHING)
+  if(m_editorState == EditorState::EDITING)
   {
-    ; // do actually nothing
-  }
-  else if(m_currentCommand.editType == EditCommandType::SAVE_IMAGE)
-  {
-    if(m_currentEditedFrame.get() != nullptr)
-    {
-      if (m_imageSavers->IsEmpty())
-        APP_CORE_ERR("UUID not added");
-      else
-      {
-        m_imageSavers->GetSelectedSaver().SaveImage(std::make_shared<Texture2D>(m_currentEditedFrame->GetTexturePtr(), ""), std::make_shared<Texture2D>(m_currentFrame->GetTexturePtr(), ""));
-      }
-    }
-    
-    //m_imageEditor.SetTextureForEditing(std::move(std::make_unique<Texture2D>(m_currentFrame->GetTexturePtr(),"currently edited texture")));
-    m_currentCommand = {EditCommandType::DO_NOTHING, EditState::DONE};
-    
-    // we can get out of edit mode only with saving the image
-    m_inEditMode = false;
-  }
-  else if(m_currentCommand.editType == EditCommandType::ADD_TEXT)
-  {
-
-  }
-  else  // only the drawing commands left
-  {
-    if(!m_inEditMode)
-      m_imageEditor.SetTextureForEditing(std::move(std::make_unique<Texture2D>(m_currentFrame->GetTexturePtr(), "currently edited texture")));
-
-    m_inEditMode = true;
+    m_activeEditedImage = m_imageEditor.Draw(); // TODO: maybe move this to OnUpdate()
+    ImVec2 imageTopLeft = ImGui::GetCursorScreenPos();      // ImDrawList API uses screen coordinates!
+    ImGui::Image(m_activeEditedImage->GetShaderResourceView(), canvasSize, uvMin, uvMax, tintColor, backgroundColor);
+    ImVec2 imageSize = ImGui::GetItemRectSize();
     const bool isImageHovered = ImGui::IsItemHovered(); // Hovered  
 
     // calculate the mouse position, TODO: in texture coordinates(0,1), and do something with scrolling 
     const ImVec2 mousePosOnImage(io.MousePos.x - imageTopLeft.x, io.MousePos.y - imageTopLeft.y);
     // Add first and second point
-    if (isImageHovered && (m_currentCommand.editState == EditState::START_EDIT) && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+    if (isImageHovered && (m_activeCommand.commandState == DrawCommandState::INITIAL) && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
     {
       m_cursorEditPoints.push_back(mousePosOnImage);
       m_cursorEditPoints.push_back(mousePosOnImage);
-      m_currentCommand.editState = EditState::FIRST_CLICK;
+      m_activeCommand.commandState = DrawCommandState::FIRST_CLICK;
     }
-    else if(isImageHovered && (m_currentCommand.editState == EditState::FIRST_CLICK))
+    else if(isImageHovered && (m_activeCommand.commandState == DrawCommandState::FIRST_CLICK))
     {
       if(ImGui::IsMouseDown(ImGuiMouseButton_Left))
       {
@@ -214,22 +188,23 @@ void EditorUI::OnImguiRender()
         Draw(PrimitiveAddingType::TEMPORARY, imageSize);
       }
       else
-      {
-        m_currentCommand.editState = EditState::MOUSE_DOWN;
-
-      }
+        m_activeCommand.commandState = DrawCommandState::MOUSE_DOWN;
     }
-    else if(isImageHovered && (m_currentCommand.editState == EditState::MOUSE_DOWN))
+    else if(isImageHovered && (m_activeCommand.commandState == DrawCommandState::MOUSE_DOWN))
     {
       m_cursorEditPoints.back() = mousePosOnImage;
       Draw(PrimitiveAddingType::PERMANENT, imageSize);
 
-      m_currentCommand = {EditCommandType::DO_NOTHING, EditState::DONE};
+      // go back the initial state so that we can draw another shape of the chosen type
+      m_activeCommand = {m_activeCommand.commandType, DrawCommandState::INITIAL};
       m_cursorEditPoints.clear();
     }
+      
   }
-  
-  m_currentEditedFrame = m_imageEditor.Draw();
+  else if((m_editorState == EditorState::SHOW_CAMERA) || (m_editorState == EditorState::SCREENSHOT))
+  {
+    ImGui::Image(m_activeOriginalImage->GetShaderResourceView(), canvasSize, uvMin, uvMax, tintColor, backgroundColor);
+  }
   ImGui::End();
 
 
@@ -238,16 +213,21 @@ void EditorUI::OnImguiRender()
   ImGui::Begin("Thumbnails", &openThumbnails, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoTitleBar);
   if (!m_imageSavers->IsEmpty())
   {
-    for (const auto& image : m_imageSavers->GetSelectedSaver().GetSavedImages())
+    for (const auto& imagePair : m_imageSavers->GetSelectedSaver().GetSavedImagePairs())
     {
-      ImGui::Text("%s", image->GetName().c_str());
+      ImGui::Text("%s", imagePair.name.c_str());
       ImVec2 pos = ImGui::GetCursorScreenPos();
       ImVec2 canvasSize = ImGui::GetContentRegionAvail();
-      float aspectRatio = m_currentFrame->GetWidth() / m_currentFrame->GetHeight();
-      if(ImGui::ImageButton(image->GetName().c_str(),image->GetShaderResourceView(), ImVec2{ canvasSize.x, canvasSize.x / aspectRatio }, uvMin, uvMax, borderColor, tintColor))
+      float aspectRatio = m_activeOriginalImage->GetWidth() / m_activeOriginalImage->GetHeight();
+      auto buttonImage = imagePair.annotatedImage.has_value() ? imagePair.annotatedImage.value() : imagePair.originalImage.value(); 
+      if(ImGui::ImageButton(imagePair.name.c_str(), buttonImage->GetShaderResourceView(), ImVec2{ canvasSize.x, canvasSize.x / aspectRatio }, uvMin, uvMax, backgroundColor, tintColor))
       {
-        ;
+        // we can go into edit mode if we select an image from the thumbnails
+        m_editorState = EditorState::EDITING;
+        m_imageEditor.SetTextureForEditing(std::make_unique<Texture2D>(buttonImage->GetTexturePtr(), buttonImage->GetName()));
       }
+
+      // little tooltip showing a zoomed version of the thumbnail image
       ImVec2 buttonSize = ImGui::GetItemRectSize();
       if (ImGui::IsItemHovered())
       {
@@ -263,7 +243,7 @@ void EditorUI::OnImguiRender()
         ImGui::Text("Max: (%.2f, %.2f)", region.x + tooltipRegionSize, region.y + tooltipRegionSize);
         ImVec2 uv0 = ImVec2((region.x) / buttonSize.x, (region.y) / buttonSize.y);
         ImVec2 uv1 = ImVec2((region.x + tooltipRegionSize) / buttonSize.x, (region.y + tooltipRegionSize) / buttonSize.y);
-        ImGui::Image(image->GetShaderResourceView(), ImVec2(tooltipRegionSize* zoom, tooltipRegionSize* zoom), uv0, uv1, tintColor, borderColor);
+        ImGui::Image(buttonImage->GetShaderResourceView(), ImVec2(tooltipRegionSize* zoom, tooltipRegionSize* zoom), uv0, uv1, tintColor, backgroundColor);
         ImGui::EndTooltip();
       }
     }
@@ -275,38 +255,80 @@ void EditorUI::OnImguiRender()
   bool openTools = true;
   ImGui::Begin("Tools", &openTools , ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoTitleBar);
   ImVec2 size = ImVec2(80.0f, 80.0f);                         // Size of the image we want to make visible
-  ImVec4 iconBg = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);             // white background
-  
+  ImVec4 iconBg = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
+
+  if (ImGui::ImageButton("screenshot", m_screenshotIcon->GetShaderResourceView(), size, uvMin, uvMax, iconBg, tintColor))
+  {
+    if(m_editorState == EditorState::SHOW_CAMERA)
+    {
+      if(m_activeOriginalImage.get() != nullptr)
+      {
+        if (m_imageSavers->IsEmpty()) //TODO: should select it with an optional<ImageSaver> return type
+          APP_CORE_ERR("Please input valid UUID for saving the current image!");
+        else
+          m_imageSavers->GetSelectedSaver().SaveImage(std::make_shared<Texture2D>(m_activeOriginalImage->GetTexturePtr(), m_activeOriginalImage->GetName()), ImageSaver::ImageType::ORIGINAL);
+      }
+      m_editorState = EditorState::SCREENSHOT;
+      m_timer.Start(500);
+    }
+  }
+
+  if(m_editorState != EditorState::EDITING)
+  {
+    ImGui::BeginDisabled();
+    iconBg = ImVec4(0.5f, 0.5f, 0.5f, 1.0f);
+  }
+
   if (ImGui::ImageButton("save", m_saveIcon->GetShaderResourceView(), size, uvMin, uvMax, iconBg, tintColor))
   {
-    m_currentCommand = { EditCommandType::SAVE_IMAGE, EditState::START_EDIT};
+    if(m_editorState == EditorState::EDITING)
+    {
+      if(m_activeEditedImage.get() != nullptr)
+      {
+        if (m_imageSavers->IsEmpty()) //TODO: should select it with an optional<ImageSaver> return type
+          APP_CORE_ERR("Please input valid UUID for saving the current image!");
+        else
+          m_imageSavers->GetSelectedSaver().SaveImage(std::make_shared<Texture2D>(m_activeEditedImage->GetTexturePtr(), m_activeEditedImage->GetName()), ImageSaver::ImageType::ANNOTATED);
+      }
+      // we can get out of edit mode only with saving the image
+      m_editorState = EditorState::SHOW_CAMERA;
+    }
   }  
 
-  if (ImGui::ImageButton("start-editing", m_startEditingIcon->GetShaderResourceView(), size, uvMin, uvMax, iconBg, tintColor))
-  {
-    m_currentCommand = { EditCommandType::START_EDITING_IMAGE, EditState::START_EDIT};
-  }
   if (ImGui::ImageButton("addText", m_addTextIcon->GetShaderResourceView(), size, uvMin, uvMax, iconBg, tintColor))
   {
-    m_currentCommand = {EditCommandType::ADD_TEXT, EditState::START_EDIT};
+    if(m_editorState == EditorState::EDITING)
+      m_activeCommand = {DrawCommandType::ADD_TEXT, DrawCommandState::INITIAL};
   }
   if (ImGui::ImageButton("pencil", m_pencilIcon->GetShaderResourceView(), size, uvMin, uvMax, iconBg, tintColor))
   {
   }
   if (ImGui::ImageButton("circle", m_circleIcon->GetShaderResourceView(), size, uvMin, uvMax, iconBg, tintColor))
   {
-    m_currentCommand = {EditCommandType::DRAW_CIRCLE, EditState::START_EDIT};
+    if(m_editorState == EditorState::EDITING)
+      m_activeCommand = {DrawCommandType::DRAW_CIRCLE, DrawCommandState::INITIAL};
   }
   if (ImGui::ImageButton("line", m_lineIcon->GetShaderResourceView(), size, uvMin, uvMax, iconBg, tintColor))
   {
-    m_currentCommand = {EditCommandType::DRAW_LINE, EditState::START_EDIT}; 
+    if(m_editorState == EditorState::EDITING)
+      m_activeCommand = {DrawCommandType::DRAW_LINE, DrawCommandState::INITIAL};
   }
   if (ImGui::ImageButton("rectangle", m_rectangleIcon->GetShaderResourceView(), size, uvMin, uvMax, iconBg, tintColor))
   {
-    m_currentCommand = {EditCommandType::DRAW_RECTANGLE, EditState::START_EDIT}; 
+    if(m_editorState == EditorState::EDITING)
+      m_activeCommand = {DrawCommandType::DRAW_RECTANGLE, DrawCommandState::INITIAL};
   }
   if (ImGui::ImageButton("arrow", m_arrowIcon->GetShaderResourceView(), size, uvMin, uvMax, iconBg, tintColor))
-    ;
+  {
+    if(m_editorState == EditorState::EDITING)
+      m_activeCommand = {DrawCommandType::DRAW_ARROW, DrawCommandState::INITIAL};
+  }
+  
+  if(m_editorState != EditorState::EDITING)
+  {
+    ImGui::EndDisabled();
+  }
+
   ImGui::End();
 
   // some profiling

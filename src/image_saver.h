@@ -17,21 +17,34 @@ private:
   std::filesystem::path m_logFileName;
 };
 
+struct SavedImagePair
+{
+  std::string name;
+  std::optional<std::shared_ptr<Texture2D>> originalImage;
+  std::optional<std::shared_ptr<Texture2D>> annotatedImage;
+};
+
 class ImageSaver
 {
   //TODO: implement error handling
 public:
+  enum class ImageType{ORIGINAL, ANNOTATED};
   ImageSaver() = default;
   ImageSaver(int uuid, const std::filesystem::path& baseFolder);
-  void SaveImage(std::shared_ptr<Texture2D> annotatedTexture, std::shared_ptr<Texture2D> originalTexture);
+  
+  // original images are saved only once when doing a screenshot of the image. The original's annotated pair can be replaced multiple
+  // times, when it is selected from the thumbnails, edited and then saved as a ANNOTATED image. The original pair can be found
+  // by the texture name
+  void SaveImage(std::shared_ptr<Texture2D> texture, ImageType type);
   void DeleteImage(const std::string& imageName);
-  int GetUuid(){return m_uuid;} 
-  const std::vector<std::shared_ptr<Texture2D>>& GetSavedImages(){ return m_annotatedImages; } 
+  int GetUuid(){return m_uuid;}
+
+  // returns a vector of both the original and annotated pair of the image
+  const std::vector<SavedImagePair>& GetSavedImagePairs(){return m_savedImagePairs;}
 private:
   int m_uuid;
   std::filesystem::path m_dirPath;
-  std::vector<std::shared_ptr<Texture2D>> m_annotatedImages;
-  std::vector<std::shared_ptr<Texture2D>> m_originalImages;
+  std::vector<SavedImagePair> m_savedImagePairs;
   std::unique_ptr<FileLogger> m_fileLogger;
 };
 

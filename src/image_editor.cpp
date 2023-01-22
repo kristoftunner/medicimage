@@ -157,7 +157,7 @@ std::shared_ptr<Texture2D> ImageEditor::Draw()
     cv::line(m_opencvImage, m_tempLine.value().begin, m_tempLine.value().end, cv::Scalar(color.red,color.green,color.blue), m_tempLine.value().attributes.thickness);
   }
 
-  std::shared_ptr<Texture2D> dstTexture = std::make_shared<Texture2D>(m_texture->GetTexturePtr(), "Edited texture");
+  std::shared_ptr<Texture2D> dstTexture = std::make_shared<Texture2D>(m_texture->GetTexturePtr(), m_texture->GetName());
   cv::directx::convertToD3D11Texture2D(m_opencvImage, dstTexture->GetTexturePtr());
   return dstTexture;
 }
