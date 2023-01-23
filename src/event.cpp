@@ -6,6 +6,7 @@
 #include "backends/imgui_impl_sdl.h"
 #include "backends/imgui_impl_dx11.h"
 #include "log.h"
+#include "renderer.h"
 
 namespace medicimage
 {
@@ -39,6 +40,7 @@ void EventInputHandler::PollEvents()
     {
       // Release all outstanding references to the swap chain's buffers before resizing.
       APP_CORE_INFO("Resize event recieved");
+      Renderer::GetInstance().Resize();
     }
   }
 }

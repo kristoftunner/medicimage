@@ -94,12 +94,31 @@ void EditorUI::Draw(PrimitiveAddingType addType, ImVec2 imageSize)
 
 void EditorUI::OnImguiRender()
 {
-
-  
   // DockSpace
+  ImGuiIO& io = ImGui::GetIO();
+  ImGuiStyle& style = ImGui::GetStyle();
   static bool dockspaceOpen = true;
-  ImGui::PushStyleVar(ImGuiStyleVar_WindowPadding, ImVec2(0.0f, 0.0f));
-  ImGui::Begin("DockSpace Demo", &dockspaceOpen, ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking | ImGuiWindowFlags_NoTitleBar);
+  static bool opt_fullscreen = true;
+  static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_None;
+  // We are using the ImGuiWindowFlags_NoDocking flag to make the parent window not dockable into,
+  // because it would be confusing to have two docking targets within each others.
+  ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
+  const ImGuiViewport* viewport = ImGui::GetMainViewport();
+  ImGui::SetNextWindowPos(viewport->WorkPos);
+  ImGui::SetNextWindowSize(viewport->WorkSize);
+  ImGui::SetNextWindowViewport(viewport->ID);
+  ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+  ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+  window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
+  window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
+
+  ImGui::Begin("DockSpace Demo", nullptr, window_flags);
+  ImGui::PopStyleVar(2);
+  if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable)
+  {
+    ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
+    ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_None | ImGuiDockNodeFlags_AutoHideTabBar);
+  }
   if (ImGui::BeginMenuBar())
   {
     if (ImGui::BeginMenu("Settings"))
@@ -116,21 +135,10 @@ void EditorUI::OnImguiRender()
 
     ImGui::EndMenuBar();
   }
-  ImGui::PopStyleVar();
-
-  ImGuiIO& io = ImGui::GetIO();
-  ImGuiStyle& style = ImGui::GetStyle();
-  if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable)
-  {
-    ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
-    ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_None | ImGuiDockNodeFlags_AutoHideTabBar);
-  }
   ImGui::End();
 
   // uuid input
-  ImGui::Begin("Currently captured frame window", nullptr, ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoTitleBar);
-
-
+  ImGui::Begin("Currently captured frame window", nullptr, ImGuiWindowFlags_NoTitleBar);
   char uuidInputBuffer[32];
   memset(uuidInputBuffer, 0, sizeof(uuidInputBuffer));
   ImGui::PushItemWidth(-1);
@@ -257,8 +265,8 @@ void EditorUI::OnImguiRender()
     if(m_editorState == EditorState::EDITING)
     {
       ImGui::OpenPopup("Image deletion");
-      //ImVec2 center = ImGui::GetMainViewport()->GetCenter();
-      //ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+      ImVec2 center = ImGui::GetMainViewport()->GetCenter();
+      ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
       bool open = true;
       if (ImGui::BeginPopupModal("Image deletion", &open, ImGuiWindowFlags_AlwaysAutoResize))
       {

@@ -125,6 +125,13 @@ void Renderer::CreateDevice(HWND hwnd, const WindowProps& windowProperties)
   ThrowIfFailed(D3D11CreateDeviceAndSwapChain(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, createDeviceFlags, featureLevelArray, 2, D3D11_SDK_VERSION, &sd, &m_swapchain, &m_device, &featureLevel, &m_deviceContext)); 
 }
 
+void Renderer::Resize()
+{
+  CleanupRenderTarget();
+  m_swapchain->ResizeBuffers(0, 0, 0, DXGI_FORMAT_UNKNOWN, 0);
+  CreateRenderTarget();
+}
+
 void Renderer::Draw()
 {
   CleanupRenderTarget();

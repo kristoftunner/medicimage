@@ -22,6 +22,7 @@ public:
   ID3D11Device* GetDevice(){return m_device;}
   ID3D11DeviceContext* GetDeviceContext() {return m_deviceContext; }
   IDXGISwapChain* GetSwapChain(){return m_swapchain;}
+  void Resize();
   void Draw();
   //void Resize(int width, int height); TODO: implement this
   static Renderer& GetInstance(); // TODO: think about this singleton design concept once more
