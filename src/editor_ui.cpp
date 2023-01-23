@@ -137,39 +137,18 @@ void EditorUI::OnImguiRender()
   }
   ImGui::End();
 
-  // uuid input
-  ImGui::Begin("Currently captured frame window", nullptr, ImGuiWindowFlags_NoTitleBar);
-  char uuidInputBuffer[32];
-  memset(uuidInputBuffer, 0, sizeof(uuidInputBuffer));
-  ImGui::PushItemWidth(-1);
-  if(ImGui::InputText("asd", uuidInputBuffer, IM_ARRAYSIZE(uuidInputBuffer), ImGuiInputTextFlags_EnterReturnsTrue))
-  {
-    if (uuidInputBuffer[0] != '\0')
-    {
-      size_t pos;
-      try
-      {
-        int uuid = std::stoi(std::string(uuidInputBuffer), & pos);
-        m_imageSavers->SelectImageSaver(uuid);
-      }
-      catch (std::invalid_argument const& ex)
-      {
-        APP_CORE_WARN("Please write only numbers for a viable uuid!"); 
-      }
-      catch (std::out_of_range const& ex)
-      {
-        APP_CORE_WARN("Please add a number smaller for uuid!"); 
-      }
-    }
-  }
-  ImGui::PopItemWidth();
+  // Main window containing the stream and uuid input
 
+  ImGui::Begin("Currently captured frame window", nullptr, ImGuiWindowFlags_NoTitleBar);
+  
+  // Camera stream
   ImVec2 uvMin = ImVec2(0.0f, 0.0f);                 // Top-left
   ImVec2 uvMax = ImVec2(1.0f, 1.0f);                 // Lower-right
   ImVec4 tintColor = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);   // No tint
   ImVec4 backgroundColor = ImVec4(1.0f, 1.0f, 1.0f, 0.5f); // 50% opaque white
   ImVec2 canvasSize = ImGui::GetContentRegionAvail();   // Resize canvas to what's available
-  
+  canvasSize.y = canvasSize.y - 35; // TODO: not hardcode these values
+
   if(m_editorState == EditorState::EDITING)
   {
     m_activeEditedImage = m_imageEditor.Draw(); // TODO: maybe move this to OnUpdate()
@@ -213,6 +192,51 @@ void EditorUI::OnImguiRender()
   else if((m_editorState == EditorState::SHOW_CAMERA) || (m_editorState == EditorState::SCREENSHOT))
   {
     ImGui::Image(m_activeOriginalImage->GetShaderResourceView(), canvasSize, uvMin, uvMax, tintColor, backgroundColor);
+  }
+  
+  // uuid input
+  static char uuidInputBuffer[32] = "";
+  ImGui::PushItemWidth(-120);
+  static bool uuidTextInputTriggered = false;
+  ImGui::PushStyleVar(ImGuiStyleVar_SelectableTextAlign, ImVec2(0.5f, 0.5f)); 
+  if(ImGui::InputText("##label", uuidInputBuffer, IM_ARRAYSIZE(uuidInputBuffer), ImGuiInputTextFlags_EnterReturnsTrue))
+  {
+    uuidTextInputTriggered = true;
+  }
+  ImGui::PopStyleVar();
+  ImGui::PopItemWidth();
+  ImGui::SameLine();
+  if(ImGui::Button("Submit"))
+  {
+    uuidTextInputTriggered = true;
+  }
+
+  ImGui::SameLine();
+  if(ImGui::Button("Clear"))
+  {
+    memset(uuidInputBuffer, 0, sizeof(uuidInputBuffer));
+  }
+
+  if(uuidTextInputTriggered)
+  {
+    uuidTextInputTriggered = false;
+    if (uuidInputBuffer[0] != '\0')
+    {
+      size_t pos;
+      try
+      {
+        int uuid = std::stoi(std::string(uuidInputBuffer), & pos);
+        m_imageSavers->SelectImageSaver(uuid);
+      }
+      catch (std::invalid_argument const& ex)
+      {
+        APP_CORE_WARN("Please write only numbers for a viable uuid!"); 
+      }
+      catch (std::out_of_range const& ex)
+      {
+        APP_CORE_WARN("Please add a number smaller for uuid!"); 
+      }
+    }
   }
   ImGui::End();
 
