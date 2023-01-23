@@ -19,7 +19,7 @@ namespace medicimage
 //enum class EditState{START_EDIT, FIRST_CLICK, MOUSE_DOWN, DONE};
 enum class EditorState{SHOW_CAMERA, EDITING, SCREENSHOT};
 enum class EditingCommandType{INITIAL, DRAWING};
-enum class DrawCommandType{DRAW_LINE, DRAW_CIRCLE, DRAW_RECTANGLE, DRAW_ARROW, ADD_TEXT};
+enum class DrawCommandType{DRAW_LINE, DRAW_CIRCLE, DRAW_RECTANGLE, DRAW_ARROW, ADD_TEXT, DELETE_IMAGE};
 enum class DrawCommandState{INITIAL, FIRST_CLICK, MOUSE_DOWN, SECOND_CLICK};
 struct DrawCommand 
 {
@@ -58,7 +58,7 @@ private:
 
   static bool s_enterPressed;
 
-  std::unique_ptr<Texture2D> m_circleIcon, m_lineIcon, m_pencilIcon, m_saveIcon,
+  std::unique_ptr<Texture2D> m_circleIcon, m_lineIcon, m_pencilIcon, m_saveIcon, m_deleteIcon,
     m_rectangleIcon, m_arrowIcon, m_addTextIcon, m_screenshotIcon;
 
   std::unique_ptr<Texture2D> m_activeOriginalImage;
@@ -74,7 +74,7 @@ private:
 
   // drawing specific members
   int m_thickness = 1;
-  Color m_color = {0,0,0};
+  Color m_color = {255,0,0};
   // for drawing a circle/rectangle/line/arrow we need only 2 points
   // for adding a text the topleft corner is enough 
   ImVector<ImVec2> m_cursorEditPoints;

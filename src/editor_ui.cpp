@@ -43,6 +43,7 @@ void EditorUI::OnAttach()
   m_lineIcon  = std::move(std::make_unique<Texture2D>("line","assets/icons/line.png"));
   m_pencilIcon  = std::move(std::make_unique<Texture2D>("pencil","assets/icons/pencil.png"));
   m_saveIcon  = std::move(std::make_unique<Texture2D>("save","assets/icons/save.png"));
+  m_deleteIcon  = std::move(std::make_unique<Texture2D>("delete","assets/icons/delete.png"));
   m_rectangleIcon  = std::move(std::make_unique<Texture2D>("rectangle","assets/icons/rectangle.png"));
   m_arrowIcon  = std::move(std::make_unique<Texture2D>("arrow","assets/icons/arrow.png"));
   m_addTextIcon  = std::move(std::make_unique<Texture2D>("add-text","assets/icons/add-text.png"));
@@ -207,50 +208,6 @@ void EditorUI::OnImguiRender()
   }
   ImGui::End();
 
-
-  // Picture thumbnails
-  bool openThumbnails = true;
-  ImGui::Begin("Thumbnails", &openThumbnails, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoTitleBar);
-  if (!m_imageSavers->IsEmpty())
-  {
-    for (const auto& imagePair : m_imageSavers->GetSelectedSaver().GetSavedImagePairs())
-    {
-      ImGui::Text("%s", imagePair.name.c_str());
-      ImVec2 pos = ImGui::GetCursorScreenPos();
-      ImVec2 canvasSize = ImGui::GetContentRegionAvail();
-      float aspectRatio = m_activeOriginalImage->GetWidth() / m_activeOriginalImage->GetHeight();
-      auto buttonImage = imagePair.annotatedImage.has_value() ? imagePair.annotatedImage.value() : imagePair.originalImage.value(); 
-      if(ImGui::ImageButton(imagePair.name.c_str(), buttonImage->GetShaderResourceView(), ImVec2{ canvasSize.x, canvasSize.x / aspectRatio }, uvMin, uvMax, backgroundColor, tintColor))
-      {
-        // we can go into edit mode if we select an image from the thumbnails
-        m_editorState = EditorState::EDITING;
-        m_imageEditor.SetTextureForEditing(std::make_unique<Texture2D>(buttonImage->GetTexturePtr(), buttonImage->GetName()));
-      }
-
-      // little tooltip showing a zoomed version of the thumbnail image
-      ImVec2 buttonSize = ImGui::GetItemRectSize();
-      if (ImGui::IsItemHovered())
-      {
-        ImGui::BeginTooltip();
-        float tooltipRegionSize = 64.0f;
-        ImVec2 region = {io.MousePos.x - pos.x - tooltipRegionSize * 0.5f, io.MousePos.y - pos.y - tooltipRegionSize * 0.5f};
-        float zoom = 2.0f;
-        if (region.x < 0.0f) { region.x = 0.0f; }
-        else if (region.x > buttonSize.x - tooltipRegionSize) { region.x = buttonSize.x - tooltipRegionSize; }
-        if (region.y < 0.0f) { region.y = 0.0f; }
-        else if (region.y > buttonSize.y - tooltipRegionSize) { region.y = buttonSize.y - tooltipRegionSize; }
-        ImGui::Text("Min: (%.2f, %.2f)", region.x, region.y);
-        ImGui::Text("Max: (%.2f, %.2f)", region.x + tooltipRegionSize, region.y + tooltipRegionSize);
-        ImVec2 uv0 = ImVec2((region.x) / buttonSize.x, (region.y) / buttonSize.y);
-        ImVec2 uv1 = ImVec2((region.x + tooltipRegionSize) / buttonSize.x, (region.y + tooltipRegionSize) / buttonSize.y);
-        ImGui::Image(buttonImage->GetShaderResourceView(), ImVec2(tooltipRegionSize* zoom, tooltipRegionSize* zoom), uv0, uv1, tintColor, backgroundColor);
-        ImGui::EndTooltip();
-      }
-    }
-  }
-  ImGui::End();
-
-
   // toolbox 
   bool openTools = true;
   ImGui::Begin("Tools", &openTools , ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoTitleBar);
@@ -292,9 +249,45 @@ void EditorUI::OnImguiRender()
       }
       // we can get out of edit mode only with saving the image
       m_editorState = EditorState::SHOW_CAMERA;
+      ImGui::BeginDisabled();
     }
   }  
+  if (ImGui::ImageButton("delete", m_deleteIcon->GetShaderResourceView(), size, uvMin, uvMax, iconBg, tintColor))
+  {
+    if(m_editorState == EditorState::EDITING)
+    {
+      ImGui::OpenPopup("Image deletion");
+      //ImVec2 center = ImGui::GetMainViewport()->GetCenter();
+      //ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+      bool open = true;
+      if (ImGui::BeginPopupModal("Image deletion", &open, ImGuiWindowFlags_AlwaysAutoResize))
+      {
+        std::string imageName = m_activeEditedImage->GetName(); 
+        ImGui::Text("Are you sure you want to delete image{}?\n deletion cannot be undone!", imageName);
+        ImGui::Separator();
 
+        if (ImGui::Button("OK", ImVec2(120, 0))) 
+        { 
+          ImGui::CloseCurrentPopup(); 
+          m_imageSavers->GetSelectedSaver().DeleteImage(m_activeEditedImage->GetName());
+          APP_CORE_INFO("Image with ID:{} has been deleted", imageName);
+          m_editorState = EditorState::SHOW_CAMERA;
+          ImGui::BeginDisabled();
+        }
+        ImGui::SetItemDefaultFocus();
+        ImGui::SameLine();
+        if (ImGui::Button("Cancel", ImVec2(120, 0))) 
+        { 
+          ImGui::CloseCurrentPopup(); 
+          m_editorState = EditorState::SHOW_CAMERA;
+          ImGui::BeginDisabled();
+        }
+        ImGui::EndPopup();
+      }
+      
+      
+    }
+  }
   if (ImGui::ImageButton("addText", m_addTextIcon->GetShaderResourceView(), size, uvMin, uvMax, iconBg, tintColor))
   {
     if(m_editorState == EditorState::EDITING)
@@ -328,6 +321,48 @@ void EditorUI::OnImguiRender()
   {
     ImGui::EndDisabled();
   }
+  
+  // Picture thumbnails
+  bool openThumbnails = true;
+  ImGui::Begin("Thumbnails", &openThumbnails, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoTitleBar);
+  if (!m_imageSavers->IsEmpty())
+  {
+    for (const auto& imagePair : m_imageSavers->GetSelectedSaver().GetSavedImagePairs())
+    {
+      ImGui::Text("%s", imagePair.name.c_str());
+      ImVec2 pos = ImGui::GetCursorScreenPos();
+      ImVec2 canvasSize = ImGui::GetContentRegionAvail();
+      float aspectRatio = m_activeOriginalImage->GetWidth() / m_activeOriginalImage->GetHeight();
+      auto buttonImage = imagePair.annotatedImage.has_value() ? imagePair.annotatedImage.value() : imagePair.originalImage.value(); 
+      if(ImGui::ImageButton(imagePair.name.c_str(), buttonImage->GetShaderResourceView(), ImVec2{ canvasSize.x, canvasSize.x / aspectRatio }, uvMin, uvMax, backgroundColor, tintColor))
+      {
+        // we can go into edit mode if we select an image from the thumbnails
+        m_editorState = EditorState::EDITING;
+        m_imageEditor.SetTextureForEditing(std::make_unique<Texture2D>(buttonImage->GetTexturePtr(), buttonImage->GetName()));
+      }
+
+      // little tooltip showing a zoomed version of the thumbnail image
+      ImVec2 buttonSize = ImGui::GetItemRectSize();
+      if (ImGui::IsItemHovered())
+      {
+        ImGui::BeginTooltip();
+        float tooltipRegionSize = 64.0f;
+        ImVec2 region = {io.MousePos.x - pos.x - tooltipRegionSize * 0.5f, io.MousePos.y - pos.y - tooltipRegionSize * 0.5f};
+        float zoom = 2.0f;
+        if (region.x < 0.0f) { region.x = 0.0f; }
+        else if (region.x > buttonSize.x - tooltipRegionSize) { region.x = buttonSize.x - tooltipRegionSize; }
+        if (region.y < 0.0f) { region.y = 0.0f; }
+        else if (region.y > buttonSize.y - tooltipRegionSize) { region.y = buttonSize.y - tooltipRegionSize; }
+        ImGui::Text("Min: (%.2f, %.2f)", region.x, region.y);
+        ImGui::Text("Max: (%.2f, %.2f)", region.x + tooltipRegionSize, region.y + tooltipRegionSize);
+        ImVec2 uv0 = ImVec2((region.x) / buttonSize.x, (region.y) / buttonSize.y);
+        ImVec2 uv1 = ImVec2((region.x + tooltipRegionSize) / buttonSize.x, (region.y + tooltipRegionSize) / buttonSize.y);
+        ImGui::Image(buttonImage->GetShaderResourceView(), ImVec2(tooltipRegionSize* zoom, tooltipRegionSize* zoom), uv0, uv1, tintColor, backgroundColor);
+        ImGui::EndTooltip();
+      }
+    }
+  }
+  ImGui::End();
 
   ImGui::End();
 

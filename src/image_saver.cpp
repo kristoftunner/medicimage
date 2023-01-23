@@ -105,7 +105,35 @@ void ImageSaver::SaveImage(std::shared_ptr<Texture2D> texture, ImageType type)
 
 void ImageSaver::DeleteImage(const std::string& imageName)
 {
-  
+  auto findByName = [&](const SavedImagePair& imagePair){
+    return imagePair.originalImage.value()->GetName() == imageName;};
+
+  auto it = std::find_if(m_savedImagePairs.begin(), m_savedImagePairs.end(), findByName);
+  if(it != m_savedImagePairs.end())
+  {
+    auto imagePair = m_savedImagePairs[it - m_savedImagePairs.begin()];
+    if(imagePair.originalImage)
+    {
+      std::filesystem::path imagePath = m_dirPath;
+      imagePath /= imagePair.name + "_original.jpeg"; 
+      if(!std::filesystem::remove(imagePath))
+        APP_CORE_ERR("Something went wrong deleting this image:{}", imagePath.string());
+      else
+        APP_CORE_INFO("Image: {} deleted", imagePath.string());
+    }
+    if(imagePair.annotatedImage)
+    {
+      std::filesystem::path imagePath = m_dirPath;
+      imagePath /= imagePair.name + "_annotated.jpeg"; 
+      if(!std::filesystem::remove(imagePath))
+        APP_CORE_ERR("Something went wrong deleting this image:{}", imagePath.string());
+      else
+        APP_CORE_INFO("Image: {} deleted", imagePath.string());
+    }
+    m_savedImagePairs.erase(it);
+  }
+  else
+    APP_CORE_ERR("Tried to erase image:{} but not found in the saved images", imageName);
 } 
   
 void ImageSaverContainer::SelectImageSaver(const int uuid)

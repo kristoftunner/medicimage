@@ -229,7 +229,7 @@ void CreateTexture()
 {
   std::cout << "hello" << std::endl;
   //// load the image
-  cv::Mat image = cv::imread("Checkerboard.png");
+  cv::Mat image = cv::imread("assets/textures/Checkerboard.png");
   int matrixElementType = image.type();
 
   cv::resize(image, image, cv::Size(1280, 720));
