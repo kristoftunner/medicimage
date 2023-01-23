@@ -264,38 +264,42 @@ void EditorUI::OnImguiRender()
   {
     if(m_editorState == EditorState::EDITING)
     {
-      ImGui::OpenPopup("Image deletion");
+      ImGui::OpenPopup("delete");
       ImVec2 center = ImGui::GetMainViewport()->GetCenter();
       ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
-      bool open = true;
-      if (ImGui::BeginPopupModal("Image deletion", &open, ImGuiWindowFlags_AlwaysAutoResize))
-      {
-        std::string imageName = m_activeEditedImage->GetName(); 
-        ImGui::Text("Are you sure you want to delete image{}?\n deletion cannot be undone!", imageName);
-        ImGui::Separator();
-
-        if (ImGui::Button("OK", ImVec2(120, 0))) 
-        { 
-          ImGui::CloseCurrentPopup(); 
-          m_imageSavers->GetSelectedSaver().DeleteImage(m_activeEditedImage->GetName());
-          APP_CORE_INFO("Image with ID:{} has been deleted", imageName);
-          m_editorState = EditorState::SHOW_CAMERA;
-          ImGui::BeginDisabled();
-        }
-        ImGui::SetItemDefaultFocus();
-        ImGui::SameLine();
-        if (ImGui::Button("Cancel", ImVec2(120, 0))) 
-        { 
-          ImGui::CloseCurrentPopup(); 
-          m_editorState = EditorState::SHOW_CAMERA;
-          ImGui::BeginDisabled();
-        }
-        ImGui::EndPopup();
-      }
-      
-      
     }
   }
+
+  if(m_editorState == EditorState::EDITING)
+  {
+    if (ImGui::BeginPopupModal("delete", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+    {
+      std::string imageName = m_activeEditedImage->GetName(); 
+      ImGui::Text("Are you sure you want to delete image{}?\n deletion cannot be undone!", imageName);
+      ImGui::Separator();
+      bool beginDisabling = false;
+      if (ImGui::Button("OK", ImVec2(120, 0))) 
+      { 
+        ImGui::CloseCurrentPopup(); 
+        m_imageSavers->GetSelectedSaver().DeleteImage(m_activeEditedImage->GetName());
+        APP_CORE_INFO("Image with ID:{} has been deleted", imageName);
+        m_editorState = EditorState::SHOW_CAMERA;
+        beginDisabling = true;
+      }
+      ImGui::SetItemDefaultFocus();
+      ImGui::SameLine();
+      if (ImGui::Button("Cancel", ImVec2(120, 0))) 
+      { 
+        ImGui::CloseCurrentPopup(); 
+        m_editorState = EditorState::SHOW_CAMERA;
+        beginDisabling = true;
+      }
+      ImGui::EndPopup();
+      if (beginDisabling)
+        ImGui::BeginDisabled();
+    }
+  } 
+
   if (ImGui::ImageButton("addText", m_addTextIcon->GetShaderResourceView(), size, uvMin, uvMax, iconBg, tintColor))
   {
     if(m_editorState == EditorState::EDITING)
