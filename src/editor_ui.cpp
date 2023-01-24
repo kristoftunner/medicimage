@@ -138,8 +138,7 @@ void EditorUI::OnImguiRender()
   ImGui::End();
 
   // Main window containing the stream and uuid input
-
-  ImGui::Begin("Currently captured frame window", nullptr, ImGuiWindowFlags_NoTitleBar);
+  ImGui::Begin("Currently captured frame window", nullptr, ImGuiWindowFlags_NoTitleBar| ImGuiWindowFlags_NoMove);
   
   // Camera stream
   ImVec2 uvMin = ImVec2(0.0f, 0.0f);                 // Top-left
@@ -219,14 +218,26 @@ void EditorUI::OnImguiRender()
 
   if(uuidTextInputTriggered)
   {
+    std::string inputText = std::string(uuidInputBuffer);
     uuidTextInputTriggered = false;
-    if (uuidInputBuffer[0] != '\0')
+    auto checkInput = [&](const std::string& inputString){
+      for(auto c : inputString)
+      {
+        if(std::isalnum(c) == 0)
+        {
+          if (c == '.' || c == ',' || c == '_' || c == '-')
+            ;
+          else
+            return false;
+        }
+      }
+      return true;};
+    if (uuidInputBuffer[0] != '\0' && checkInput(inputText))
     {
       size_t pos;
       try
       {
-        int uuid = std::stoi(std::string(uuidInputBuffer), & pos);
-        m_imageSavers->SelectImageSaver(uuid);
+        m_imageSavers->SelectImageSaver(inputText);
       }
       catch (std::invalid_argument const& ex)
       {
@@ -237,6 +248,8 @@ void EditorUI::OnImguiRender()
         APP_CORE_WARN("Please add a number smaller for uuid!"); 
       }
     }
+    else
+      APP_CORE_ERR("Add only letters numbers and \\.\\,\\-\\_ characters for uuid");
   }
   ImGui::End();
 

@@ -53,10 +53,10 @@ void FileLogger::LogFilesave(const std::string& filename)
     APP_CORE_ERR("Could not dump json into this file:{}", m_logFileName);
 } 
 
-ImageSaver::ImageSaver(int uuid, const std::filesystem::path& baseFolder) : m_uuid(uuid), m_dirPath(baseFolder)
+ImageSaver::ImageSaver(const std::string& uuid, const std::filesystem::path& baseFolder) : m_uuid(uuid), m_dirPath(baseFolder)
 {
   m_dirPath /= "data";
-  m_dirPath /= std::to_string(uuid);
+  m_dirPath /= uuid;
 
   if(!(std::filesystem::is_directory(m_dirPath)));
     if(!(std::filesystem::create_directory(m_dirPath)))
@@ -71,7 +71,7 @@ void ImageSaver::SaveImage(std::shared_ptr<Texture2D> texture, ImageType type)
   cv::cvtColor(ocvImage, ocvImage, cv::COLOR_RGBA2BGR);
   if(type == ImageType::ORIGINAL)
   {
-    std::string name = std::to_string(m_uuid) + "_" + std::to_string(m_savedImagePairs.size());
+    std::string name = m_uuid + "_" + std::to_string(m_savedImagePairs.size());
     SavedImagePair imagePair;
     imagePair.name = name;
     imagePair.originalImage = texture;
@@ -136,7 +136,7 @@ void ImageSaver::DeleteImage(const std::string& imageName)
     APP_CORE_ERR("Tried to erase image:{} but not found in the saved images", imageName);
 } 
   
-void ImageSaverContainer::SelectImageSaver(const int uuid)
+void ImageSaverContainer::SelectImageSaver(const std::string& uuid)
 {
   if(m_savers.find(uuid) == m_savers.end())
     m_savers[uuid] =  ImageSaver(uuid, m_baseFolder);
