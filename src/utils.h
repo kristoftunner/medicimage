@@ -1,6 +1,8 @@
 #pragma once
 
 #include <chrono>
+#include <filesystem>
+
 #include "log.h"
 namespace medicimage
 {
@@ -37,6 +39,16 @@ private:
   std::chrono::time_point<std::chrono::system_clock> m_startTime;
   int m_timerDuration = 0;
   bool m_running = false;
+};
+
+class AppConfig
+{
+public:
+  AppConfig();
+  bool SetAppFolder(const std::filesystem::path& path); //TODO: use an exception instead
+  const std::filesystem::path& GetAppFolder(){return m_appFolderPath;}
+private:
+  std::filesystem::path m_appFolderPath;
 };
 
 } // namespace medicimage

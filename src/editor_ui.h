@@ -80,6 +80,7 @@ private:
   ImVector<ImVec2> m_cursorEditPoints;
 
   std::unique_ptr<ImageSaverContainer> m_imageSavers;
+  AppConfig m_appConfig;
 };
   
 } // namespace medicimage

@@ -35,7 +35,7 @@ void EditorUI::OnUpdate()
 
 void EditorUI::OnAttach()
 {
-  m_imageSavers = std::move(std::make_unique<ImageSaverContainer>(std::filesystem::current_path()));
+  m_imageSavers = std::move(std::make_unique<ImageSaverContainer>(m_appConfig.GetAppFolder()));
 
   // loading in the icons
   m_circleIcon  = std::move(std::make_unique<Texture2D>("circle","assets/icons/circle.png"));
@@ -125,8 +125,11 @@ void EditorUI::OnImguiRender()
     {
       if(ImGui::BeginMenu("Options"))
       {
-        static char destFolderBuffer[32] = "workspace"; // todo: add to some std::string
-        ImGui::InputText("Destination folder", destFolderBuffer, IM_ARRAYSIZE(destFolderBuffer));
+        static char destFolderBuffer[128] = ""; // TODO: do this with something like a file dialog??? 
+        if(ImGui::InputText("Destination folder", destFolderBuffer, IM_ARRAYSIZE(destFolderBuffer), ImGuiInputTextFlags_EnterReturnsTrue))
+        {
+          m_appConfig.SetAppFolder(destFolderBuffer);
+        }
         ImGui::EndMenu();
       }
       APP_CORE_TRACE("Menu bar opened");

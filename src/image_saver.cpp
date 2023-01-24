@@ -58,9 +58,8 @@ ImageSaver::ImageSaver(const std::string& uuid, const std::filesystem::path& bas
   m_dirPath /= "data";
   m_dirPath /= uuid;
 
-  if(!(std::filesystem::is_directory(m_dirPath)));
-    if(!(std::filesystem::create_directory(m_dirPath)))
-      APP_CORE_WARN("Directory:{} already created.", m_dirPath.string());
+  if(!(std::filesystem::create_directory(m_dirPath)))
+    APP_CORE_WARN("Directory:{} already created.", m_dirPath.string());
   m_fileLogger = std::make_unique<FileLogger>(m_dirPath);
 }
 
@@ -81,6 +80,7 @@ void ImageSaver::SaveImage(std::shared_ptr<Texture2D> texture, ImageType type)
     std::filesystem::path imagePath = m_dirPath;
     imagePath /= name; 
     cv::imwrite(imagePath.string(), ocvImage);
+    m_fileLogger->LogFilesave(name);
   }
   else if(type == ImageType::ANNOTATED)
   {
@@ -97,6 +97,7 @@ void ImageSaver::SaveImage(std::shared_ptr<Texture2D> texture, ImageType type)
       std::filesystem::path imagePath = m_dirPath;
       imagePath /= name; 
       cv::imwrite(imagePath.string(), ocvImage);
+      m_fileLogger->LogFilesave(name);
     }
     else
       APP_CORE_ERR("Failed to save image:{}", name);
