@@ -29,13 +29,15 @@ CameraAPI::Frame OpenCvCamera::CaptureFrame()
     return CameraAPI::Frame();
   }
 
-  int width  = static_cast<int>(m_cap.get(cv::CAP_PROP_FRAME_WIDTH));
-  int height = static_cast<int>(m_cap.get(cv::CAP_PROP_FRAME_HEIGHT));
-  int format = static_cast<int>(m_cap.get(cv::CAP_PROP_FORMAT));
-  
+  //int width  = static_cast<int>(m_cap.get(cv::CAP_PROP_FRAME_WIDTH));
+  //int height = static_cast<int>(m_cap.get(cv::CAP_PROP_FRAME_HEIGHT));
+  //int format = static_cast<int>(m_cap.get(cv::CAP_PROP_FORMAT));
+  constexpr int width = 1920;
+  constexpr int height = 1080; 
   cv::Mat frame;
   m_cap.read(frame);
   cv::cvtColor(frame, frame, cv::COLOR_BGR2RGBA);
+  cv::resize(frame, frame, cv::Size(width,height));
   Frame frameTexture = std::make_unique<Texture2D>(width, height);
   Renderer::GetInstance().GetDeviceContext()->UpdateSubresource(frameTexture.value()->GetTexturePtr(), 0, 0, frame.data, (UINT)frame.step[0], (UINT)frame.total());
   frame.release();

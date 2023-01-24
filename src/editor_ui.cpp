@@ -381,12 +381,14 @@ void EditorUI::OnImguiRender()
       ImGui::Text("%s", imagePair.name.c_str());
       ImVec2 pos = ImGui::GetCursorScreenPos();
       ImVec2 canvasSize = ImGui::GetContentRegionAvail();
-      float aspectRatio = m_activeOriginalImage->GetWidth() / m_activeOriginalImage->GetHeight();
+      float aspectRatio = static_cast<float>(m_activeOriginalImage->GetWidth()) / static_cast<float>(m_activeOriginalImage->GetHeight());
       auto buttonImage = imagePair.annotatedImage.has_value() ? imagePair.annotatedImage.value() : imagePair.originalImage.value(); 
       if(ImGui::ImageButton(imagePair.name.c_str(), buttonImage->GetShaderResourceView(), ImVec2{ canvasSize.x, canvasSize.x / aspectRatio }, uvMin, uvMax, backgroundColor, tintColor))
       {
         // we can go into edit mode if we select an image from the thumbnails
         m_editorState = EditorState::EDITING;
+        const std::string uuid = m_imageSavers->GetSelectedSaver().GetUuid();
+        m_imageEditor.AddWatermark(uuid);
         m_imageEditor.SetTextureForEditing(std::make_unique<Texture2D>(buttonImage->GetTexturePtr(), buttonImage->GetName()));
       }
 

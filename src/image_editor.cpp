@@ -157,6 +157,11 @@ std::shared_ptr<Texture2D> ImageEditor::Draw()
     cv::line(m_opencvImage, m_tempLine.value().begin, m_tempLine.value().end, cv::Scalar(color.red,color.green,color.blue), m_tempLine.value().attributes.thickness);
   }
 
+  // add watermark
+  cv::UMat watermark(m_texture->GetHeight(), m_texture->GetWidth(), CV_8UC4, cv::Scalar(0, 0, 0));
+  cv::putText(watermark, m_watermark, cv::Point{100,100}, cv::FONT_HERSHEY_PLAIN, 10, cv::Scalar{128,128,128}, 3);
+  cv::addWeighted(m_opencvImage, 1.0, watermark, 0.5, 0.0, m_opencvImage, -1);
+  
   std::shared_ptr<Texture2D> dstTexture = std::make_shared<Texture2D>(m_texture->GetTexturePtr(), m_texture->GetName());
   cv::directx::convertToD3D11Texture2D(m_opencvImage, dstTexture->GetTexturePtr());
   return dstTexture;

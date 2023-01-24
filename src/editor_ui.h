@@ -73,7 +73,7 @@ private:
   Timer m_timer;
 
   // drawing specific members
-  int m_thickness = 1;
+  int m_thickness = 3;
   Color m_color = {255,0,0};
   // for drawing a circle/rectangle/line/arrow we need only 2 points
   // for adding a text the topleft corner is enough 
