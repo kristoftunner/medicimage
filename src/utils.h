@@ -2,6 +2,7 @@
 
 #include <chrono>
 #include <filesystem>
+#include <deque>
 
 #include "log.h"
 namespace medicimage
@@ -47,8 +48,11 @@ public:
   AppConfig();
   bool SetAppFolder(const std::filesystem::path& path); //TODO: use an exception instead
   const std::filesystem::path& GetAppFolder(){return m_appFolderPath;}
+  void PushPatientFolder(const std::filesystem::path& patientFolder);
+  const std::deque<std::filesystem::path>& GetSavedPatientFolders() const {return m_loadedPatientFolders;}
 private:
   std::filesystem::path m_appFolderPath;
+  std::deque<std::filesystem::path> m_loadedPatientFolders;
 };
 
 } // namespace medicimage

@@ -35,7 +35,13 @@ void EditorUI::OnUpdate()
 
 void EditorUI::OnAttach()
 {
+  // first initialize OpenCL in OpenCV for the initial texture loading
+  m_imageEditor.Init(Renderer::GetInstance().GetDevice());
+  
+  // init image saver container with the saved patient folders(if there is any)
   m_imageSavers = std::move(std::make_unique<ImageSaverContainer>(m_appConfig.GetAppFolder()));
+  for(const auto& patientFolder : m_appConfig.GetSavedPatientFolders())
+    m_imageSavers->SelectImageSaver(patientFolder.stem().string());
 
   // loading in the icons
   m_circleIcon  = std::move(std::make_unique<Texture2D>("circle","assets/icons/circle.png"));
@@ -52,7 +58,6 @@ void EditorUI::OnAttach()
   m_activeOriginalImage = std::make_unique<Texture2D>("checkerboard", "assets/textures/Checkerboard.png"); 
   m_activeEditedImage = std::make_unique<Texture2D>("initial checkerboard", "assets/textures/Checkerboard.png"); // initialize the edited frame with the current frame and later update only the current frame in OnUpdate
 
-  m_imageEditor.Init(Renderer::GetInstance().GetDevice());
   m_imageEditor.SetTextureForEditing(std::move(std::make_unique<Texture2D>(m_activeOriginalImage->GetTexturePtr(), "currently edited texture"))); // initialize image editor as well
 
   m_camera.Open();
@@ -241,6 +246,7 @@ void EditorUI::OnImguiRender()
       try
       {
         m_imageSavers->SelectImageSaver(inputText);
+        m_appConfig.PushPatientFolder(m_imageSavers->GetSelectedSaver().GetPatientFolder());
       }
       catch (std::invalid_argument const& ex)
       {
@@ -374,6 +380,19 @@ void EditorUI::OnImguiRender()
     ImGui::EndDisabled();
   }
   
+  // listbox for selecting saved uuids
+  if (ImGui::BeginListBox("##listbox"))
+  {
+    for(const auto& saver : m_imageSavers->GetImageSavers())
+    {
+      bool selected = true;
+      auto a = saver.first;
+      ImGui::Selectable("asdasd", &selected);
+    }
+    ImGui::EndListBox();
+  }
+  ImGui::End();
+  
   // Picture thumbnails
   bool openThumbnails = true;
   ImGui::Begin("Thumbnails", &openThumbnails, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoTitleBar);
@@ -418,7 +437,6 @@ void EditorUI::OnImguiRender()
   }
   ImGui::End();
 
-  ImGui::End();
 
   // some profiling
   ImGui::Begin("Profiling");

@@ -57,10 +57,85 @@ ImageSaver::ImageSaver(const std::string& uuid, const std::filesystem::path& bas
 {
   m_dirPath /= "data";
   m_dirPath /= uuid;
+  m_fileLogger = std::make_unique<FileLogger>(m_dirPath);
 
   if(!(std::filesystem::create_directory(m_dirPath)))
-    APP_CORE_WARN("Directory:{} already created.", m_dirPath.string());
-  m_fileLogger = std::make_unique<FileLogger>(m_dirPath);
+  {
+    APP_CORE_INFO("Directory:{} already created, loading images from it.", m_dirPath.string());
+    // iterate trough the files and load the conained images 
+    for(auto const& dirEntry : std::filesystem::directory_iterator(m_dirPath))
+    {
+      if(dirEntry.path().extension() == ".jpeg")
+      {
+        std::string name = dirEntry.path().stem().string(); 
+        auto origPos = name.find("_original");
+        auto annotatedPos = name.find("_annotated");
+        if(origPos != std::string::npos)
+        {
+          LoadImage(name.substr(0, origPos), dirEntry.path(), ImageType::ORIGINAL);
+          APP_CORE_INFO("Picture {} is loaded", dirEntry.path());
+        }
+        else if(annotatedPos != std::string::npos)
+        {
+          LoadImage(name.substr(0, annotatedPos), dirEntry.path(), ImageType::ANNOTATED);
+          APP_CORE_INFO("Picture {} is loaded", dirEntry.path());
+        }
+      }
+    }
+  }
+}
+
+void ImageSaver::LoadImage(std::string imageName, const std::filesystem::path& filePath, ImageType type)
+{
+  // assuming there are only one annotated and original variant of an image
+  auto findAnnotatedName = [&](const SavedImagePair& imagePair){
+    if(imagePair.annotatedImage.has_value())
+      return imagePair.annotatedImage.value()->GetName() == imageName;
+    else 
+      return false;
+  };
+  
+  auto findOriginalName = [&](const SavedImagePair& imagePair){
+    if(imagePair.originalImage.has_value())
+      return imagePair.originalImage.value()->GetName() == imageName;
+    else 
+      return false;
+  };
+
+  if(type == ImageType::ORIGINAL)
+  {
+    auto it = std::find_if(m_savedImagePairs.begin(), m_savedImagePairs.end(), findAnnotatedName);
+    if(it != m_savedImagePairs.end())
+    { 
+      // the annotated image is already loaded, so load there the 
+      SavedImagePair& imagePair = *it;
+      imagePair.originalImage = std::make_shared<Texture2D>(imageName, filePath.string());
+    }
+    else
+    {
+      SavedImagePair imagePair;
+      imagePair.name = imageName;
+      imagePair.originalImage = std::make_shared<Texture2D>(imageName, filePath.string());
+      m_savedImagePairs.push_back(imagePair);  
+    }
+  }
+  else if(type == ImageType::ANNOTATED)
+  {
+    auto it = std::find_if(m_savedImagePairs.begin(), m_savedImagePairs.end(), findOriginalName);
+    if(it != m_savedImagePairs.end())
+    { 
+      // the annotated image is already loaded, so load there the 
+      SavedImagePair& imagePair = *it;
+      imagePair.annotatedImage = std::make_shared<Texture2D>(imageName, filePath.string());
+    }
+    else
+    {
+      SavedImagePair imagePair;
+      imagePair.name = imageName;
+      imagePair.annotatedImage = std::make_shared<Texture2D>(imageName, filePath.string());
+      m_savedImagePairs.push_back(imagePair);  
+    }
+  }
 }
 
 void ImageSaver::SaveImage(std::shared_ptr<Texture2D> texture, ImageType type)

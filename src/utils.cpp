@@ -17,14 +17,24 @@ AppConfig::AppConfig()
     //APP_CORE_INFO("Log file not created for {}, creating log file", configFilename.c_str());
     std::ofstream configFile(configFilename);
     m_appFolderPath = std::filesystem::current_path();
-    config = { {"appPath", m_appFolderPath.string()} };
+    config = { 
+      {"appPath", m_appFolderPath.string()} 
+      };
     configFile << config;
     configFile.close();
   }
   else
   {
     checkingStream >> config;
-    m_appFolderPath = config.at("appPath").get<std::string>(); 
+    m_appFolderPath = config.at("appPath").get<std::string>();
+    if(config.contains("patients"))
+    {
+      json patients = config.at("patients");
+      for(auto& patient : patients)
+      {
+        PushPatientFolder(patient.get<std::string>());
+      }
+    }
   }
 }
 
@@ -47,6 +57,35 @@ bool AppConfig::SetAppFolder(const std::filesystem::path& path)
   }
 
   return true;
+}
+
+void AppConfig::PushPatientFolder(const std::filesystem::path& patientFolder)
+{
+  if(m_loadedPatientFolders.size() == 20)
+  {
+    m_loadedPatientFolders.pop_front();
+    m_loadedPatientFolders.push_back(patientFolder);
+  }
+  else
+    m_loadedPatientFolders.push_back(patientFolder);
+
+  // update the json config file
+  std::ifstream jsonFile("config.json");
+  if(jsonFile.good())
+  {
+    json config;
+    jsonFile >> config;
+    json patients = json::array();
+    for(auto const& patient : m_loadedPatientFolders)
+      patients.emplace_back(patient);
+    jsonFile.close();
+    
+    std::ofstream outputFile("config.json");
+    config["patients"] = patients;
+    outputFile << config;
+  }
+  else
+    APP_CORE_ERR("Application config file not found or corrupted!");
 }
 
 } // namespace medicimage
