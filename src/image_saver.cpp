@@ -1,5 +1,6 @@
 #include "image_saver.h"
 #include "log.h"
+#include "image_editor.h"
 
 #include "opencv2/core/directx.hpp"
 #include "opencv2/core/ocl.hpp"
@@ -14,13 +15,14 @@ namespace medicimage
 
 using json = nlohmann::json;
 
-void FileLogger::LogFilesave(const std::string& filename)
+void FileLogger::LogFileOperation(const std::string& filename, FileOperation fileOp)
 {
   std::ifstream checkingStream(m_logFileName);
-  
+  std::string operation = fileOp == FileOperation::FILE_SAVE ? "saved" : "deleted"; 
   json fileEntry = {
     {"name", filename},
-    {"date", "2022.02.23"} // TODO: add date
+    {"date", "2022.02.23"},
+    {"operation", operation} 
     };
 
   json logData; 
@@ -139,22 +141,33 @@ void ImageSaver::LoadImage(std::string imageName, const std::filesystem::path& f
 
 void ImageSaver::SaveImage(std::shared_ptr<Texture2D> texture, ImageType type)
 {
-  cv::UMat ocvImage;
-  cv::directx::convertFromD3D11Texture2D(texture->GetTexturePtr(), ocvImage);
-  cv::cvtColor(ocvImage, ocvImage, cv::COLOR_RGBA2BGR);
+  auto in_time_t = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+  std::stringstream ss;
+  ss << std::put_time(std::localtime(&in_time_t), "%Y-%m-%d %X");
+  
   if(type == ImageType::ORIGINAL)
   {
     std::string name = m_uuid + "_" + std::to_string(m_savedImagePairs.size());
+    texture->SetName(name);
+
+    // need to add footer only to the original image, because for the annotated the original image is used as a base
+    std::string footerText = texture->GetName() + " - " + ss.str();
+    texture = ImageEditor::AddImageFooter(footerText, texture);
+
     SavedImagePair imagePair;
     imagePair.name = name;
     imagePair.originalImage = texture;
     m_savedImagePairs.push_back(imagePair);
-    texture->SetName(name);
+    
     name += "_original.jpeg";
     std::filesystem::path imagePath = m_dirPath;
     imagePath /= name; 
+    
+    cv::UMat ocvImage;
+    cv::directx::convertFromD3D11Texture2D(texture->GetTexturePtr(), ocvImage);
+    cv::cvtColor(ocvImage, ocvImage, cv::COLOR_RGBA2BGR);
     cv::imwrite(imagePath.string(), ocvImage);
-    m_fileLogger->LogFilesave(name);
+    m_fileLogger->LogFileOperation(name, FileLogger::FileOperation::FILE_SAVE);
   }
   else if(type == ImageType::ANNOTATED)
   {
@@ -170,8 +183,12 @@ void ImageSaver::SaveImage(std::shared_ptr<Texture2D> texture, ImageType type)
       name += "_annotated.jpeg";
       std::filesystem::path imagePath = m_dirPath;
       imagePath /= name; 
+      
+      cv::UMat ocvImage;
+      cv::directx::convertFromD3D11Texture2D(texture->GetTexturePtr(), ocvImage);
+      cv::cvtColor(ocvImage, ocvImage, cv::COLOR_RGBA2BGR);
       cv::imwrite(imagePath.string(), ocvImage);
-      m_fileLogger->LogFilesave(name);
+      m_fileLogger->LogFileOperation(name, FileLogger::FileOperation::FILE_SAVE);
     }
     else
       APP_CORE_ERR("Failed to save image:{}", name);
@@ -194,7 +211,10 @@ void ImageSaver::DeleteImage(const std::string& imageName)
       if(!std::filesystem::remove(imagePath))
         APP_CORE_ERR("Something went wrong deleting this image:{}", imagePath.string());
       else
+      {
+        m_fileLogger->LogFileOperation(imagePair.name + "_original.jpeg", FileLogger::FileOperation::FILE_DELETE);
         APP_CORE_INFO("Image: {} deleted", imagePath.string());
+      }
     }
     if(imagePair.annotatedImage)
     {
@@ -203,7 +223,10 @@ void ImageSaver::DeleteImage(const std::string& imageName)
       if(!std::filesystem::remove(imagePath))
         APP_CORE_ERR("Something went wrong deleting this image:{}", imagePath.string());
       else
+      {
+        m_fileLogger->LogFileOperation(imagePair.name + "_annotated.jpeg", FileLogger::FileOperation::FILE_DELETE);
         APP_CORE_INFO("Image: {} deleted", imagePath.string());
+      }
     }
     m_savedImagePairs.erase(it);
   }

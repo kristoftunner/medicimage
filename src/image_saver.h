@@ -18,8 +18,9 @@ struct SavedImagePair
 class FileLogger
 {
 public:
+  enum class FileOperation{FILE_SAVE, FILE_DELETE};
   FileLogger(const std::filesystem::path& logFileDir) : m_logFileName(logFileDir){m_logFileName /= "files.json";}
-  void LogFilesave(const std::string& filename);
+  void LogFileOperation(const std::string& filename, FileOperation fileOp);
   std::vector<std::pair<std::string,std::string>> GetSavedImages(); 
 private:
   std::filesystem::path m_logFileName;

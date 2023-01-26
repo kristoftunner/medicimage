@@ -20,7 +20,6 @@ void EditorUI::OnUpdate()
   {
     if(m_timer.Done())
     {
-      APP_CORE_INFO("Screenshot added!");
       m_editorState = EditorState::SHOW_CAMERA;
     }
   }
@@ -228,6 +227,14 @@ void EditorUI::OnImguiRender()
   
   // uuid input
   static char uuidInputBuffer[32] = "";
+  static bool bufferInitialized = false;
+
+  if (!bufferInitialized)
+  {
+    std::string uuid = m_imageSavers->GetSelectedSaver().GetUuid();
+    memcpy(uuidInputBuffer, uuid.c_str(), uuid.size()+1);
+    bufferInitialized = true;
+  }
   ImGui::PushItemWidth(-120);
   static bool uuidTextInputTriggered = false;
   ImGui::PushStyleVar(ImGuiStyleVar_SelectableTextAlign, ImVec2(0.5f, 0.5f)); 
@@ -303,9 +310,7 @@ void EditorUI::OnImguiRender()
           APP_CORE_ERR("Please input valid UUID for saving the current image!");
         else
         {
-          const std::string watermark = "lorem ipsum 12:20";
-          std::shared_ptr<Texture2D> watermarkedTexture = ImageEditor::AddImageFooter(watermark,std::make_shared<Texture2D>(m_activeOriginalImage->GetTexturePtr(), m_activeOriginalImage->GetName()));  
-          m_imageSavers->GetSelectedSaver().SaveImage(watermarkedTexture, ImageSaver::ImageType::ORIGINAL);
+          m_imageSavers->GetSelectedSaver().SaveImage(std::make_shared<Texture2D>(m_activeOriginalImage->GetTexturePtr(), m_activeOriginalImage->GetName()), ImageSaver::ImageType::ORIGINAL);
         }
       }
       m_editorState = EditorState::SCREENSHOT;
@@ -350,14 +355,13 @@ void EditorUI::OnImguiRender()
     if (ImGui::BeginPopupModal("delete", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
     {
       std::string imageName = m_activeEditedImage->GetName(); 
-      ImGui::Text("Are you sure you want to delete image{}?\n deletion cannot be undone!", imageName);
+      ImGui::Text("Are you sure you want to delete image %s?\n deletion cannot be undone!", imageName.c_str());
       ImGui::Separator();
       bool beginDisabling = false;
       if (ImGui::Button("OK", ImVec2(120, 0))) 
       { 
         ImGui::CloseCurrentPopup(); 
         m_imageSavers->GetSelectedSaver().DeleteImage(m_activeEditedImage->GetName());
-        APP_CORE_INFO("Image with ID:{} has been deleted", imageName);
         m_editorState = EditorState::SHOW_CAMERA;
         beginDisabling = true;
       }
@@ -375,14 +379,14 @@ void EditorUI::OnImguiRender()
     }
   } 
 
-  if (ImGui::ImageButton("addText", m_addTextIcon->GetShaderResourceView(), size, uvMin, uvMax, iconBg, tintColor))
-  {
-    if(m_editorState == EditorState::EDITING)
-      m_activeCommand = {DrawCommandType::ADD_TEXT, DrawCommandState::INITIAL};
-  }
-  if (ImGui::ImageButton("pencil", m_pencilIcon->GetShaderResourceView(), size, uvMin, uvMax, iconBg, tintColor))
-  {
-  }
+  //if (ImGui::ImageButton("addText", m_addTextIcon->GetShaderResourceView(), size, uvMin, uvMax, iconBg, tintColor))
+  //{
+  //  if(m_editorState == EditorState::EDITING)
+  //    m_activeCommand = {DrawCommandType::ADD_TEXT, DrawCommandState::INITIAL};
+  //}
+  //if (ImGui::ImageButton("pencil", m_pencilIcon->GetShaderResourceView(), size, uvMin, uvMax, iconBg, tintColor))
+  //{
+  //}
   if (ImGui::ImageButton("circle", m_circleIcon->GetShaderResourceView(), size, uvMin, uvMax, iconBg, tintColor))
   {
     if(m_editorState == EditorState::EDITING)
@@ -398,11 +402,11 @@ void EditorUI::OnImguiRender()
     if(m_editorState == EditorState::EDITING)
       m_activeCommand = {DrawCommandType::DRAW_RECTANGLE, DrawCommandState::INITIAL};
   }
-  if (ImGui::ImageButton("arrow", m_arrowIcon->GetShaderResourceView(), size, uvMin, uvMax, iconBg, tintColor))
-  {
-    if(m_editorState == EditorState::EDITING)
-      m_activeCommand = {DrawCommandType::DRAW_ARROW, DrawCommandState::INITIAL};
-  }
+  //if (ImGui::ImageButton("arrow", m_arrowIcon->GetShaderResourceView(), size, uvMin, uvMax, iconBg, tintColor))
+  //{
+  //  if(m_editorState == EditorState::EDITING)
+  //    m_activeCommand = {DrawCommandType::DRAW_ARROW, DrawCommandState::INITIAL};
+  //}
   
   if(m_editorState != EditorState::EDITING)
   {
@@ -410,16 +414,16 @@ void EditorUI::OnImguiRender()
   }
   
   // listbox for selecting saved uuids
-  if (ImGui::BeginListBox("##listbox"))
-  {
-    for(const auto& saver : m_imageSavers->GetImageSavers())
-    {
-      bool selected = true;
-      auto a = saver.first;
-      ImGui::Selectable("asdasd", &selected);
-    }
-    ImGui::EndListBox();
-  }
+  //if (ImGui::BeginListBox("##listbox"))
+  //{
+  //  for(const auto& saver : m_imageSavers->GetImageSavers())
+  //  {
+  //    bool selected = true;
+  //    auto a = saver.first;
+  //    ImGui::Selectable("asdasd", &selected);
+  //  }
+  //  ImGui::EndListBox();
+  //}
   ImGui::End();
   
   // Picture thumbnails
@@ -468,9 +472,9 @@ void EditorUI::OnImguiRender()
 
 
   // some profiling
-  ImGui::Begin("Profiling");
-  ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-  ImGui::End();
+  //ImGui::Begin("Profiling");
+  //ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+  //ImGui::End();
 } 
 
 } // namespace medicimage

@@ -129,34 +129,34 @@ std::shared_ptr<Texture2D> ImageEditor::Draw()
   for(auto& rectangle : m_rectangles)
   {
     const Color& color = rectangle.attributes.color;
-    cv::rectangle(image, rectangle.topLeft, rectangle.bottomRight, cv::Scalar(color.red,color.green,color.blue), rectangle.attributes.thickness);
+    cv::rectangle(image, rectangle.topLeft, rectangle.bottomRight, cv::Scalar(color.blue,color.green,color.red), rectangle.attributes.thickness);
   }
   if(m_tempRectangle)
   {
     const Color& color = m_tempRectangle.value().attributes.color;
-    cv::rectangle(image, m_tempRectangle.value().topLeft, m_tempRectangle.value().bottomRight, cv::Scalar(color.red,color.green,color.blue), m_tempRectangle.value().attributes.thickness);
+    cv::rectangle(image, m_tempRectangle.value().topLeft, m_tempRectangle.value().bottomRight, cv::Scalar(color.blue,color.green,color.red), m_tempRectangle.value().attributes.thickness);
   }
 
   for(auto& circle : m_circles)
   {
     const Color& color = circle.attributes.color;
-    cv::circle(image, circle.center, static_cast<int>(circle.radius), cv::Scalar(color.red,color.green,color.blue), circle.attributes.thickness); 
+    cv::circle(image, circle.center, static_cast<int>(circle.radius), cv::Scalar(color.blue,color.green,color.red), circle.attributes.thickness); 
   }
   if(m_tempCircle)
   {
     const Color& color = m_tempCircle.value().attributes.color;
-    cv::circle(image, m_tempCircle.value().center, static_cast<int>(m_tempCircle.value().radius), cv::Scalar(color.red,color.green,color.blue), m_tempCircle.value().attributes.thickness);
+    cv::circle(image, m_tempCircle.value().center, static_cast<int>(m_tempCircle.value().radius), cv::Scalar(color.blue,color.green,color.red), m_tempCircle.value().attributes.thickness);
   }
 
   for(auto& line : m_lines)
   {
     const Color& color = line.attributes.color;
-    cv::line(image, line.begin, line.end, cv::Scalar(color.red,color.green,color.blue), line.attributes.thickness);
+    cv::line(image, line.begin, line.end, cv::Scalar(color.blue,color.green,color.red), line.attributes.thickness);
   }
   if(m_tempLine)
   {
     const Color& color = m_tempLine.value().attributes.color;
-    cv::line(image, m_tempLine.value().begin, m_tempLine.value().end, cv::Scalar(color.red,color.green,color.blue), m_tempLine.value().attributes.thickness);
+    cv::line(image, m_tempLine.value().begin, m_tempLine.value().end, cv::Scalar(color.blue,color.green,color.red), m_tempLine.value().attributes.thickness);
   }
 
   std::shared_ptr<Texture2D> dstTexture = std::make_shared<Texture2D>(m_texture->GetTexturePtr(), m_texture->GetName());
@@ -175,12 +175,13 @@ std::shared_ptr<Texture2D> ImageEditor::AddImageFooter(const std::string& waterm
   // assuming the original texture has 1920x1080 resolution, expanding with 20-20 pixels left/right and 30 bottom, 20 top
   constexpr int sideBorder = 20;
   constexpr int topBorder = 20;
-  constexpr int bottomBorder = 120;
+  constexpr int bottomBorder = 100;
   cv::UMat borderedImage;
   cv::copyMakeBorder(image, borderedImage, topBorder, bottomBorder, sideBorder, sideBorder, cv::BORDER_CONSTANT , cv::Scalar{255,255,255} ); // adding white border
-  cv::putText(borderedImage, watermark, cv::Point{100, 100}, cv::FONT_HERSHEY_PLAIN, 10, cv::Scalar{128,128,128}, 3);
+  cv::putText(borderedImage, watermark, cv::Point{20, borderedImage.rows - 20}, cv::FONT_HERSHEY_PLAIN, 4, cv::Scalar{128,128,128}, 3);
   
   std::shared_ptr<Texture2D> dstTexture = std::make_shared<Texture2D>(borderedImage.cols, borderedImage.rows);
+  dstTexture->SetName(texture->GetName());
   cv::cvtColor(borderedImage, borderedImage, cv::COLOR_BGR2RGBA);
   cv::directx::convertToD3D11Texture2D(borderedImage, dstTexture->GetTexturePtr());
   return dstTexture;
