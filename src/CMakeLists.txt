@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.16)
 
-file(GLOB medicimage_sources ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
+file(GLOB_RECURSE medicimage_sources ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp)
 message(STATUS "Collected MEDICIMAGE source: ${medicimage_sources}")
 add_library(medicimage STATIC ${medicimage_sources})
 set_property(TARGET medicimage PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")

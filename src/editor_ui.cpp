@@ -1,5 +1,6 @@
 #include "editor_ui.h"
 #include "log.h"
+#include "widgets/ImFileDialog.h"
 
 namespace medicimage
 {
