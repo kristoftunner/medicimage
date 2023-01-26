@@ -62,6 +62,19 @@ void EditorUI::OnAttach()
   m_imageEditor.SetTextureForEditing(std::move(std::make_unique<Texture2D>(m_activeOriginalImage->GetTexturePtr(), "currently edited texture"))); // initialize image editor as well
 
   m_camera.Open();
+  
+  // init file dialog
+  ifd::FileDialog::Instance().CreateTexture = [&](uint8_t* data, int w, int h, char fmt) -> void*
+  {
+    // Here, there is a memory leak, because on DirectX there is no similar API for storing textures, like OpenGL 
+    auto* texture = new medicimage::Texture2D(w,h); 
+    Renderer::GetInstance().GetDeviceContext()->UpdateSubresource(texture->GetTexturePtr(), 0, 0, data, w*4, w*h*4);
+    return reinterpret_cast<void*>(texture->GetShaderResourceView());
+  }; 
+	
+  ifd::FileDialog::Instance().DeleteTexture = [](void* tex) {
+    APP_CORE_INFO("FileDialog.DeleteTexture called");
+  };
 
 } 
 
@@ -131,10 +144,9 @@ void EditorUI::OnImguiRender()
     {
       if(ImGui::BeginMenu("Options"))
       {
-        static char destFolderBuffer[128] = ""; // TODO: do this with something like a file dialog??? 
-        if(ImGui::InputText("Destination folder", destFolderBuffer, IM_ARRAYSIZE(destFolderBuffer), ImGuiInputTextFlags_EnterReturnsTrue))
+        if(ImGui::Button("Data folder"))
         {
-          m_appConfig.SetAppFolder(destFolderBuffer);
+          ifd::FileDialog::Instance().Open("DirectoryOpenDialog", "Open a directory", "");
         }
         ImGui::EndMenu();
       }
@@ -145,6 +157,18 @@ void EditorUI::OnImguiRender()
     ImGui::EndMenuBar();
   }
   ImGui::End();
+
+	if (ifd::FileDialog::Instance().IsDone("DirectoryOpenDialog")) {
+		if (ifd::FileDialog::Instance().HasResult()) {
+			auto& result = ifd::FileDialog::Instance().GetResult();
+
+      // when setting a new application folder, the thumbnails and the image savers should be reset(the data will remain in the data folder)
+		  m_appConfig.UpdateAppFolder(result);
+      m_imageSavers = std::move(std::make_unique<ImageSaverContainer>(m_appConfig.GetAppFolder()));
+      APP_CORE_INFO("Directory:{} selected", result.string());
+		}
+		ifd::FileDialog::Instance().Close();
+	}
 
   // Main window containing the stream and uuid input
   ImGui::Begin("Currently captured frame window", nullptr, ImGuiWindowFlags_NoTitleBar| ImGuiWindowFlags_NoMove);

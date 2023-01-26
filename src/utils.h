@@ -46,7 +46,7 @@ class AppConfig
 {
 public:
   AppConfig();
-  bool SetAppFolder(const std::filesystem::path& path); //TODO: use an exception instead
+  bool UpdateAppFolder(const std::filesystem::path& path); //TODO: use an exception instead
   const std::filesystem::path& GetAppFolder(){return m_appFolderPath;}
   void PushPatientFolder(const std::filesystem::path& patientFolder);
   const std::deque<std::filesystem::path>& GetSavedPatientFolders() const {return m_loadedPatientFolders;}

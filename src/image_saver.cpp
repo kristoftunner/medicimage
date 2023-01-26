@@ -55,7 +55,6 @@ void FileLogger::LogFilesave(const std::string& filename)
 
 ImageSaver::ImageSaver(const std::string& uuid, const std::filesystem::path& baseFolder) : m_uuid(uuid), m_dirPath(baseFolder)
 {
-  m_dirPath /= "data";
   m_dirPath /= uuid;
   m_fileLogger = std::make_unique<FileLogger>(m_dirPath);
 
@@ -215,13 +214,27 @@ void ImageSaver::DeleteImage(const std::string& imageName)
 void ImageSaverContainer::SelectImageSaver(const std::string& uuid)
 {
   if(m_savers.find(uuid) == m_savers.end())
-    m_savers[uuid] =  ImageSaver(uuid, m_baseFolder);
+    m_savers[uuid] =  ImageSaver(uuid, m_dataFolder);
   m_selectedSaver = uuid;
 }
 
 bool ImageSaverContainer::IsEmpty()
 {
   return m_savers.empty();
+}
+
+ImageSaverContainer::ImageSaverContainer(const std::filesystem::path& baseFolder)
+  : m_dataFolder(baseFolder/"data")
+{
+  if(!std::filesystem::create_directory(m_dataFolder))
+    APP_CORE_INFO("Data folder alredy created, using that one:{}", m_dataFolder);
+}
+
+void ImageSaverContainer::UpdateAppFolder(const std::filesystem::path& appFolder)
+{
+  m_dataFolder = appFolder/"data";
+  if (!std::filesystem::create_directory(m_dataFolder))
+    APP_CORE_INFO("Directory: {} alredy created, using that one", m_dataFolder);
 }
 
 } // namespace medicimage

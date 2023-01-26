@@ -38,7 +38,7 @@ AppConfig::AppConfig()
   }
 }
 
-bool AppConfig::SetAppFolder(const std::filesystem::path& path)
+bool AppConfig::UpdateAppFolder(const std::filesystem::path& path)
 {
   if(!(std::filesystem::create_directory(path)))
     APP_CORE_WARN("Directory:{} already created, using as the app base folder.", path);
@@ -49,7 +49,11 @@ bool AppConfig::SetAppFolder(const std::filesystem::path& path)
   if(configFile.good())
   {
     configFile >> config;
-    config["appPath"] = m_appFolderPath.string(); 
+    config["appPath"] = m_appFolderPath.string();
+    if(config.contains("patients"))
+    {
+      config["patients"] = nullptr;
+    }
     configFile.close();
     std::ofstream writeConfig("config.json");
     if(writeConfig.good())

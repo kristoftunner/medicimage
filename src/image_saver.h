@@ -53,15 +53,16 @@ private:
 class ImageSaverContainer
 {
 public:
-  ImageSaverContainer(const std::filesystem::path& baseFolder) : m_baseFolder(baseFolder) {}
+  ImageSaverContainer(const std::filesystem::path& baseFolder); 
   void SelectImageSaver(const std::string& uuid);
   bool IsEmpty();
+  void UpdateAppFolder(const std::filesystem::path& appFolder); //TODO: this API call is a bit weird, we should just create a new one in case of changing the app folder
   // API to load the previously saved images from disk at init time of the application
   ImageSaver& GetSelectedSaver(){ return m_savers[m_selectedSaver]; }
   const std::unordered_map<std::string, ImageSaver>& GetImageSavers(){return m_savers;} // TODO: this is a bit hacky   
 private:
   std::string m_selectedSaver; // uuid of the saver
   std::unordered_map<std::string, ImageSaver> m_savers;
-  std::filesystem::path m_baseFolder;
+  std::filesystem::path m_dataFolder;
 };
 } // namespace medicimage

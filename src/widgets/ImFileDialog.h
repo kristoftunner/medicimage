@@ -9,6 +9,8 @@
 #include <unordered_map>
 #include <algorithm> // std::min, std::max
 
+#include "image_loader.h"
+
 #define IFD_DIALOG_FILE			0
 #define IFD_DIALOG_DIRECTORY	1
 #define IFD_DIALOG_SAVE			2
@@ -79,6 +81,7 @@ namespace ifd {
 
 			bool HasIconPreview;
 			void* IconPreview;
+      medicimage::Image IconImage;
 			uint8_t* IconPreviewData;
 			int IconPreviewWidth, IconPreviewHeight;
 		};

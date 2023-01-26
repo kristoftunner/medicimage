@@ -10,9 +10,6 @@
 #include <imgui.h>
 #include <imgui_internal.h>
 
-#define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
-
 #ifdef _WIN32
 #define NOMINMAX
 #include <windows.h>
@@ -127,7 +124,7 @@ namespace ifd {
 			std::vector<std::string> btnList;
 			float totalWidth = 0.0f;
 			for (auto comp : path) {
-				std::string section = comp.u8string();
+				std::string section = comp.string();
 				if (section.size() == 1 && (section[0] == '\\' || section[0] == '/'))
 					continue;
 
@@ -183,7 +180,7 @@ namespace ifd {
 
 			// click state
 			if (!anyOtherHC && clicked) {
-				strcpy(pathBuffer, path.u8string().c_str());
+				strcpy(pathBuffer, path.string().c_str());
 				*state |= 0b001;
 				*state &= 0b011; // remove SetKeyboardFocus flag
 			}
@@ -338,7 +335,7 @@ namespace ifd {
 		Size = std::filesystem::file_size(path, ec);
 
 		struct stat attr;
-		stat(path.u8string().c_str(), &attr);
+		stat(path.string().c_str(), &attr);
 		DateModified = attr.st_ctime;
 
 		HasIconPreview = false;
@@ -433,7 +430,7 @@ namespace ifd {
 		thisPC->Read = true;
 		for (const auto& entry : std::filesystem::directory_iterator("/", ec)) {
 			if (std::filesystem::is_directory(entry, ec))
-				thisPC->Children.push_back(new FileTreeNode(entry.path().u8string()));
+				thisPC->Children.push_back(new FileTreeNode(entry.path().string()));
 		}
 		m_treeCache.push_back(thisPC);
 #endif
@@ -537,7 +534,7 @@ namespace ifd {
 
 	void FileDialog::RemoveFavorite(const std::string& path)
 	{
-		auto itr = std::find(m_favorites.begin(), m_favorites.end(), m_currentDirectory.u8string());
+		auto itr = std::find(m_favorites.begin(), m_favorites.end(), m_currentDirectory.string());
 
 		if (itr != m_favorites.end())
 			m_favorites.erase(itr);
@@ -587,18 +584,18 @@ namespace ifd {
 		}
 
 		if (m_selections.size() == 1) {
-			std::string filename = m_selections[0].filename().u8string();
+			std::string filename = m_selections[0].filename().string();
 			if (filename.size() == 0)
-				filename = m_selections[0].u8string(); // drive
+				filename = m_selections[0].string(); // drive
 
 			strcpy(m_inputTextbox, filename.c_str());
 		}
 		else {
 			std::string textboxVal = "";
 			for (const auto& sel : m_selections) {
-				std::string filename = sel.filename().u8string();
+				std::string filename = sel.filename().string();
 				if (filename.size() == 0)
-					filename = sel.u8string();
+					filename = sel.string();
 
 				textboxVal += "\"" + filename + "\", ";
 			}
@@ -705,10 +702,10 @@ namespace ifd {
 	void* FileDialog::m_getIcon(const std::filesystem::path& path)
 	{
 #ifdef _WIN32
-		if (m_icons.count(path.u8string()) > 0)
-			return m_icons[path.u8string()];
+		if (m_icons.count(path.string()) > 0)
+			return m_icons[path.string()];
 
-		std::string pathU8 = path.u8string();
+		std::string pathU8 = path.string();
 
 		std::error_code ec;
 		m_icons[pathU8] = nullptr;
@@ -763,10 +760,10 @@ namespace ifd {
 
 		return m_icons[pathU8];
 #else
-		if (m_icons.count(path.u8string()) > 0)
-			return m_icons[path.u8string()];
+		if (m_icons.count(path.string()) > 0)
+			return m_icons[path.string()];
 
-		std::string pathU8 = path.u8string();
+		std::string pathU8 = path.string();
 
 		m_icons[pathU8] = nullptr;
 
@@ -858,7 +855,6 @@ namespace ifd {
 			this->DeleteTexture(data.IconPreview);
 
 			if (data.IconPreviewData != nullptr) {
-				stbi_image_free(data.IconPreviewData);
 				data.IconPreviewData = nullptr;
 			}
 		}
@@ -884,18 +880,20 @@ namespace ifd {
 				continue;
 
 			if (data.Path.has_extension()) {
-				std::string ext = data.Path.extension().u8string();
+				std::string ext = data.Path.extension().string();
 				if (ext == ".png" || ext == ".jpg" || ext == ".jpeg" || ext == ".bmp" || ext == ".tga") {
-					int width, height, nrChannels;
-					unsigned char* image = stbi_load(data.Path.u8string().c_str(), &width, &height, &nrChannels, STBI_rgb_alpha);
+				//	auto image = medicimage::Image(data.Path.string());
+    //      int width, height, nrChannels;
+				//	unsigned char* image = stbi_load(data.Path.string().c_str(), &width, &height, &nrChannels, STBI_rgb_alpha);
 
-					if (image == nullptr || width == 0 || height == 0)
-						continue;
+				//	if (image == nullptr || width == 0 || height == 0)
+				//		continue;
 
-					data.HasIconPreview = true;
-					data.IconPreviewData = image;
-					data.IconPreviewWidth = width;
-					data.IconPreviewHeight = height;
+					data.IconImage = medicimage::Image(data.Path.string()); 
+          data.HasIconPreview = true;
+					data.IconPreviewData = const_cast<uint8_t*>(data.IconImage.GetImage().data());
+					data.IconPreviewWidth = data.IconImage.Width();
+					data.IconPreviewHeight = data.IconImage.Height();
 				}
 			}
 		}
@@ -923,8 +921,8 @@ namespace ifd {
 		m_currentDirectory = p;
 #ifdef _WIN32
 		// drives don't work well without the backslash symbol
-		if (p.u8string().size() == 2 && p.u8string()[1] == ':')
-			m_currentDirectory = std::filesystem::u8path(p.u8string() + "\\");
+		if (p.string().size() == 2 && p.string()[1] == ':')
+			m_currentDirectory = std::filesystem::u8path(p.string() + "\\");
 #endif
 
 		m_clearIconPreview();
@@ -940,17 +938,17 @@ namespace ifd {
 			m_clearIcons();
 		}
 
-		if (p.u8string() == "Quick Access") {
+		if (p.string() == "Quick Access") {
 			for (auto& node : m_treeCache) {
 				if (node->Path == p)
 					for (auto& c : node->Children)
 						m_content.push_back(FileData(c->Path));
 			}
 		} 
-		else if (p.u8string() == "This PC") {
+		else if (p.string() == "This PC") {
 			for (auto& node : m_treeCache) {
 				if (node->Path == p)
-					for (auto& c : node->Children)
+				  for (auto& c : node->Children)
 						m_content.push_back(FileData(c->Path));
 			}
 		}
@@ -966,7 +964,7 @@ namespace ifd {
 
 					// check if filename matches search query
 					if (m_searchBuffer[0]) {
-						std::string filename = info.Path.u8string();
+						std::string filename = info.Path.string();
 
 						std::string filenameSearch = filename;
 						std::string query(m_searchBuffer);
@@ -982,7 +980,7 @@ namespace ifd {
 						if (m_filterSelection < m_filterExtensions.size()) {
 							const auto& exts = m_filterExtensions[m_filterSelection];
 							if (exts.size() > 0) {
-								std::string extension = info.Path.extension().u8string();
+								std::string extension = info.Path.extension().string();
 
 								// extension not found? skip
 								if (std::count(exts.begin(), exts.end(), extension) == 0)
@@ -1020,8 +1018,8 @@ namespace ifd {
 			auto compareFn = [column, sortDirection](const FileData& left, const FileData& right) -> bool {
 				// name
 				if (column == 0) {
-					std::string lName = left.Path.u8string();
-					std::string rName = right.Path.u8string();
+					std::string lName = left.Path.string();
+					std::string rName = right.Path.string();
 
 					std::transform(lName.begin(), lName.end(), lName.begin(), ::tolower);
 					std::transform(rName.begin(), rName.end(), rName.begin(), ::tolower);
@@ -1064,16 +1062,16 @@ namespace ifd {
 		std::error_code ec;
 		ImGui::PushID(node);
 		bool isClicked = false;
-		std::string displayName = node->Path.stem().u8string();
+		std::string displayName = node->Path.stem().string();
 		if (displayName.size() == 0)
-			displayName = node->Path.u8string();
+			displayName = node->Path.string();
 		if (FolderNode(displayName.c_str(), (ImTextureID)m_getIcon(node->Path), isClicked)) {
 			if (!node->Read) {
 				// cache children if it's not already cached
 				if (std::filesystem::exists(node->Path, ec))
 					for (const auto& entry : std::filesystem::directory_iterator(node->Path, ec)) {
 						if (std::filesystem::is_directory(entry, ec))
-							node->Children.push_back(new FileTreeNode(entry.path().u8string()));
+							node->Children.push_back(new FileTreeNode(entry.path().string()));
 					}
 				node->Read = true;
 			}
@@ -1114,9 +1112,9 @@ namespace ifd {
 				// content
 				int fileId = 0;
 				for (auto& entry : m_content) {
-					std::string filename = entry.Path.filename().u8string();
+					std::string filename = entry.Path.filename().string();
 					if (filename.size() == 0)
-						filename = entry.Path.u8string(); // drive
+						filename = entry.Path.string(); // drive
 					
 					bool isSelected = std::count(m_selections.begin(), m_selections.end(), entry.Path);
 
@@ -1167,13 +1165,12 @@ namespace ifd {
 			for (auto& entry : m_content) {
 				if (entry.HasIconPreview && entry.IconPreviewData != nullptr) {
 					entry.IconPreview = this->CreateTexture(entry.IconPreviewData, entry.IconPreviewWidth, entry.IconPreviewHeight, 1);
-					stbi_image_free(entry.IconPreviewData);
 					entry.IconPreviewData = nullptr;
 				}
 
-				std::string filename = entry.Path.filename().u8string();
+				std::string filename = entry.Path.filename().string();
 				if (filename.size() == 0)
-					filename = entry.Path.u8string(); // drive
+					filename = entry.Path.string(); // drive
 
 				bool isSelected = std::count(m_selections.begin(), m_selections.end(), entry.Path);
 
@@ -1223,7 +1220,7 @@ namespace ifd {
 				ImGui::CloseCurrentPopup();
 			else {
 				const FileData& data = m_content[m_selectedFileItem];
-				ImGui::TextWrapped("Are you sure you want to delete %s?", data.Path.filename().u8string().c_str());
+				ImGui::TextWrapped("Are you sure you want to delete %s?", data.Path.filename().string().c_str());
 				if (ImGui::Button("Yes")) {
 					std::error_code ec;
 					std::filesystem::remove_all(data.Path, ec);
@@ -1316,11 +1313,11 @@ namespace ifd {
 			m_setDirectory(curDirCopy);
 		ImGui::SameLine();
 		
-		if (FavoriteButton("##dirfav", std::count(m_favorites.begin(), m_favorites.end(), m_currentDirectory.u8string()))) {
-			if (std::count(m_favorites.begin(), m_favorites.end(), m_currentDirectory.u8string()))
-				RemoveFavorite(m_currentDirectory.u8string());
+		if (FavoriteButton("##dirfav", std::count(m_favorites.begin(), m_favorites.end(), m_currentDirectory.string()))) {
+			if (std::count(m_favorites.begin(), m_favorites.end(), m_currentDirectory.string()))
+				RemoveFavorite(m_currentDirectory.string());
 			else 
-				AddFavorite(m_currentDirectory.u8string());
+				AddFavorite(m_currentDirectory.string());
 		}
 		ImGui::SameLine();
 		ImGui::PopStyleColor();

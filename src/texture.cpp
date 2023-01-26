@@ -117,7 +117,7 @@ namespace medicimage
 
     ThrowIfFailed(Renderer::GetInstance().GetDevice()->CreateTexture2D(&m_desc, &initData, &m_texture));
   }
-  
+
   void Texture2D::CreateShaderResourceView()
   {
     D3D11_SHADER_RESOURCE_VIEW_DESC srvDesc;
