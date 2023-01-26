@@ -25,6 +25,8 @@ public:
   Texture2D& operator=(const Texture2D& texture);
 	~Texture2D();
 
+  void Update();
+
 	void Bind(unsigned int slot = 0) const;
 	void Unbind(unsigned int slot = 0) const;
 

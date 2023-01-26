@@ -33,8 +33,7 @@ void ImguiLayer::OnAttach()
   float fontSize = 18.0f;// *2.0f;
   io.Fonts->AddFontFromFileTTF("assets/fonts/banschrift.ttf", fontSize);
   io.FontDefault = io.Fonts->AddFontFromFileTTF("assets/fonts/banschrift.ttf", fontSize);
-  //ImGui::StyleColorsDark();
-  ImGui::StyleColorsLight();
+  ImGui::StyleColorsDark();
   // Setup Platform/Renderer backends
   bool ret = ImGui_ImplSDL2_InitForD3D(m_window);
   ret = ImGui_ImplDX11_Init(m_device, m_deviceContext);

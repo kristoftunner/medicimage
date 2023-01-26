@@ -60,12 +60,11 @@ public:
   void AddCircle(ImVec2 center, float radius, PrimitiveAddingType addType, const int thickness = 1, const Color color= {0,0,0}); // orig is sized between 0-1
   void AddLine(ImVec2 begin, ImVec2 end, PrimitiveAddingType addType, const int thickness = 1, const Color color= {0,0,0});
   void AddArrow(ImVec2 begin, ImVec2 end, PrimitiveAddingType addType, const int thickness = 1, const Color color= {0,0,0});
-  void AddWatermark(const std::string& watermark){m_watermark = watermark;}
+  static std::shared_ptr<Texture2D> AddImageFooter(const std::string& watermark, std::shared_ptr<Texture2D> texture);
   std::shared_ptr<Texture2D> Draw();
 private:
   std::unique_ptr<Texture2D> m_texture;
   cv::UMat m_opencvImage;
-  std::string m_watermark = "";
 
   // primitives to draw on the image in the Draw call
   std::vector<Line> m_lines;

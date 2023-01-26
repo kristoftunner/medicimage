@@ -177,15 +177,15 @@ void EditorUI::OnImguiRender()
   ImVec2 uvMin = ImVec2(0.0f, 0.0f);                 // Top-left
   ImVec2 uvMax = ImVec2(1.0f, 1.0f);                 // Lower-right
   ImVec4 tintColor = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);   // No tint
-  ImVec4 backgroundColor = ImVec4(1.0f, 1.0f, 1.0f, 0.5f); // 50% opaque white
+  ImVec4 borderColor = ImVec4(1.0f, 1.0f, 1.0f, 0.0f); // 50% opaque white
   ImVec2 canvasSize = ImGui::GetContentRegionAvail();   // Resize canvas to what's available
   canvasSize.y = canvasSize.y - 35; // TODO: not hardcode these values
 
   if(m_editorState == EditorState::EDITING)
   {
     m_activeEditedImage = m_imageEditor.Draw(); // TODO: maybe move this to OnUpdate()
-    ImVec2 imageTopLeft = ImGui::GetCursorScreenPos();      // ImDrawList API uses screen coordinates!
-    ImGui::Image(m_activeEditedImage->GetShaderResourceView(), canvasSize, uvMin, uvMax, tintColor, backgroundColor);
+    ImVec2 imageTopLeft = ImGui::GetCursorScreenPos();      
+    ImGui::Image(m_activeEditedImage->GetShaderResourceView(), canvasSize, uvMin, uvMax, tintColor, borderColor);
     ImVec2 imageSize = ImGui::GetItemRectSize();
     const bool isImageHovered = ImGui::IsItemHovered(); // Hovered  
 
@@ -223,7 +223,7 @@ void EditorUI::OnImguiRender()
   }
   else if((m_editorState == EditorState::SHOW_CAMERA) || (m_editorState == EditorState::SCREENSHOT))
   {
-    ImGui::Image(m_activeOriginalImage->GetShaderResourceView(), canvasSize, uvMin, uvMax, tintColor, backgroundColor);
+    ImGui::Image(m_activeOriginalImage->GetShaderResourceView(), canvasSize, uvMin, uvMax, tintColor, borderColor);
   }
   
   // uuid input
@@ -302,7 +302,11 @@ void EditorUI::OnImguiRender()
         if (m_imageSavers->IsEmpty()) //TODO: should select it with an optional<ImageSaver> return type
           APP_CORE_ERR("Please input valid UUID for saving the current image!");
         else
-          m_imageSavers->GetSelectedSaver().SaveImage(std::make_shared<Texture2D>(m_activeOriginalImage->GetTexturePtr(), m_activeOriginalImage->GetName()), ImageSaver::ImageType::ORIGINAL);
+        {
+          const std::string watermark = "lorem ipsum 12:20";
+          std::shared_ptr<Texture2D> watermarkedTexture = ImageEditor::AddImageFooter(watermark,std::make_shared<Texture2D>(m_activeOriginalImage->GetTexturePtr(), m_activeOriginalImage->GetName()));  
+          m_imageSavers->GetSelectedSaver().SaveImage(watermarkedTexture, ImageSaver::ImageType::ORIGINAL);
+        }
       }
       m_editorState = EditorState::SCREENSHOT;
       m_timer.Start(500);
@@ -423,6 +427,7 @@ void EditorUI::OnImguiRender()
   ImGui::Begin("Thumbnails", &openThumbnails, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoTitleBar);
   if (!m_imageSavers->IsEmpty())
   {
+    ImVec4 backgroundColor = ImVec4(1.0f, 1.0f, 1.0f, 0.0f); // 50% opaque white
     for (const auto& imagePair : m_imageSavers->GetSelectedSaver().GetSavedImagePairs())
     {
       ImGui::Text("%s", imagePair.name.c_str());
@@ -435,7 +440,6 @@ void EditorUI::OnImguiRender()
         // we can go into edit mode if we select an image from the thumbnails
         m_editorState = EditorState::EDITING;
         const std::string uuid = m_imageSavers->GetSelectedSaver().GetUuid();
-        m_imageEditor.AddWatermark(uuid);
         m_imageEditor.SetTextureForEditing(std::make_unique<Texture2D>(buttonImage->GetTexturePtr(), buttonImage->GetName()));
       }
 
