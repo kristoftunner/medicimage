@@ -38,8 +38,10 @@ public:
   void OnDetach() override;
   void OnImguiRender() override;
 private:
-  void DispatchDrawingCommand();
   void Draw(PrimitiveAddingType addType, ImVec2 imageSize);
+  void ShowImageWindow();
+  void ShowToolbox();
+  void ShowThumbnails();
   struct CallbackFunctions // for ImGui textinput callback 
   {
     static int EnterPressedCallback(ImGuiInputTextCallbackData* data)

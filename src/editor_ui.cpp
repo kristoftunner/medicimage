@@ -124,73 +124,18 @@ void EditorUI::Draw(PrimitiveAddingType addType, ImVec2 imageSize)
   }
 }
 
-void EditorUI::OnImguiRender()
+void EditorUI::ShowImageWindow()
 {
-  // DockSpace
-  ImGuiIO& io = ImGui::GetIO();
-  ImGuiStyle& style = ImGui::GetStyle();
-  static bool dockspaceOpen = true;
-  static bool opt_fullscreen = true;
-  static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_None;
-  // We are using the ImGuiWindowFlags_NoDocking flag to make the parent window not dockable into,
-  // because it would be confusing to have two docking targets within each others.
-  ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
-  const ImGuiViewport* viewport = ImGui::GetMainViewport();
-  ImGui::SetNextWindowPos(viewport->WorkPos);
-  ImGui::SetNextWindowSize(viewport->WorkSize);
-  ImGui::SetNextWindowViewport(viewport->ID);
-  ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
-  ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
-  window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
-  window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
-
-  ImGui::Begin("DockSpace Demo", nullptr, window_flags);
-  ImGui::PopStyleVar(2);
-  if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable)
-  {
-    ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
-    ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_None | ImGuiDockNodeFlags_AutoHideTabBar);
-  }
-  if (ImGui::BeginMenuBar())
-  {
-    if (ImGui::BeginMenu("Settings"))
-    {
-      if(ImGui::BeginMenu("Options"))
-      {
-        if(ImGui::Button("Data folder"))
-        {
-          ifd::FileDialog::Instance().Open("DirectoryOpenDialog", "Open a directory", "");
-        }
-        ImGui::EndMenu();
-      }
-      APP_CORE_TRACE("Menu bar opened");
-      ImGui::EndMenu();
-    }
-
-    ImGui::EndMenuBar();
-  }
-  ImGui::End();
-
-	if (ifd::FileDialog::Instance().IsDone("DirectoryOpenDialog")) {
-		if (ifd::FileDialog::Instance().HasResult()) {
-			auto& result = ifd::FileDialog::Instance().GetResult();
-
-      // when setting a new application folder, the thumbnails and the image savers should be reset(the data will remain in the data folder)
-		  m_appConfig.UpdateAppFolder(result);
-      m_imageSavers = std::move(std::make_unique<ImageSaverContainer>(m_appConfig.GetAppFolder()));
-      APP_CORE_INFO("Directory:{} selected", result.string());
-		}
-		ifd::FileDialog::Instance().Close();
-	}
-
   // Main window containing the stream and uuid input
   ImGui::Begin("Currently captured frame window", nullptr, ImGuiWindowFlags_NoTitleBar| ImGuiWindowFlags_NoMove);
   
   // Camera stream
-  ImVec2 uvMin = ImVec2(0.0f, 0.0f);                 // Top-left
-  ImVec2 uvMax = ImVec2(1.0f, 1.0f);                 // Lower-right
-  ImVec4 tintColor = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);   // No tint
-  ImVec4 borderColor = ImVec4(1.0f, 1.0f, 1.0f, 0.0f); // 50% opaque white
+  ImGuiIO& io = ImGui::GetIO();
+  ImGuiStyle& style = ImGui::GetStyle();
+  constexpr ImVec2 uvMin = ImVec2(0.0f, 0.0f);                 // Top-left
+  constexpr ImVec2 uvMax = ImVec2(1.0f, 1.0f);                 // Lower-right
+  constexpr ImVec4 tintColor = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);   // No tint
+  constexpr ImVec4 borderColor = ImVec4(1.0f, 1.0f, 1.0f, 0.0f); // 50% opaque white
   ImVec2 canvasSize = ImGui::GetContentRegionAvail();   // Resize canvas to what's available
   canvasSize.y = canvasSize.y - 35; // TODO: not hardcode these values
 
@@ -299,13 +244,20 @@ void EditorUI::OnImguiRender()
   }
   ImGui::End();
 
-  // toolbox 
+}
+
+void EditorUI::ShowToolbox()
+{
   bool openTools = true;
   ImGui::Begin("Tools", &openTools , ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoTitleBar);
-  ImVec2 size = ImVec2(80.0f, 80.0f);                         // Size of the image we want to make visible
+  constexpr ImVec2 bigIconSize = ImVec2(100.0f, 100.0f);                         
+  constexpr ImVec2 smallIconSize = ImVec2(40.0f, 40.0f);                         
   ImVec4 iconBg = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
 
-  if (ImGui::ImageButton("screenshot", m_screenshotIcon->GetShaderResourceView(), size, uvMin, uvMax, iconBg, tintColor))
+  constexpr ImVec2 uvMin = ImVec2(0.0f, 0.0f);                 // Top-left
+  constexpr ImVec2 uvMax = ImVec2(1.0f, 1.0f);                 // Lower-right
+  ImVec4 tintColor = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);   // No tint
+  if (ImGui::ImageButton("screenshot", m_screenshotIcon->GetShaderResourceView(), bigIconSize, uvMin, uvMax, iconBg, tintColor))
   {
     if(m_editorState == EditorState::SHOW_CAMERA)
     {
@@ -329,7 +281,7 @@ void EditorUI::OnImguiRender()
     iconBg = ImVec4(0.5f, 0.5f, 0.5f, 1.0f);
   }
 
-  if (ImGui::ImageButton("save", m_saveIcon->GetShaderResourceView(), size, uvMin, uvMax, iconBg, tintColor))
+  if (ImGui::ImageButton("save", m_saveIcon->GetShaderResourceView(), smallIconSize, uvMin, uvMax, iconBg, tintColor))
   {
     if(m_editorState == EditorState::EDITING)
     {
@@ -344,8 +296,10 @@ void EditorUI::OnImguiRender()
       m_editorState = EditorState::SHOW_CAMERA;
       ImGui::BeginDisabled();
     }
-  }  
-  if (ImGui::ImageButton("delete", m_deleteIcon->GetShaderResourceView(), size, uvMin, uvMax, iconBg, tintColor))
+  } 
+  ImGui::SameLine();
+
+  if (ImGui::ImageButton("delete", m_deleteIcon->GetShaderResourceView(), smallIconSize, uvMin, uvMax, iconBg, tintColor))
   {
     if(m_editorState == EditorState::EDITING)
     {
@@ -384,30 +338,35 @@ void EditorUI::OnImguiRender()
     }
   } 
 
-  //if (ImGui::ImageButton("addText", m_addTextIcon->GetShaderResourceView(), size, uvMin, uvMax, iconBg, tintColor))
+  //if (ImGui::ImageButton("addText", m_addTextIcon->GetShaderResourceView(), smallIconSize, uvMin, uvMax, iconBg, tintColor))
   //{
   //  if(m_editorState == EditorState::EDITING)
   //    m_activeCommand = {DrawCommandType::ADD_TEXT, DrawCommandState::INITIAL};
   //}
-  //if (ImGui::ImageButton("pencil", m_pencilIcon->GetShaderResourceView(), size, uvMin, uvMax, iconBg, tintColor))
+  //ImGui::SameLine();
+  //if (ImGui::ImageButton("pencil", m_pencilIcon->GetShaderResourceView(), smallIconSize, uvMin, uvMax, iconBg, tintColor))
   //{
   //}
-  if (ImGui::ImageButton("circle", m_circleIcon->GetShaderResourceView(), size, uvMin, uvMax, iconBg, tintColor))
+  if (ImGui::ImageButton("circle", m_circleIcon->GetShaderResourceView(), smallIconSize, uvMin, uvMax, iconBg, tintColor))
   {
     if(m_editorState == EditorState::EDITING)
       m_activeCommand = {DrawCommandType::DRAW_CIRCLE, DrawCommandState::INITIAL};
   }
-  if (ImGui::ImageButton("line", m_lineIcon->GetShaderResourceView(), size, uvMin, uvMax, iconBg, tintColor))
+  ImGui::SameLine();
+  
+  if (ImGui::ImageButton("line", m_lineIcon->GetShaderResourceView(), smallIconSize, uvMin, uvMax, iconBg, tintColor))
   {
     if(m_editorState == EditorState::EDITING)
       m_activeCommand = {DrawCommandType::DRAW_LINE, DrawCommandState::INITIAL};
   }
-  if (ImGui::ImageButton("rectangle", m_rectangleIcon->GetShaderResourceView(), size, uvMin, uvMax, iconBg, tintColor))
+  
+  if (ImGui::ImageButton("rectangle", m_rectangleIcon->GetShaderResourceView(), smallIconSize, uvMin, uvMax, iconBg, tintColor))
   {
     if(m_editorState == EditorState::EDITING)
       m_activeCommand = {DrawCommandType::DRAW_RECTANGLE, DrawCommandState::INITIAL};
   }
-  //if (ImGui::ImageButton("arrow", m_arrowIcon->GetShaderResourceView(), size, uvMin, uvMax, iconBg, tintColor))
+  
+  //if (ImGui::ImageButton("arrow", m_arrowIcon->GetShaderResourceView(), smallIconSize, uvMin, uvMax, iconBg, tintColor))
   //{
   //  if(m_editorState == EditorState::EDITING)
   //    m_activeCommand = {DrawCommandType::DRAW_ARROW, DrawCommandState::INITIAL};
@@ -419,7 +378,7 @@ void EditorUI::OnImguiRender()
   }
   
   //listbox for selecting saved uuids
-  if (ImGui::BeginListBox("##listbox"))
+  if (ImGui::BeginListBox("##listbox", ImVec2{ -FLT_MIN, 120 }))
   {
     for(const auto& saverMap : m_imageSavers->GetImageSavers())
     {
@@ -437,8 +396,14 @@ void EditorUI::OnImguiRender()
     ImGui::EndListBox();
   }
   ImGui::End();
-  
+
+}
+
+void EditorUI::ShowThumbnails()
+{
   // Picture thumbnails
+  ImGuiIO& io = ImGui::GetIO();
+  ImGuiStyle& style = ImGui::GetStyle();
   bool openThumbnails = true;
   ImGui::Begin("Thumbnails", &openThumbnails, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoTitleBar);
   if (!m_imageSavers->IsEmpty())
@@ -446,6 +411,9 @@ void EditorUI::OnImguiRender()
     ImVec4 backgroundColor = ImVec4(1.0f, 1.0f, 1.0f, 0.0f); // 50% opaque white
     for (const auto& imagePair : m_imageSavers->GetSelectedSaver().GetSavedImagePairs())
     {
+      constexpr ImVec2 uvMin = ImVec2(0.0f, 0.0f);                 // Top-left
+      constexpr ImVec2 uvMax = ImVec2(1.0f, 1.0f);                 // Lower-right
+      constexpr ImVec4 tintColor = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);   // No tint
       ImGui::Text("%s", imagePair.name.c_str());
       ImVec2 pos = ImGui::GetCursorScreenPos();
       ImVec2 canvasSize = ImGui::GetContentRegionAvail();
@@ -481,7 +449,70 @@ void EditorUI::OnImguiRender()
     }
   }
   ImGui::End();
+}
 
+void EditorUI::OnImguiRender()
+{
+  // DockSpace
+  ImGuiIO& io = ImGui::GetIO();
+  ImGuiStyle& style = ImGui::GetStyle();
+  static bool dockspaceOpen = true;
+  static bool opt_fullscreen = true;
+  static ImGuiDockNodeFlags dockspace_flags = ImGuiDockNodeFlags_None;
+  // We are using the ImGuiWindowFlags_NoDocking flag to make the parent window not dockable into,
+  // because it would be confusing to have two docking targets within each others.
+  ImGuiWindowFlags window_flags = ImGuiWindowFlags_MenuBar | ImGuiWindowFlags_NoDocking;
+  const ImGuiViewport* viewport = ImGui::GetMainViewport();
+  ImGui::SetNextWindowPos(viewport->WorkPos);
+  ImGui::SetNextWindowSize(viewport->WorkSize);
+  ImGui::SetNextWindowViewport(viewport->ID);
+  ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0.0f);
+  ImGui::PushStyleVar(ImGuiStyleVar_WindowBorderSize, 0.0f);
+  window_flags |= ImGuiWindowFlags_NoTitleBar | ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove;
+  window_flags |= ImGuiWindowFlags_NoBringToFrontOnFocus | ImGuiWindowFlags_NoNavFocus;
+
+  ImGui::Begin("DockSpace Demo", nullptr, window_flags);
+  ImGui::PopStyleVar(2);
+  if (io.ConfigFlags & ImGuiConfigFlags_DockingEnable)
+  {
+    ImGuiID dockspace_id = ImGui::GetID("MyDockSpace");
+    ImGui::DockSpace(dockspace_id, ImVec2(0.0f, 0.0f), ImGuiDockNodeFlags_None | ImGuiDockNodeFlags_AutoHideTabBar);
+  }
+  if (ImGui::BeginMenuBar())
+  {
+    if (ImGui::BeginMenu("Settings"))
+    {
+      if(ImGui::BeginMenu("Options"))
+      {
+        if(ImGui::Button("Data folder"))
+        {
+          ifd::FileDialog::Instance().Open("DirectoryOpenDialog", "Open a directory", "");
+        }
+        ImGui::EndMenu();
+      }
+      APP_CORE_TRACE("Menu bar opened");
+      ImGui::EndMenu();
+    }
+
+    ImGui::EndMenuBar();
+  }
+  ImGui::End();
+
+	if (ifd::FileDialog::Instance().IsDone("DirectoryOpenDialog")) {
+		if (ifd::FileDialog::Instance().HasResult()) {
+			auto& result = ifd::FileDialog::Instance().GetResult();
+
+      // when setting a new application folder, the thumbnails and the image savers should be reset(the data will remain in the data folder)
+		  m_appConfig.UpdateAppFolder(result);
+      m_imageSavers = std::move(std::make_unique<ImageSaverContainer>(m_appConfig.GetAppFolder()));
+      APP_CORE_INFO("Directory:{} selected", result.string());
+		}
+		ifd::FileDialog::Instance().Close();
+	}
+
+  ShowImageWindow();
+  ShowToolbox();
+  ShowThumbnails(); 
 
   // some profiling
   //ImGui::Begin("Profiling");
