@@ -9,6 +9,7 @@
 #include "log.h"
 #include "utils.h"
 
+#include <array>
 #include <memory>
 #include <vector>
 
@@ -71,6 +72,7 @@ private:
   EditorState m_editorState = EditorState::SHOW_CAMERA;
   DrawCommand m_activeCommand;
   Timer m_timer;
+  std::array<char,128> m_inputText; 
 
   // drawing specific members
   int m_thickness = 3;

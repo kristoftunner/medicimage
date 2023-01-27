@@ -39,7 +39,7 @@ public:
   void SaveImage(std::shared_ptr<Texture2D> texture, ImageType type);
   void LoadImage(std::string imageName, const std::filesystem::path& filePath, ImageType type);
   void DeleteImage(const std::string& imageName);
-  std::string GetUuid(){return m_uuid;}
+  std::string GetUuid() const {return m_uuid;}
   const std::filesystem::path& GetPatientFolder() { return m_dirPath; }
 
   // returns a vector of both the original and annotated pair of the image

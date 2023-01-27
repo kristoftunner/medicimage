@@ -2,6 +2,8 @@
 #include "log.h"
 #include "widgets/ImFileDialog.h"
 
+#include <assert.h>
+
 namespace medicimage
 {
 
@@ -9,7 +11,9 @@ namespace medicimage
 
 EditorUI::EditorUI() 
   : Layer("EditorUI")
-{}
+{
+  m_inputText.fill(0);
+}
 
 EditorUI::~EditorUI()
 {} 
@@ -42,6 +46,14 @@ void EditorUI::OnAttach()
   m_imageSavers = std::move(std::make_unique<ImageSaverContainer>(m_appConfig.GetAppFolder()));
   for(const auto& patientFolder : m_appConfig.GetSavedPatientFolders())
     m_imageSavers->SelectImageSaver(patientFolder.stem().string());
+  
+  if(!m_imageSavers->IsEmpty())
+  {
+    auto uuid = m_imageSavers->GetSelectedSaver().GetUuid();
+    m_inputText.fill(0);
+    assert(m_inputText.size() >= uuid.size());
+    std::copy(uuid.begin(), uuid.end(), m_inputText.begin());
+  }
 
   // loading in the icons
   m_circleIcon  = std::move(std::make_unique<Texture2D>("circle","assets/icons/circle.png"));
@@ -66,6 +78,8 @@ void EditorUI::OnAttach()
   ifd::FileDialog::Instance().CreateTexture = [&](uint8_t* data, int w, int h, char fmt) -> void*
   {
     // Here, there is a memory leak, because on DirectX there is no similar API for storing textures, like OpenGL 
+    // but these textures are just the thumbnails on file dialog.. so for now it is okay, in the future this has 
+    // to be fixed with either another filedialog plugin or fixing this one: TODO
     auto* texture = new medicimage::Texture2D(w,h); 
     Renderer::GetInstance().GetDeviceContext()->UpdateSubresource(texture->GetTexturePtr(), 0, 0, data, w*4, w*h*4);
     return reinterpret_cast<void*>(texture->GetShaderResourceView());
@@ -226,19 +240,10 @@ void EditorUI::OnImguiRender()
   }
   
   // uuid input
-  static char uuidInputBuffer[32] = "";
-  static bool bufferInitialized = false;
-
-  if (!bufferInitialized)
-  {
-    std::string uuid = m_imageSavers->GetSelectedSaver().GetUuid();
-    memcpy(uuidInputBuffer, uuid.c_str(), uuid.size()+1);
-    bufferInitialized = true;
-  }
   ImGui::PushItemWidth(-120);
   static bool uuidTextInputTriggered = false;
   ImGui::PushStyleVar(ImGuiStyleVar_SelectableTextAlign, ImVec2(0.5f, 0.5f)); 
-  if(ImGui::InputText("##label", uuidInputBuffer, IM_ARRAYSIZE(uuidInputBuffer), ImGuiInputTextFlags_EnterReturnsTrue))
+  if(ImGui::InputText("##label", m_inputText.data(), m_inputText.size(), ImGuiInputTextFlags_EnterReturnsTrue))
   {
     uuidTextInputTriggered = true;
   }
@@ -253,12 +258,12 @@ void EditorUI::OnImguiRender()
   ImGui::SameLine();
   if(ImGui::Button("Clear"))
   {
-    memset(uuidInputBuffer, 0, sizeof(uuidInputBuffer));
+    m_inputText.fill(0);  // no clearing it because we dont use this as an iterated array, but C-style array in ImGui
   }
 
   if(uuidTextInputTriggered)
   {
-    std::string inputText = std::string(uuidInputBuffer);
+    std::string inputText = std::string(m_inputText.data());
     uuidTextInputTriggered = false;
     auto checkInput = [&](const std::string& inputString){
       for(auto c : inputString)
@@ -272,7 +277,7 @@ void EditorUI::OnImguiRender()
         }
       }
       return true;};
-    if (uuidInputBuffer[0] != '\0' && checkInput(inputText))
+    if (m_inputText[0] != '\0' && checkInput(inputText))
     {
       size_t pos;
       try
@@ -413,17 +418,24 @@ void EditorUI::OnImguiRender()
     ImGui::EndDisabled();
   }
   
-  // listbox for selecting saved uuids
-  //if (ImGui::BeginListBox("##listbox"))
-  //{
-  //  for(const auto& saver : m_imageSavers->GetImageSavers())
-  //  {
-  //    bool selected = true;
-  //    auto a = saver.first;
-  //    ImGui::Selectable("asdasd", &selected);
-  //  }
-  //  ImGui::EndListBox();
-  //}
+  //listbox for selecting saved uuids
+  if (ImGui::BeginListBox("##listbox"))
+  {
+    for(const auto& saverMap : m_imageSavers->GetImageSavers())
+    {
+      auto& saver = saverMap.second;
+      bool selected = saver.GetUuid() == m_imageSavers->GetSelectedSaver().GetUuid();
+      auto uuid = saver.GetUuid();
+      if(ImGui::Selectable(uuid.c_str(), &selected))
+      {
+        assert(m_inputText.size() >= uuid.size());
+        m_inputText.fill(0);
+        std::copy(uuid.begin(), uuid.end(), m_inputText.begin());
+        m_imageSavers->SelectImageSaver(uuid);
+      }
+    }
+    ImGui::EndListBox();
+  }
   ImGui::End();
   
   // Picture thumbnails
