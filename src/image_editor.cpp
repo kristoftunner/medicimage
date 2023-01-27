@@ -118,7 +118,43 @@ void ImageEditor::AddLine(ImVec2 begin, ImVec2 end, PrimitiveAddingType addType,
 
 void ImageEditor::AddArrow(ImVec2 begin, ImVec2 end, PrimitiveAddingType addType, const int thickness, const Color color)
 {
+  auto checkInput = [&](float input) { return ((input <= 1) && (input >= 0)); };
+  if(!checkInput(begin.x) || !checkInput(begin.y) || !checkInput(end.x) || !checkInput(end.y))
+    return;
+  
+  int textureWidth = m_texture->GetWidth();
+  int textureHeight = m_texture->GetHeight();
+  cv::Point lineBegin = {static_cast<int>(begin.x * textureWidth), static_cast<int>(begin.y * textureHeight)}; 
+  cv::Point lineEnd = {static_cast<int>(end.x * textureWidth), static_cast<int>(end.y * textureHeight)}; 
+  
+  if(addType == PrimitiveAddingType::PERMANENT)
+  {
+    m_arrows.emplace_back(Line{lineBegin, lineEnd, {thickness, color}});
+    m_tempArrow.reset();
+  }
+  else
+    m_tempArrow.emplace(Line{lineBegin, lineEnd, {thickness, color}});
+  APP_CORE_TRACE("Added a arrow: begin: {}:{} end:{}:{}", lineBegin.x, lineBegin.y, lineEnd.x, lineEnd.y);
+}
 
+void ImageEditor::AddText(const std::string& text, ImVec2 bottomLeft, PrimitiveAddingType addType,const int fontSize, const Color color)
+{
+  auto checkInput = [&](float input) { return ((input <= 1) && (input >= 0)); };
+  if(!checkInput(bottomLeft.x) || !checkInput(bottomLeft.y))
+    return;
+  
+  int textureWidth = m_texture->GetWidth();
+  int textureHeight = m_texture->GetHeight();
+  cv::Point bottomLeftCorner = {static_cast<int>(bottomLeft.x * textureWidth), static_cast<int>(bottomLeft.y * textureHeight)}; 
+  
+  if(addType == PrimitiveAddingType::PERMANENT)
+  {
+    m_texts.emplace_back(Text{text, bottomLeftCorner, fontSize, color});
+    m_tempText.reset();
+  }
+  else
+    m_tempText.emplace(Text{text, bottomLeftCorner, fontSize, color});
+  APP_CORE_TRACE("Added text:{} at:{}:{}", text, bottomLeft.x, bottomLeft.y);
 }
 
 std::shared_ptr<Texture2D> ImageEditor::Draw()
@@ -129,7 +165,7 @@ std::shared_ptr<Texture2D> ImageEditor::Draw()
   for(auto& rectangle : m_rectangles)
   {
     const Color& color = rectangle.attributes.color;
-    cv::rectangle(image, rectangle.topLeft, rectangle.bottomRight, cv::Scalar(color.blue,color.green,color.red), rectangle.attributes.thickness);
+    cv::rectangle(image, rectangle.topLeft, rectangle.bottomRight, cv::Scalar(color.blue,color.green,color.red), rectangle.attributes.thickness); // color has to be passed in BGR format 
   }
   if(m_tempRectangle)
   {
@@ -157,6 +193,28 @@ std::shared_ptr<Texture2D> ImageEditor::Draw()
   {
     const Color& color = m_tempLine.value().attributes.color;
     cv::line(image, m_tempLine.value().begin, m_tempLine.value().end, cv::Scalar(color.blue,color.green,color.red), m_tempLine.value().attributes.thickness);
+  }
+
+  for(auto& arrow : m_arrows)
+  {
+    const Color& color = arrow.attributes.color;
+    cv::arrowedLine(image, arrow.begin, arrow.end, cv::Scalar(color.blue,color.green,color.red), arrow.attributes.thickness);
+  }
+  if(m_tempArrow)
+  {
+    const Color& color = m_tempArrow.value().attributes.color;
+    cv::arrowedLine(image, m_tempArrow.value().begin, m_tempArrow.value().end, cv::Scalar(color.blue,color.green,color.red), m_tempArrow.value().attributes.thickness);
+  }
+  
+  for(auto& text : m_texts)
+  {
+    const Color& color = text.color;
+    cv::putText(image, text.text, text.bottomLeft, cv::FONT_HERSHEY_PLAIN, text.fontSize, cv::Scalar(color.blue,color.green,color.red), 3);
+  }
+  if(m_tempText)
+  {
+    const Color& color = m_tempText.value().color;
+    cv::putText(image, m_tempText.value().text, m_tempText.value().bottomLeft, cv::FONT_HERSHEY_PLAIN, m_tempText.value().fontSize, cv::Scalar(color.blue, color.green, color.red), 3);
   }
 
   std::shared_ptr<Texture2D> dstTexture = std::make_shared<Texture2D>(m_texture->GetTexturePtr(), m_texture->GetName());

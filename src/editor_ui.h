@@ -16,8 +16,6 @@
 namespace medicimage
 {
 
-//enum class EditCommandType{DO_NOTHING, DRAW_LINE, DRAW_CIRCLE, DRAW_RECTANGLE, ADD_TEXT, START_EDITING_IMAGE, SAVE_IMAGE};
-//enum class EditState{START_EDIT, FIRST_CLICK, MOUSE_DOWN, DONE};
 enum class EditorState{SHOW_CAMERA, EDITING, SCREENSHOT};
 enum class EditingCommandType{INITIAL, DRAWING};
 enum class DrawCommandType{DRAW_LINE, DRAW_CIRCLE, DRAW_RECTANGLE, DRAW_ARROW, ADD_TEXT, DELETE_IMAGE};

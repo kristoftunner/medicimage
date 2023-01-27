@@ -121,6 +121,13 @@ void EditorUI::Draw(PrimitiveAddingType addType, ImVec2 imageSize)
       m_imageEditor.AddLine(begin, end, addType, m_thickness, m_color);
       break;
     }
+    case DrawCommandType::DRAW_ARROW:
+    {
+      ImVec2 begin = {m_cursorEditPoints[0].x / imageSize.x, m_cursorEditPoints[0].y / imageSize.y};
+      ImVec2 end = {m_cursorEditPoints[1].x / imageSize.x, m_cursorEditPoints[1].y / imageSize.y};
+      m_imageEditor.AddArrow(begin, end, addType, m_thickness, m_color);
+      break;
+    }
   }
 }
 
@@ -338,11 +345,13 @@ void EditorUI::ShowToolbox()
     }
   } 
 
-  //if (ImGui::ImageButton("addText", m_addTextIcon->GetShaderResourceView(), smallIconSize, uvMin, uvMax, iconBg, tintColor))
-  //{
-  //  if(m_editorState == EditorState::EDITING)
-  //    m_activeCommand = {DrawCommandType::ADD_TEXT, DrawCommandState::INITIAL};
-  //}
+  if (ImGui::ImageButton("addText", m_addTextIcon->GetShaderResourceView(), smallIconSize, uvMin, uvMax, iconBg, tintColor))
+  {
+    if(m_editorState == EditorState::EDITING)
+      m_activeCommand = {DrawCommandType::ADD_TEXT, DrawCommandState::INITIAL};
+  }
+  ImGui::SameLine();
+
   //ImGui::SameLine();
   //if (ImGui::ImageButton("pencil", m_pencilIcon->GetShaderResourceView(), smallIconSize, uvMin, uvMax, iconBg, tintColor))
   //{
@@ -352,13 +361,13 @@ void EditorUI::ShowToolbox()
     if(m_editorState == EditorState::EDITING)
       m_activeCommand = {DrawCommandType::DRAW_CIRCLE, DrawCommandState::INITIAL};
   }
-  ImGui::SameLine();
   
   if (ImGui::ImageButton("line", m_lineIcon->GetShaderResourceView(), smallIconSize, uvMin, uvMax, iconBg, tintColor))
   {
     if(m_editorState == EditorState::EDITING)
       m_activeCommand = {DrawCommandType::DRAW_LINE, DrawCommandState::INITIAL};
   }
+  ImGui::SameLine();
   
   if (ImGui::ImageButton("rectangle", m_rectangleIcon->GetShaderResourceView(), smallIconSize, uvMin, uvMax, iconBg, tintColor))
   {
@@ -366,12 +375,12 @@ void EditorUI::ShowToolbox()
       m_activeCommand = {DrawCommandType::DRAW_RECTANGLE, DrawCommandState::INITIAL};
   }
   
-  //if (ImGui::ImageButton("arrow", m_arrowIcon->GetShaderResourceView(), smallIconSize, uvMin, uvMax, iconBg, tintColor))
-  //{
-  //  if(m_editorState == EditorState::EDITING)
-  //    m_activeCommand = {DrawCommandType::DRAW_ARROW, DrawCommandState::INITIAL};
-  //}
-  
+  if (ImGui::ImageButton("arrow", m_arrowIcon->GetShaderResourceView(), smallIconSize, uvMin, uvMax, iconBg, tintColor))
+  {
+    if(m_editorState == EditorState::EDITING)
+      m_activeCommand = {DrawCommandType::DRAW_ARROW, DrawCommandState::INITIAL};
+  }
+
   if(m_editorState != EditorState::EDITING)
   {
     ImGui::EndDisabled();

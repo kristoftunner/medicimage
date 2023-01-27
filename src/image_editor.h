@@ -47,6 +47,14 @@ struct Rectangle
   PrimitiveAttributes attributes;
 };
 
+struct Text
+{
+  std::string text;
+  cv::Point bottomLeft;
+  int fontSize;
+  Color color;
+};
+
 enum class PrimitiveAddingType {TEMPORARY, PERMANENT};
 
 class ImageEditor
@@ -60,6 +68,7 @@ public:
   void AddCircle(ImVec2 center, float radius, PrimitiveAddingType addType, const int thickness = 1, const Color color= {0,0,0}); // orig is sized between 0-1
   void AddLine(ImVec2 begin, ImVec2 end, PrimitiveAddingType addType, const int thickness = 1, const Color color= {0,0,0});
   void AddArrow(ImVec2 begin, ImVec2 end, PrimitiveAddingType addType, const int thickness = 1, const Color color= {0,0,0});
+  void AddText(const std::string& text, ImVec2 bottomLeft, PrimitiveAddingType addType,const int fontSize, const Color color={0,0,0}); // TODO: change const std::string& to std::string_view 
   static std::shared_ptr<Texture2D> AddImageFooter(const std::string& watermark, std::shared_ptr<Texture2D> texture);
   std::shared_ptr<Texture2D> Draw();
 private:
@@ -71,11 +80,13 @@ private:
   std::vector<Circle> m_circles;
   std::vector<Rectangle> m_rectangles;
   std::vector<Line> m_arrows;
-
+  std::vector<Text> m_texts;
+  
   std::optional<Line> m_tempLine;
   std::optional<Circle> m_tempCircle;
   std::optional<Rectangle> m_tempRectangle;
   std::optional<Line> m_tempArrow;
+  std::optional<Text> m_tempText;
 };
 
 } // namespace medicimage
