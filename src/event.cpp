@@ -1,6 +1,7 @@
 #include <iostream>
 
 #include "event.h"
+#include "key_event.h"
 #include "application_event.h"
 #include "window.h"
 #include "backends/imgui_impl_sdl.h"
@@ -21,6 +22,13 @@ EventInputHandler::EventInputHandler(std::shared_ptr<ImguiLayer> imgui, SDL_Wind
 EventInputHandler::~EventInputHandler()
 {}
 
+void EventInputHandler::FlushEvents()
+{
+  for(auto event : m_events)
+    delete event;
+  m_events.clear();
+}
+
 void EventInputHandler::PollEvents()
 {
   SDL_Event event;
@@ -31,16 +39,28 @@ void EventInputHandler::PollEvents()
     {
       APP_CORE_INFO("Quit event recieved");
     }
-    if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE && event.window.windowID == SDL_GetWindowID(m_window))
+    else if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE && event.window.windowID == SDL_GetWindowID(m_window))
     {
       APP_CORE_INFO("Close event recieved");
       m_events.push_back(new WindowCloseEvent());
     }
-    if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_RESIZED && event.window.windowID == SDL_GetWindowID(m_window))
+    else if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_RESIZED && event.window.windowID == SDL_GetWindowID(m_window))
     {
-      // Release all outstanding references to the swap chain's buffers before resizing.
-      APP_CORE_INFO("Resize event recieved");
-      Renderer::GetInstance().Resize();
+      APP_CORE_TRACE("Resize event recieved");
+      Renderer::GetInstance().Resize(); // TODO: move this into an application layer, not the event generation stack
+    }
+    else if(event.type == SDL_TEXTINPUT)
+    {
+      // TODO: do UTF8 decoding here
+      auto textInput = new KeyTextInputEvent(event.text.text); 
+      m_events.push_back(textInput);
+      APP_CORE_TRACE("Event received: {}", textInput->ToString());
+    }
+    else if(event.type == SDL_KEYDOWN)
+    {
+      auto keyDownEvent = new KeyPressedEvent(event.key.keysym.sym);  // TODO: proper mapping of SDL keys into KeyPressedEvent keymap
+      m_events.push_back(keyDownEvent);
+      APP_CORE_TRACE("Key pressed event received: {}", keyDownEvent->ToString());
     }
   }
 }

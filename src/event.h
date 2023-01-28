@@ -1,7 +1,6 @@
 #pragma once
 #include <memory>
 #include <vector>
-
 #include "imgui_layer.h"
 #include <functional>
 #include <SDL.h>
@@ -16,7 +15,7 @@ enum class EventType
   None = 0,
   WindowClose, WindowResize, WindowFocus, WindowLostFocus, WindowMoved,
   AppTick, AppUpdate, AppRender,
-  KeyPressed, KeyReleased, KeyTyped, 
+  KeyPressed, KeyReleased, KeyTextInput, 
   MousePressed, MouseReleased,
   MouseButtonPressed, MouseButtonReleased, MouseMoved, MouseScrolled
 };
@@ -36,6 +35,7 @@ enum EventCategory
                               virtual const char* GetName() const override { return #type; }
 
 #define EVENT_CLASS_CATEGORY(category) virtual int GetCategoryFlags() const override {return category;}
+#define BIND_EVENT_FN(func) std::bind(&func, this, std::placeholders::_1)
 
 class Event {
   friend class EventDispatcher;
@@ -85,6 +85,7 @@ public:
   EventInputHandler(std::shared_ptr<ImguiLayer> imgui, SDL_Window* window);
   ~EventInputHandler();
   void PollEvents();
+  void FlushEvents();
   std::vector<Event*>& GetCollectedEvents(){return m_events;}
 private:
   SDL_Window* m_window;

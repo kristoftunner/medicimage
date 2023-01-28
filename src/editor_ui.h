@@ -8,6 +8,7 @@
 #include "image_saver.h"
 #include "log.h"
 #include "utils.h"
+#include "key_event.h"
 
 #include <array>
 #include <memory>
@@ -19,7 +20,7 @@ namespace medicimage
 enum class EditorState{SHOW_CAMERA, EDITING, SCREENSHOT};
 enum class EditingCommandType{INITIAL, DRAWING};
 enum class DrawCommandType{DRAW_LINE, DRAW_CIRCLE, DRAW_RECTANGLE, DRAW_ARROW, ADD_TEXT, DELETE_IMAGE};
-enum class DrawCommandState{INITIAL, FIRST_CLICK, MOUSE_DOWN, SECOND_CLICK};
+enum class DrawCommandState{INITIAL, FIRST_CLICK, MOUSE_DOWN, SECOND_CLICK, FINISH};
 struct DrawCommand 
 {
   DrawCommandType commandType;
@@ -34,9 +35,12 @@ public:
   void OnUpdate() override;
   void OnAttach() override;
   void OnDetach() override;
+  void OnEvent(Event* event) override;
   void OnImguiRender() override;
 private:
   void Draw(PrimitiveAddingType addType, ImVec2 imageSize);
+  bool OnKeyTextInputEvent(KeyTextInputEvent* e);
+  bool OnKeyPressedEvent(KeyPressedEvent* e);
   void ShowImageWindow();
   void ShowToolbox();
   void ShowThumbnails();
@@ -77,7 +81,8 @@ private:
   // drawing specific members
   int m_thickness = 3;
   Color m_color = {255,0,0};
-  
+  std::string m_editText = "";
+  int m_drawnTextFontSize = 4;  
   // for drawing a circle/rectangle/line/arrow we need only 2 points
   // for adding a text the topleft corner is enough 
   ImVector<ImVec2> m_cursorEditPoints;

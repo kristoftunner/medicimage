@@ -28,7 +28,6 @@ static void DumpTexture(ID3D11Texture2D* texture)
   std::ofstream fileStream("filename", std::ios::binary);
   fileStream.write(reinterpret_cast<char*>(mappedTexture.pData), mappedTexture.DepthPitch);
 
-  //APP_CORE_INFO("Dumped {%d}", mappedTexture.DepthPitch);
   Renderer::GetInstance().GetDeviceContext()->Unmap(texture, 0);
 }
 
@@ -39,11 +38,13 @@ void ImageEditor::SetTextureForEditing(std::unique_ptr<Texture2D> texture)
   m_circles.clear();
   m_rectangles.clear();
   m_arrows.clear();
+  m_texts.clear();
 
   m_tempLine.reset();
   m_tempCircle.reset();
   m_tempRectangle.reset();
   m_tempArrow.reset();
+  m_tempText.reset();
 }
 
 void ImageEditor::Init(ID3D11Device* device)
@@ -208,13 +209,27 @@ std::shared_ptr<Texture2D> ImageEditor::Draw()
   
   for(auto& text : m_texts)
   {
-    const Color& color = text.color;
-    cv::putText(image, text.text, text.bottomLeft, cv::FONT_HERSHEY_PLAIN, text.fontSize, cv::Scalar(color.blue,color.green,color.red), 3);
+    constexpr auto font = cv::FONT_HERSHEY_SIMPLEX;
+    constexpr auto thickness = 3;
+    int baseline = 0;
+    constexpr auto backgroundScaler = 0.55;
+    auto textSize = cv::getTextSize(text.text, font, text.fontSize * backgroundScaler, thickness, &baseline);
+    auto bgTopRight = text.bottomLeft + cv::Point{ textSize.width, -textSize.height };
+    auto bgBottomLeft = text.bottomLeft + cv::Point(0, baseline * backgroundScaler);
+    cv::rectangle(image, cv::Rect(bgBottomLeft, bgTopRight), cv::Scalar::all(255), -1); // white rectangle behind the text
+    cv::putText(image, text.text, text.bottomLeft, cv::FONT_HERSHEY_PLAIN, text.fontSize, cv::Scalar::all(0), thickness);
   }
   if(m_tempText)
   {
-    const Color& color = m_tempText.value().color;
-    cv::putText(image, m_tempText.value().text, m_tempText.value().bottomLeft, cv::FONT_HERSHEY_PLAIN, m_tempText.value().fontSize, cv::Scalar(color.blue, color.green, color.red), 3);
+    constexpr auto font = cv::FONT_HERSHEY_SIMPLEX;
+    constexpr auto thickness = 3;
+    int baseline = 0;
+    constexpr auto backgroundScaler = 0.55;
+    auto textSize = cv::getTextSize(m_tempText.value().text, font, m_tempText.value().fontSize * backgroundScaler, thickness, &baseline);
+    auto bgTopRight = m_tempText.value().bottomLeft + cv::Point{ textSize.width, -textSize.height };
+    auto bgBottomLeft = m_tempText.value().bottomLeft + cv::Point(0, baseline * backgroundScaler);
+    cv::rectangle(image, cv::Rect(bgBottomLeft, bgTopRight), cv::Scalar::all(255), -1); // white rectangle behind the m_tempText.value()
+    cv::putText(image, m_tempText.value().text, m_tempText.value().bottomLeft, cv::FONT_HERSHEY_PLAIN, m_tempText.value().fontSize, cv::Scalar::all(0), thickness);
   }
 
   std::shared_ptr<Texture2D> dstTexture = std::make_shared<Texture2D>(m_texture->GetTexturePtr(), m_texture->GetName());

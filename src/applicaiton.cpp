@@ -6,7 +6,6 @@
 namespace medicimage
 {
 
-#define BIND_EVENT_FN(func) std::bind(&func, this, std::placeholders::_1)
 
 
 Application::Application()
@@ -80,8 +79,10 @@ void Application::Run()
     auto events = m_inputHandler->GetCollectedEvents();
     for(auto event : events)
     {
-      OnEvent(event); 
+      OnEvent(event);
+      m_editor.OnEvent(event);
     }
+    m_inputHandler->FlushEvents();
 
     // Update the layers
     m_editor.OnUpdate();

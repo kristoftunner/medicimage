@@ -93,6 +93,42 @@ void EditorUI::OnAttach()
 
 void EditorUI::OnDetach(){} 
 
+void EditorUI::OnEvent(Event* event)
+{
+  EventDispatcher dispatcher(event);
+  dispatcher.Dispatch<KeyTextInputEvent>(BIND_EVENT_FN(EditorUI::OnKeyTextInputEvent));
+  dispatcher.Dispatch<KeyPressedEvent>(BIND_EVENT_FN(EditorUI::OnKeyPressedEvent));
+}
+
+bool EditorUI::OnKeyTextInputEvent(KeyTextInputEvent* e)
+{
+  if ((m_activeCommand.commandState == DrawCommandState::FIRST_CLICK) && m_activeCommand.commandType == DrawCommandType::ADD_TEXT)
+  {
+    // text drawing rectangle bottom left point added, receiving text input
+    m_editText += e->GetInputTextText();
+    return true;
+  }
+  else
+    return false;
+}
+
+bool EditorUI::OnKeyPressedEvent(KeyPressedEvent* e)
+{
+  if ((m_activeCommand.commandState == DrawCommandState::FIRST_CLICK) && m_activeCommand.commandType == DrawCommandType::ADD_TEXT)
+  {
+    if(e->GetKeyCode() == Key::MDIK_RETURN)
+    {
+      m_activeCommand.commandState = DrawCommandState::FINISH;
+      return true;
+    }
+    else
+      return false;
+  }
+  else
+    return false;
+
+}
+
 void EditorUI::Draw(PrimitiveAddingType addType, ImVec2 imageSize)
 {
   constexpr float circleRadiusSpeed = 1.5;
@@ -126,6 +162,12 @@ void EditorUI::Draw(PrimitiveAddingType addType, ImVec2 imageSize)
       ImVec2 begin = {m_cursorEditPoints[0].x / imageSize.x, m_cursorEditPoints[0].y / imageSize.y};
       ImVec2 end = {m_cursorEditPoints[1].x / imageSize.x, m_cursorEditPoints[1].y / imageSize.y};
       m_imageEditor.AddArrow(begin, end, addType, m_thickness, m_color);
+      break;
+    }
+    case DrawCommandType::ADD_TEXT:
+    {
+      ImVec2 begin = {m_cursorEditPoints[0].x / imageSize.x, m_cursorEditPoints[0].y / imageSize.y};
+      m_imageEditor.AddText(m_editText, begin, addType, m_drawnTextFontSize, {255,255,255});
       break;
     }
   }
@@ -162,6 +204,17 @@ void EditorUI::ShowImageWindow()
       m_cursorEditPoints.push_back(mousePosOnImage);
       m_cursorEditPoints.push_back(mousePosOnImage);
       m_activeCommand.commandState = DrawCommandState::FIRST_CLICK;
+    }
+    else if((m_activeCommand.commandState == DrawCommandState::FIRST_CLICK) && m_activeCommand.commandType == DrawCommandType::ADD_TEXT)
+    {
+      Draw(PrimitiveAddingType::TEMPORARY, imageSize);
+    }
+    else if((m_activeCommand.commandState == DrawCommandState::FINISH) && m_activeCommand.commandType == DrawCommandType::ADD_TEXT)
+    {
+      Draw(PrimitiveAddingType::PERMANENT, imageSize);
+      m_editText = "";
+      m_activeCommand = {m_activeCommand.commandType, DrawCommandState::INITIAL};
+      m_cursorEditPoints.clear();
     }
     else if(isImageHovered && (m_activeCommand.commandState == DrawCommandState::FIRST_CLICK))
     {
