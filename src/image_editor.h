@@ -70,12 +70,15 @@ public:
   void AddArrow(ImVec2 begin, ImVec2 end, PrimitiveAddingType addType, const int thickness = 1, const Color color= {0,0,0});
   void AddText(const std::string& text, ImVec2 bottomLeft, PrimitiveAddingType addType,const int fontSize, const Color color={0,0,0}); // TODO: change const std::string& to std::string_view 
   void ClearDrawing();
-  static std::shared_ptr<Texture2D> AddImageFooter(const std::string& watermark, std::shared_ptr<Texture2D> texture);
+  static std::shared_ptr<Texture2D> AddImageFooter(const std::string& footerText, std::shared_ptr<Texture2D> texture);
   std::shared_ptr<Texture2D> Draw();
 private:
+  static cv::UMat AddFooter(cv::UMat image, const std::string& footerText);
   std::unique_ptr<Texture2D> m_texture;
   cv::UMat m_opencvImage;
-
+  static constexpr int m_sideBorder = 20;
+  static constexpr int m_topBorder = 20;
+  static constexpr int m_bottomBorder = 100;
   // primitives to draw on the image in the Draw call
   std::vector<Line> m_lines;
   std::vector<Circle> m_circles;

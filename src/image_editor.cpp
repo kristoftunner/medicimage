@@ -48,6 +48,7 @@ void ImageEditor::ClearDrawing()
 
 void ImageEditor::SetTextureForEditing(std::unique_ptr<Texture2D> texture)
 {
+  // cut the image from the border and the footer
   m_texture = std::move(texture);
   ClearDrawing();
 }
@@ -166,6 +167,10 @@ void ImageEditor::AddText(const std::string& text, ImVec2 bottomLeft, PrimitiveA
 std::shared_ptr<Texture2D> ImageEditor::Draw()
 {
   cv::directx::convertFromD3D11Texture2D(m_texture->GetTexturePtr(), m_opencvImage);
+  constexpr int sideBorder = 20;
+  constexpr int topBorder = 20;
+  constexpr int bottomBorder = 100;
+  m_opencvImage = m_opencvImage(cv::Range(m_topBorder, m_opencvImage.rows - m_topBorder - m_bottomBorder), cv::Range(m_sideBorder, m_opencvImage.cols - 2*m_sideBorder));
   cv::UMat image;
   cv::cvtColor(m_opencvImage, image, cv::COLOR_RGBA2BGR);
   for(auto& rectangle : m_rectangles)
@@ -237,26 +242,36 @@ std::shared_ptr<Texture2D> ImageEditor::Draw()
     cv::putText(image, m_tempText.value().text, m_tempText.value().bottomLeft, cv::FONT_HERSHEY_PLAIN, m_tempText.value().fontSize, cv::Scalar::all(0), thickness);
   }
 
-  std::shared_ptr<Texture2D> dstTexture = std::make_shared<Texture2D>(m_texture->GetTexturePtr(), m_texture->GetName());
-  cv::cvtColor(image, m_opencvImage, cv::COLOR_BGR2RGBA);
+  // add image footer to the edited image, because we loaded the only the actual image without the border and the footer
+  auto in_time_t = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+  std::stringstream ss;
+  ss << std::put_time(std::localtime(&in_time_t), "%d-%b-%Y %X");
+  std::string footerText = m_texture->GetName() + " - " + ss.str();
+  auto borderedImage = AddFooter(image, footerText); 
+  
+  std::shared_ptr<Texture2D> dstTexture = std::make_shared<Texture2D>(borderedImage.cols, borderedImage.rows);
+  cv::cvtColor(borderedImage, m_opencvImage, cv::COLOR_BGR2RGBA);
   cv::directx::convertToD3D11Texture2D(m_opencvImage, dstTexture->GetTexturePtr());
   return dstTexture;
 }
 
-std::shared_ptr<Texture2D> ImageEditor::AddImageFooter(const std::string& watermark, std::shared_ptr<Texture2D> texture)
+cv::UMat ImageEditor::AddFooter(cv::UMat image, const std::string& footerText)
+{
+  // add a sticker to the bottom with the image name, date and time
+  // assuming the original texture has 1920x1080 resolution, expanding with 20-20 pixels left/right and 30 bottom, 20 top
+  cv::UMat borderedImage;
+  cv::copyMakeBorder(image, borderedImage, m_topBorder, m_bottomBorder, m_sideBorder, m_sideBorder, cv::BORDER_CONSTANT , cv::Scalar{255,255,255} ); // adding white border
+  cv::putText(borderedImage, footerText, cv::Point{20, borderedImage.rows - 20}, cv::FONT_HERSHEY_PLAIN, 4, cv::Scalar{128,128,128}, 3);
+  return borderedImage;
+}
+
+std::shared_ptr<Texture2D> ImageEditor::AddImageFooter(const std::string& footerText, std::shared_ptr<Texture2D> texture)
 {
   cv::UMat image;
   cv::directx::convertFromD3D11Texture2D(texture->GetTexturePtr(), image);
   cv::cvtColor(image, image, cv::COLOR_RGBA2BGR);
-
-  // add a sticker to the bottom with the image name, date and time
-  // assuming the original texture has 1920x1080 resolution, expanding with 20-20 pixels left/right and 30 bottom, 20 top
-  constexpr int sideBorder = 20;
-  constexpr int topBorder = 20;
-  constexpr int bottomBorder = 100;
-  cv::UMat borderedImage;
-  cv::copyMakeBorder(image, borderedImage, topBorder, bottomBorder, sideBorder, sideBorder, cv::BORDER_CONSTANT , cv::Scalar{255,255,255} ); // adding white border
-  cv::putText(borderedImage, watermark, cv::Point{20, borderedImage.rows - 20}, cv::FONT_HERSHEY_PLAIN, 4, cv::Scalar{128,128,128}, 3);
+  
+  cv::UMat borderedImage = AddFooter(image, footerText);
   
   std::shared_ptr<Texture2D> dstTexture = std::make_shared<Texture2D>(borderedImage.cols, borderedImage.rows);
   dstTexture->SetName(texture->GetName());

@@ -332,7 +332,7 @@ void EditorUI::ShowToolbox()
       if(m_activeOriginalImage.get() != nullptr)
       {
         if (m_imageSavers->HasSelectedSaver()) //TODO: should select it with an optional<ImageSaver> return type
-          m_imageSavers->GetSelectedSaver().SaveImage(std::make_shared<Texture2D>(m_activeOriginalImage->GetTexturePtr(), m_activeOriginalImage->GetName()));
+          m_imageSavers->GetSelectedSaver().SaveImage(std::make_shared<Texture2D>(m_activeOriginalImage->GetTexturePtr(), m_activeOriginalImage->GetName()), false);
         else
         {
           APP_CORE_ERR("Please input valid UUID for saving the current image!");
@@ -356,7 +356,7 @@ void EditorUI::ShowToolbox()
       if(m_activeEditedImage.get() != nullptr)
       {
         if (m_imageSavers->HasSelectedSaver()) //TODO: should select it with an optional<ImageSaver> return type
-          m_imageSavers->GetSelectedSaver().SaveImage(std::make_shared<Texture2D>(m_activeEditedImage->GetTexturePtr(), m_activeEditedImage->GetName()));
+          m_imageSavers->GetSelectedSaver().SaveImage(std::make_shared<Texture2D>(m_activeEditedImage->GetTexturePtr(), m_activeEditedImage->GetName()), true);
         else
           APP_CORE_ERR("Please input valid UUID for saving the current image!");
       }
@@ -411,10 +411,39 @@ void EditorUI::ShowToolbox()
   {
     if(m_editorState == EditorState::EDITING)
     {
-      m_imageEditor.ClearDrawing();
+      ImGui::OpenPopup("undo");
+      ImVec2 center = ImGui::GetMainViewport()->GetCenter();
+      ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
     }
   }
   ImGui::SameLine();
+  
+  if(m_editorState == EditorState::EDITING)
+  {
+    if (ImGui::BeginPopupModal("undo", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
+    {
+      std::string imageName = m_activeEditedImage->GetName(); 
+      ImGui::Text("Are you sure you want to clear the annotations");
+      ImGui::Separator();
+      bool beginDisabling = false;
+      if (ImGui::Button("OK", ImVec2(120, 0))) 
+      { 
+        ImGui::CloseCurrentPopup();
+        m_imageEditor.ClearDrawing();
+        m_editorState = EditorState::SHOW_CAMERA;
+        beginDisabling = true;
+      }
+      ImGui::SetItemDefaultFocus();
+      ImGui::SameLine();
+      if (ImGui::Button("Cancel", ImVec2(120, 0))) 
+      { 
+        ImGui::CloseCurrentPopup(); 
+      }
+      ImGui::EndPopup();
+      if (beginDisabling)
+        ImGui::BeginDisabled();
+    }
+  } 
 
   if (ImGui::ImageButton("addText", m_addTextIcon->GetShaderResourceView(), smallIconSize, uvMin, uvMax, iconBg, tintColor))
   {
@@ -485,13 +514,16 @@ void EditorUI::ShowThumbnails()
   // Picture thumbnails
   ImGuiIO& io = ImGui::GetIO();
   ImGuiStyle& style = ImGui::GetStyle();
+  static int numOfPrevThumbs = 0;
   bool openThumbnails = true;
   ImGui::Begin("Thumbnails", &openThumbnails, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoTitleBar);
   if (m_imageSavers->HasSelectedSaver())
   {
+    int numOfCurrentThumbs = 0;
     ImVec4 backgroundColor = ImVec4(1.0f, 1.0f, 1.0f, 0.0f); // 50% opaque white
     for (const auto& image : m_imageSavers->GetSelectedSaver().GetSavedImages())
     {
+      numOfCurrentThumbs++;
       constexpr ImVec2 uvMin = ImVec2(0.0f, 0.0f);                 // Top-left
       constexpr ImVec2 uvMax = ImVec2(1.0f, 1.0f);                 // Lower-right
       constexpr ImVec4 tintColor = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);   // No tint
@@ -503,8 +535,8 @@ void EditorUI::ShowThumbnails()
       {
         // we can go into edit mode if we select an image from the thumbnails
         m_editorState = EditorState::EDITING;
-        const std::string uuid = m_imageSavers->GetSelectedSaver().GetUuid();
-        m_imageEditor.SetTextureForEditing(std::make_unique<Texture2D>(image->GetTexturePtr(), image->GetName()));
+        auto imageName = m_imageSavers->GetSelectedSaver().GetNextImageName();
+        m_imageEditor.SetTextureForEditing(std::make_unique<Texture2D>(image->GetTexturePtr(), imageName));
       }
 
       // little tooltip showing a zoomed version of the thumbnail image
@@ -527,8 +559,12 @@ void EditorUI::ShowThumbnails()
         ImGui::EndTooltip();
       }
     }
+    if(numOfPrevThumbs < numOfCurrentThumbs)
+    {
+      numOfPrevThumbs = numOfCurrentThumbs;
+      ImGui::SetScrollHereY(1.0f);
+    }
   }
-  ImGui::SetScrollHereY(1.0f);
   ImGui::End();
 }
 

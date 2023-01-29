@@ -36,12 +36,13 @@ public:
   // original images are saved only once when doing a screenshot of the image. The original's annotated pair can be replaced multiple
   // times, when it is selected from the thumbnails, edited and then saved as a ANNOTATED image. The original pair can be found
   // by the texture name
-  void SaveImage(std::shared_ptr<Texture2D> texture);
+  void SaveImage(std::shared_ptr<Texture2D> texture, bool hasFooter);
   void ClearSavedImages();
   void LoadPatientsFolder();
   void LoadImage(std::string imageName, const std::filesystem::path& filePath);
   void DeleteImage(const std::string& imageName);
   std::string GetUuid() const {return m_uuid;}
+  std::string GetNextImageName(){return m_uuid + "_" + std::to_string(m_savedImages.size());}
   const std::filesystem::path& GetPatientFolder() { return m_dirPath; }
 
   // returns a vector of both the original and annotated pair of the image

@@ -96,18 +96,21 @@ void ImageSaver::LoadImage(std::string imageName, const std::filesystem::path& f
   }
 }
 
-void ImageSaver::SaveImage(std::shared_ptr<Texture2D> texture)
+void ImageSaver::SaveImage(std::shared_ptr<Texture2D> texture, bool hasFooter)
 {
-  auto in_time_t = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-  std::stringstream ss;
-  ss << std::put_time(std::localtime(&in_time_t), "%d-%b-%Y %X");
   
   std::string name = m_uuid + "_" + std::to_string(m_savedImages.size());
   texture->SetName(name);
 
-  // need to add footer only to the original image, because for the annotated the original image is used as a base
-  std::string footerText = texture->GetName() + " - " + ss.str();
-  texture = ImageEditor::AddImageFooter(footerText, texture);
+  if(!hasFooter)
+  {
+    // need to add footer only to the original image, because for the annotated the original image is used as a base
+    auto in_time_t = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+    std::stringstream ss;
+    ss << std::put_time(std::localtime(&in_time_t), "%d-%b-%Y %X");
+    std::string footerText = texture->GetName() + " - " + ss.str();
+    texture = ImageEditor::AddImageFooter(footerText, texture);
+  }
 
   m_savedImages.push_back(texture);
     
