@@ -19,7 +19,7 @@ namespace medicimage
 
 enum class EditorState{SHOW_CAMERA, EDITING, SCREENSHOT};
 enum class EditingCommandType{INITIAL, DRAWING};
-enum class DrawCommandType{DRAW_LINE, DRAW_CIRCLE, DRAW_RECTANGLE, DRAW_ARROW, ADD_TEXT, DELETE_IMAGE};
+enum class DrawCommandType{DRAW_LINE, DRAW_CIRCLE, DRAW_RECTANGLE, DRAW_ARROW, ADD_TEXT, DELETE_IMAGE, UNDO};
 enum class DrawCommandState{INITIAL, FIRST_CLICK, MOUSE_DOWN, SECOND_CLICK, FINISH};
 struct DrawCommand 
 {
@@ -64,7 +64,7 @@ private:
   static bool s_enterPressed;
 
   std::unique_ptr<Texture2D> m_circleIcon, m_lineIcon, m_pencilIcon, m_saveIcon, m_deleteIcon,
-    m_rectangleIcon, m_arrowIcon, m_addTextIcon, m_screenshotIcon;
+    m_rectangleIcon, m_arrowIcon, m_addTextIcon, m_screenshotIcon, m_undoIcon;
 
   std::unique_ptr<Texture2D> m_activeOriginalImage;
   std::shared_ptr<Texture2D> m_activeEditedImage;
@@ -77,6 +77,8 @@ private:
   DrawCommand m_activeCommand;
   Timer m_timer;
   std::array<char,128> m_inputText; 
+  ImFont* m_largeFont;
+  ImFont* m_smallFont;
 
   // drawing specific members
   int m_thickness = 3;

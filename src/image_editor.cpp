@@ -31,9 +31,8 @@ static void DumpTexture(ID3D11Texture2D* texture)
   Renderer::GetInstance().GetDeviceContext()->Unmap(texture, 0);
 }
 
-void ImageEditor::SetTextureForEditing(std::unique_ptr<Texture2D> texture)
+void ImageEditor::ClearDrawing()
 {
-  m_texture = std::move(texture);
   m_lines.clear();
   m_circles.clear();
   m_rectangles.clear();
@@ -45,6 +44,12 @@ void ImageEditor::SetTextureForEditing(std::unique_ptr<Texture2D> texture)
   m_tempRectangle.reset();
   m_tempArrow.reset();
   m_tempText.reset();
+}
+
+void ImageEditor::SetTextureForEditing(std::unique_ptr<Texture2D> texture)
+{
+  m_texture = std::move(texture);
+  ClearDrawing();
 }
 
 void ImageEditor::Init(ID3D11Device* device)

@@ -42,12 +42,12 @@ void EditorUI::OnAttach()
   // first initialize OpenCL in OpenCV for the initial texture loading
   m_imageEditor.Init(Renderer::GetInstance().GetDevice());
   
-  // init image saver container with the saved patient folders(if there is any)
+  // init image saver container 
   m_imageSavers = std::move(std::make_unique<ImageSaverContainer>(m_appConfig.GetAppFolder()));
   for(const auto& patientFolder : m_appConfig.GetSavedPatientFolders())
-    m_imageSavers->SelectImageSaver(patientFolder.stem().string());
+    m_imageSavers->AddSaver(patientFolder.stem().string());
   
-  if(!m_imageSavers->IsEmpty())
+  if(m_imageSavers->HasSelectedSaver())
   {
     auto uuid = m_imageSavers->GetSelectedSaver().GetUuid();
     m_inputText.fill(0);
@@ -65,6 +65,7 @@ void EditorUI::OnAttach()
   m_rectangleIcon  = std::move(std::make_unique<Texture2D>("rectangle","assets/icons/rectangle.png"));
   m_arrowIcon  = std::move(std::make_unique<Texture2D>("arrow","assets/icons/arrow.png"));
   m_addTextIcon  = std::move(std::make_unique<Texture2D>("add-text","assets/icons/add-text.png"));
+  m_undoIcon  = std::move(std::make_unique<Texture2D>("add-text","assets/icons/left-arrow.png"));
 
   // initieliaze the frames 
   m_activeOriginalImage = std::make_unique<Texture2D>("checkerboard", "assets/textures/Checkerboard.png"); 
@@ -89,6 +90,10 @@ void EditorUI::OnAttach()
     APP_CORE_INFO("FileDialog.DeleteTexture called");
   };
 
+  // load the bigger font and the smaller font for restoring
+  ImGuiIO& io = ImGui::GetIO(); 
+  m_smallFont = io.Fonts->AddFontFromFileTTF("assets/fonts/banschrift.ttf", 18.0);
+  m_largeFont = io.Fonts->AddFontFromFileTTF("assets/fonts/banschrift.ttf", 48.0);
 } 
 
 void EditorUI::OnDetach(){} 
@@ -186,7 +191,7 @@ void EditorUI::ShowImageWindow()
   constexpr ImVec4 tintColor = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);   // No tint
   constexpr ImVec4 borderColor = ImVec4(1.0f, 1.0f, 1.0f, 0.0f); // 50% opaque white
   ImVec2 canvasSize = ImGui::GetContentRegionAvail();   // Resize canvas to what's available
-  canvasSize.y = canvasSize.y - 35; // TODO: not hardcode these values
+  canvasSize.y = canvasSize.y - 60; // TODO: not hardcode these values
 
   if(m_editorState == EditorState::EDITING)
   {
@@ -245,14 +250,16 @@ void EditorUI::ShowImageWindow()
   }
   
   // uuid input
-  ImGui::PushItemWidth(-120);
   static bool uuidTextInputTriggered = false;
-  ImGui::PushStyleVar(ImGuiStyleVar_SelectableTextAlign, ImVec2(0.5f, 0.5f)); 
+
+  ImGui::PushFont(m_largeFont); 
+  ImGui::PushItemWidth(-260); // TODO: do not hardcode it
+  float sz = ImGui::GetTextLineHeight();
   if(ImGui::InputText("##label", m_inputText.data(), m_inputText.size(), ImGuiInputTextFlags_EnterReturnsTrue))
   {
     uuidTextInputTriggered = true;
   }
-  ImGui::PopStyleVar();
+
   ImGui::PopItemWidth();
   ImGui::SameLine();
   if(ImGui::Button("Submit"))
@@ -265,6 +272,7 @@ void EditorUI::ShowImageWindow()
   {
     m_inputText.fill(0);  // no clearing it because we dont use this as an iterated array, but C-style array in ImGui
   }
+  ImGui::PopFont();
 
   if(uuidTextInputTriggered)
   {
@@ -323,11 +331,11 @@ void EditorUI::ShowToolbox()
     {
       if(m_activeOriginalImage.get() != nullptr)
       {
-        if (m_imageSavers->IsEmpty()) //TODO: should select it with an optional<ImageSaver> return type
-          APP_CORE_ERR("Please input valid UUID for saving the current image!");
+        if (m_imageSavers->HasSelectedSaver()) //TODO: should select it with an optional<ImageSaver> return type
+          m_imageSavers->GetSelectedSaver().SaveImage(std::make_shared<Texture2D>(m_activeOriginalImage->GetTexturePtr(), m_activeOriginalImage->GetName()));
         else
         {
-          m_imageSavers->GetSelectedSaver().SaveImage(std::make_shared<Texture2D>(m_activeOriginalImage->GetTexturePtr(), m_activeOriginalImage->GetName()), ImageSaver::ImageType::ORIGINAL);
+          APP_CORE_ERR("Please input valid UUID for saving the current image!");
         }
       }
       m_editorState = EditorState::SCREENSHOT;
@@ -347,10 +355,10 @@ void EditorUI::ShowToolbox()
     {
       if(m_activeEditedImage.get() != nullptr)
       {
-        if (m_imageSavers->IsEmpty()) //TODO: should select it with an optional<ImageSaver> return type
-          APP_CORE_ERR("Please input valid UUID for saving the current image!");
+        if (m_imageSavers->HasSelectedSaver()) //TODO: should select it with an optional<ImageSaver> return type
+          m_imageSavers->GetSelectedSaver().SaveImage(std::make_shared<Texture2D>(m_activeEditedImage->GetTexturePtr(), m_activeEditedImage->GetName()));
         else
-          m_imageSavers->GetSelectedSaver().SaveImage(std::make_shared<Texture2D>(m_activeEditedImage->GetTexturePtr(), m_activeEditedImage->GetName()), ImageSaver::ImageType::ANNOTATED);
+          APP_CORE_ERR("Please input valid UUID for saving the current image!");
       }
       // we can get out of edit mode only with saving the image
       m_editorState = EditorState::SHOW_CAMERA;
@@ -379,8 +387,9 @@ void EditorUI::ShowToolbox()
       bool beginDisabling = false;
       if (ImGui::Button("OK", ImVec2(120, 0))) 
       { 
-        ImGui::CloseCurrentPopup(); 
-        m_imageSavers->GetSelectedSaver().DeleteImage(m_activeEditedImage->GetName());
+        ImGui::CloseCurrentPopup();
+        if(m_imageSavers->HasSelectedSaver())
+          m_imageSavers->GetSelectedSaver().DeleteImage(m_activeEditedImage->GetName());
         m_editorState = EditorState::SHOW_CAMERA;
         beginDisabling = true;
       }
@@ -398,12 +407,20 @@ void EditorUI::ShowToolbox()
     }
   } 
 
+  if (ImGui::ImageButton("undo", m_undoIcon->GetShaderResourceView(), smallIconSize, uvMin, uvMax, iconBg, tintColor))
+  {
+    if(m_editorState == EditorState::EDITING)
+    {
+      m_imageEditor.ClearDrawing();
+    }
+  }
+  ImGui::SameLine();
+
   if (ImGui::ImageButton("addText", m_addTextIcon->GetShaderResourceView(), smallIconSize, uvMin, uvMax, iconBg, tintColor))
   {
     if(m_editorState == EditorState::EDITING)
       m_activeCommand = {DrawCommandType::ADD_TEXT, DrawCommandState::INITIAL};
   }
-  ImGui::SameLine();
 
   //ImGui::SameLine();
   //if (ImGui::ImageButton("pencil", m_pencilIcon->GetShaderResourceView(), smallIconSize, uvMin, uvMax, iconBg, tintColor))
@@ -414,20 +431,21 @@ void EditorUI::ShowToolbox()
     if(m_editorState == EditorState::EDITING)
       m_activeCommand = {DrawCommandType::DRAW_CIRCLE, DrawCommandState::INITIAL};
   }
+  ImGui::SameLine();
   
   if (ImGui::ImageButton("line", m_lineIcon->GetShaderResourceView(), smallIconSize, uvMin, uvMax, iconBg, tintColor))
   {
     if(m_editorState == EditorState::EDITING)
       m_activeCommand = {DrawCommandType::DRAW_LINE, DrawCommandState::INITIAL};
   }
-  ImGui::SameLine();
   
   if (ImGui::ImageButton("rectangle", m_rectangleIcon->GetShaderResourceView(), smallIconSize, uvMin, uvMax, iconBg, tintColor))
   {
     if(m_editorState == EditorState::EDITING)
       m_activeCommand = {DrawCommandType::DRAW_RECTANGLE, DrawCommandState::INITIAL};
   }
-  
+  ImGui::SameLine();
+
   if (ImGui::ImageButton("arrow", m_arrowIcon->GetShaderResourceView(), smallIconSize, uvMin, uvMax, iconBg, tintColor))
   {
     if(m_editorState == EditorState::EDITING)
@@ -445,7 +463,7 @@ void EditorUI::ShowToolbox()
     for(const auto& saverMap : m_imageSavers->GetImageSavers())
     {
       auto& saver = saverMap.second;
-      bool selected = saver.GetUuid() == m_imageSavers->GetSelectedSaver().GetUuid();
+      bool selected = saver.GetUuid() == m_imageSavers->GetSelectedUuid();
       auto uuid = saver.GetUuid();
       if(ImGui::Selectable(uuid.c_str(), &selected))
       {
@@ -453,6 +471,7 @@ void EditorUI::ShowToolbox()
         m_inputText.fill(0);
         std::copy(uuid.begin(), uuid.end(), m_inputText.begin());
         m_imageSavers->SelectImageSaver(uuid);
+        m_imageSavers->GetSelectedSaver().LoadPatientsFolder();
       }
     }
     ImGui::EndListBox();
@@ -468,25 +487,24 @@ void EditorUI::ShowThumbnails()
   ImGuiStyle& style = ImGui::GetStyle();
   bool openThumbnails = true;
   ImGui::Begin("Thumbnails", &openThumbnails, ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoTitleBar);
-  if (!m_imageSavers->IsEmpty())
+  if (m_imageSavers->HasSelectedSaver())
   {
     ImVec4 backgroundColor = ImVec4(1.0f, 1.0f, 1.0f, 0.0f); // 50% opaque white
-    for (const auto& imagePair : m_imageSavers->GetSelectedSaver().GetSavedImagePairs())
+    for (const auto& image : m_imageSavers->GetSelectedSaver().GetSavedImages())
     {
       constexpr ImVec2 uvMin = ImVec2(0.0f, 0.0f);                 // Top-left
       constexpr ImVec2 uvMax = ImVec2(1.0f, 1.0f);                 // Lower-right
       constexpr ImVec4 tintColor = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);   // No tint
-      ImGui::Text("%s", imagePair.name.c_str());
+      ImGui::Text("%s", image->GetName().c_str());
       ImVec2 pos = ImGui::GetCursorScreenPos();
       ImVec2 canvasSize = ImGui::GetContentRegionAvail();
       float aspectRatio = static_cast<float>(m_activeOriginalImage->GetWidth()) / static_cast<float>(m_activeOriginalImage->GetHeight());
-      auto buttonImage = imagePair.annotatedImage.has_value() ? imagePair.annotatedImage.value() : imagePair.originalImage.value(); 
-      if(ImGui::ImageButton(imagePair.name.c_str(), buttonImage->GetShaderResourceView(), ImVec2{ canvasSize.x, canvasSize.x / aspectRatio }, uvMin, uvMax, backgroundColor, tintColor))
+      if(ImGui::ImageButton(image->GetName().c_str(), image->GetShaderResourceView(), ImVec2{ canvasSize.x, canvasSize.x / aspectRatio }, uvMin, uvMax, backgroundColor, tintColor))
       {
         // we can go into edit mode if we select an image from the thumbnails
         m_editorState = EditorState::EDITING;
         const std::string uuid = m_imageSavers->GetSelectedSaver().GetUuid();
-        m_imageEditor.SetTextureForEditing(std::make_unique<Texture2D>(buttonImage->GetTexturePtr(), buttonImage->GetName()));
+        m_imageEditor.SetTextureForEditing(std::make_unique<Texture2D>(image->GetTexturePtr(), image->GetName()));
       }
 
       // little tooltip showing a zoomed version of the thumbnail image
@@ -505,11 +523,12 @@ void EditorUI::ShowThumbnails()
         ImGui::Text("Max: (%.2f, %.2f)", region.x + tooltipRegionSize, region.y + tooltipRegionSize);
         ImVec2 uv0 = ImVec2((region.x) / buttonSize.x, (region.y) / buttonSize.y);
         ImVec2 uv1 = ImVec2((region.x + tooltipRegionSize) / buttonSize.x, (region.y + tooltipRegionSize) / buttonSize.y);
-        ImGui::Image(buttonImage->GetShaderResourceView(), ImVec2(tooltipRegionSize* zoom, tooltipRegionSize* zoom), uv0, uv1, tintColor, backgroundColor);
+        ImGui::Image(image->GetShaderResourceView(), ImVec2(tooltipRegionSize* zoom, tooltipRegionSize* zoom), uv0, uv1, tintColor, backgroundColor);
         ImGui::EndTooltip();
       }
     }
   }
+  ImGui::SetScrollHereY(1.0f);
   ImGui::End();
 }
 
@@ -546,7 +565,7 @@ void EditorUI::OnImguiRender()
     {
       if(ImGui::BeginMenu("Options"))
       {
-        if(ImGui::Button("Data folder"))
+        if(ImGui::Button("Image folder"))
         {
           ifd::FileDialog::Instance().Open("DirectoryOpenDialog", "Open a directory", "");
         }
@@ -577,9 +596,9 @@ void EditorUI::OnImguiRender()
   ShowThumbnails(); 
 
   // some profiling
-  //ImGui::Begin("Profiling");
-  //ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
-  //ImGui::End();
+  ImGui::Begin("Profiling");
+  ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+  ImGui::End();
 } 
 
 } // namespace medicimage
