@@ -55,10 +55,10 @@ void FileLogger::LogFileOperation(const std::string& filename, FileOperation fil
     APP_CORE_ERR("Could not dump json into this file:{}", m_logFileName);
 } 
 
-ImageSaver::ImageSaver(const std::string& uuid, const std::filesystem::path& baseFolder) : m_uuid(uuid), m_dirPath(baseFolder)
+ImageSaver::ImageSaver(const std::string& uuid, const std::filesystem::path& baseFolder) : m_uuid(uuid), m_dirPath(baseFolder / uuid)
 {
-  m_dirPath /= uuid;
   m_fileLogger = std::make_unique<FileLogger>(m_dirPath);
+  CreatePatientDir();
 }
 
 void ImageSaver::ClearSavedImages()
@@ -68,20 +68,25 @@ void ImageSaver::ClearSavedImages()
 
 void ImageSaver::LoadPatientsFolder()
 {
-  if(!(std::filesystem::create_directory(m_dirPath)))
+  // iterate trough the files and load the conained images 
+  for(auto const& dirEntry : std::filesystem::directory_iterator(m_dirPath))
   {
-    APP_CORE_INFO("Directory:{} already created, loading images from it.", m_dirPath.string());
-    // iterate trough the files and load the conained images 
-    for(auto const& dirEntry : std::filesystem::directory_iterator(m_dirPath))
+    if(dirEntry.path().extension() == ".jpeg")
     {
-      if(dirEntry.path().extension() == ".jpeg")
-      {
-        std::string name = dirEntry.path().stem().string(); 
-        LoadImage(name, dirEntry.path());
-        APP_CORE_INFO("Picture {} is loaded", dirEntry.path());
-      }
+      std::string name = dirEntry.path().stem().string(); 
+      LoadImage(name, dirEntry.path());
+      APP_CORE_INFO("Picture {} is loaded", dirEntry.path());
     }
   }
+}
+
+void ImageSaver::CreatePatientDir()
+{
+  if (!(std::filesystem::create_directory(m_dirPath)))
+    APP_CORE_INFO("Directory:{} already created, loading images from it.", m_dirPath.string());
+  if(!(std::filesystem::create_directory(m_dirPath/"thumbs")))
+    APP_CORE_INFO("thumbs folder alredy created for patient:{}, using that one", m_uuid);
+
 }
 
 void ImageSaver::LoadImage(std::string imageName, const std::filesystem::path& filePath)
@@ -115,13 +120,15 @@ void ImageSaver::SaveImage(std::shared_ptr<Texture2D> texture, bool hasFooter)
   m_savedImages.push_back(texture);
     
   name += ".jpeg";
-  std::filesystem::path imagePath = m_dirPath;
-  imagePath /= name; 
-    
+  std::filesystem::path imagePath = m_dirPath / name;
+  std::filesystem::path thumbImagePath = m_dirPath / "thumbs" / name;
+ 
   cv::UMat ocvImage;
   cv::directx::convertFromD3D11Texture2D(texture->GetTexturePtr(), ocvImage);
   cv::cvtColor(ocvImage, ocvImage, cv::COLOR_RGBA2BGR);
   cv::imwrite(imagePath.string(), ocvImage);
+  cv::resize(ocvImage, ocvImage, cv::Size(640,360) );
+  cv::imwrite(thumbImagePath.string(), ocvImage);
   m_fileLogger->LogFileOperation(name, FileLogger::FileOperation::FILE_SAVE);
 }
 
@@ -133,9 +140,9 @@ void ImageSaver::DeleteImage(const std::string& imageName)
   if(it != m_savedImages.end())
   {
     auto image = *it;
-    std::filesystem::path imagePath = m_dirPath;
-    imagePath /= image->GetName() + ".jpeg"; 
-    if(!std::filesystem::remove(imagePath))
+    std::filesystem::path imagePath = m_dirPath / (image->GetName() + ".jpeg");;
+    std::filesystem::path thumbImagePath = m_dirPath / "thumbs" / (image->GetName() + ".jpeg");;
+    if(!std::filesystem::remove(imagePath) || !(std::filesystem::remove(thumbImagePath)))
       APP_CORE_ERR("Something went wrong deleting this image:{}", imagePath.string());
     else
     {

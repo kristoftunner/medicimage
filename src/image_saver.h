@@ -39,6 +39,7 @@ public:
   void SaveImage(std::shared_ptr<Texture2D> texture, bool hasFooter);
   void ClearSavedImages();
   void LoadPatientsFolder();
+  void CreatePatientDir();
   void LoadImage(std::string imageName, const std::filesystem::path& filePath);
   void DeleteImage(const std::string& imageName);
   std::string GetUuid() const {return m_uuid;}

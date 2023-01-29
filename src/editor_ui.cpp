@@ -94,6 +94,9 @@ void EditorUI::OnAttach()
   ImGuiIO& io = ImGui::GetIO(); 
   m_smallFont = io.Fonts->AddFontFromFileTTF("assets/fonts/banschrift.ttf", 18.0);
   m_largeFont = io.Fonts->AddFontFromFileTTF("assets/fonts/banschrift.ttf", 48.0);
+  
+  ImGuiStyle& style = ImGui::GetStyle();
+  m_defaultFrameBgColor = style.Colors[ImGuiCol_Button];
 } 
 
 void EditorUI::OnDetach(){} 
@@ -362,6 +365,7 @@ void EditorUI::ShowToolbox()
       }
       // we can get out of edit mode only with saving the image
       m_editorState = EditorState::SHOW_CAMERA;
+      m_activeCommand = {DrawCommandType::DO_NOTHING, DrawCommandState::INITIAL};
       ImGui::BeginDisabled();
     }
   } 
@@ -404,6 +408,7 @@ void EditorUI::ShowToolbox()
       ImGui::EndPopup();
       if (beginDisabling)
         ImGui::BeginDisabled();
+      m_activeCommand = {DrawCommandType::DO_NOTHING, DrawCommandState::INITIAL};
     }
   } 
 
@@ -423,7 +428,7 @@ void EditorUI::ShowToolbox()
     if (ImGui::BeginPopupModal("undo", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
     {
       std::string imageName = m_activeEditedImage->GetName(); 
-      ImGui::Text("Are you sure you want to clear the annotations");
+      ImGui::Text("Are you sure you want to clear the annotations?");
       ImGui::Separator();
       bool beginDisabling = false;
       if (ImGui::Button("OK", ImVec2(120, 0))) 
@@ -442,19 +447,24 @@ void EditorUI::ShowToolbox()
       ImGui::EndPopup();
       if (beginDisabling)
         ImGui::BeginDisabled();
+      m_activeCommand = {DrawCommandType::DO_NOTHING, DrawCommandState::INITIAL};
     }
   } 
-
+  
+  // setting green border for the selected button
+  ImGuiStyle& style = ImGui::GetStyle();
+  
+  style.Colors[ImGuiCol_Button] = m_activeCommand.commandType == DrawCommandType::ADD_TEXT ? m_toolUsedBgColor : m_defaultFrameBgColor; 
   if (ImGui::ImageButton("addText", m_addTextIcon->GetShaderResourceView(), smallIconSize, uvMin, uvMax, iconBg, tintColor))
   {
     if(m_editorState == EditorState::EDITING)
       m_activeCommand = {DrawCommandType::ADD_TEXT, DrawCommandState::INITIAL};
   }
-
   //ImGui::SameLine();
   //if (ImGui::ImageButton("pencil", m_pencilIcon->GetShaderResourceView(), smallIconSize, uvMin, uvMax, iconBg, tintColor))
   //{
   //}
+  style.Colors[ImGuiCol_Button] = m_activeCommand.commandType == DrawCommandType::DRAW_CIRCLE ? m_toolUsedBgColor : m_defaultFrameBgColor; 
   if (ImGui::ImageButton("circle", m_circleIcon->GetShaderResourceView(), smallIconSize, uvMin, uvMax, iconBg, tintColor))
   {
     if(m_editorState == EditorState::EDITING)
@@ -462,12 +472,14 @@ void EditorUI::ShowToolbox()
   }
   ImGui::SameLine();
   
+  style.Colors[ImGuiCol_Button] = m_activeCommand.commandType == DrawCommandType::DRAW_LINE ? m_toolUsedBgColor : m_defaultFrameBgColor; 
   if (ImGui::ImageButton("line", m_lineIcon->GetShaderResourceView(), smallIconSize, uvMin, uvMax, iconBg, tintColor))
   {
     if(m_editorState == EditorState::EDITING)
       m_activeCommand = {DrawCommandType::DRAW_LINE, DrawCommandState::INITIAL};
   }
   
+  style.Colors[ImGuiCol_Button] = m_activeCommand.commandType == DrawCommandType::DRAW_RECTANGLE ? m_toolUsedBgColor : m_defaultFrameBgColor; 
   if (ImGui::ImageButton("rectangle", m_rectangleIcon->GetShaderResourceView(), smallIconSize, uvMin, uvMax, iconBg, tintColor))
   {
     if(m_editorState == EditorState::EDITING)
@@ -475,6 +487,7 @@ void EditorUI::ShowToolbox()
   }
   ImGui::SameLine();
 
+  style.Colors[ImGuiCol_Button] = m_activeCommand.commandType == DrawCommandType::DRAW_ARROW ? m_toolUsedBgColor : m_defaultFrameBgColor; 
   if (ImGui::ImageButton("arrow", m_arrowIcon->GetShaderResourceView(), smallIconSize, uvMin, uvMax, iconBg, tintColor))
   {
     if(m_editorState == EditorState::EDITING)
@@ -485,6 +498,8 @@ void EditorUI::ShowToolbox()
   {
     ImGui::EndDisabled();
   }
+  // restore the default color
+  style.Colors[ImGuiCol_Button] = m_defaultFrameBgColor; 
   
   //listbox for selecting saved uuids
   if (ImGui::BeginListBox("##listbox", ImVec2{ -FLT_MIN, 120 }))
