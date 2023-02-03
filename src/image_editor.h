@@ -62,7 +62,7 @@ class ImageEditor
 public:
   ImageEditor() = default;
   void Init(ID3D11Device* device);
-  void SetTextureForEditing(std::unique_ptr<Texture2D> texture);
+  void SetTextureForEditing(std::unique_ptr<Texture2D> texture, const std::string& timestamp);
   // topLeft, width and height are relative to the texture size, between 0-1
   void AddRectangle(ImVec2 topLeft, ImVec2 bottomRight, PrimitiveAddingType addType, const int thickness = 1, const Color color = {0,0,0});
   void AddCircle(ImVec2 center, float radius, PrimitiveAddingType addType, const int thickness = 1, const Color color= {0,0,0}); // orig is sized between 0-1
@@ -71,14 +71,16 @@ public:
   void AddText(const std::string& text, ImVec2 bottomLeft, PrimitiveAddingType addType,const int fontSize, const Color color={0,0,0}); // TODO: change const std::string& to std::string_view 
   void ClearDrawing();
   static std::shared_ptr<Texture2D> AddImageFooter(const std::string& footerText, std::shared_ptr<Texture2D> texture);
+  static std::shared_ptr<Texture2D> ReplaceImageFooter(const std::string& footerText, std::shared_ptr<Texture2D> texture);
   std::shared_ptr<Texture2D> Draw();
 private:
   static cv::UMat AddFooter(cv::UMat image, const std::string& footerText);
   std::unique_ptr<Texture2D> m_texture;
   cv::UMat m_opencvImage;
-  static constexpr int m_sideBorder = 20;
-  static constexpr int m_topBorder = 20;
-  static constexpr int m_bottomBorder = 100;
+  static constexpr int s_sideBorder = 20;
+  static constexpr int s_topBorder = 20;
+  static constexpr int s_bottomBorder = 100;
+  std::string m_timestamp;
   // primitives to draw on the image in the Draw call
   std::vector<Line> m_lines;
   std::vector<Circle> m_circles;
@@ -91,6 +93,9 @@ private:
   std::optional<Rectangle> m_tempRectangle;
   std::optional<Line> m_tempArrow;
   std::optional<Text> m_tempText;
+
+  // TODO: move this into a better place
+  cv::ocl::Context m_context;
 };
 
 } // namespace medicimage

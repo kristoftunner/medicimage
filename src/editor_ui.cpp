@@ -71,7 +71,7 @@ void EditorUI::OnAttach()
   m_activeOriginalImage = std::make_unique<Texture2D>("checkerboard", "assets/textures/Checkerboard.png"); 
   m_activeEditedImage = std::make_unique<Texture2D>("initial checkerboard", "assets/textures/Checkerboard.png"); // initialize the edited frame with the current frame and later update only the current frame in OnUpdate
 
-  m_imageEditor.SetTextureForEditing(std::move(std::make_unique<Texture2D>(m_activeOriginalImage->GetTexturePtr(), "currently edited texture"))); // initialize image editor as well
+  m_imageEditor.SetTextureForEditing(std::move(std::make_unique<Texture2D>(m_activeOriginalImage->GetTexturePtr(), "currently edited texture")),""); // initialize image editor as well
 
   m_camera.Open();
   
@@ -81,7 +81,7 @@ void EditorUI::OnAttach()
     // Here, there is a memory leak, because on DirectX there is no similar API for storing textures, like OpenGL 
     // but these textures are just the thumbnails on file dialog.. so for now it is okay, in the future this has 
     // to be fixed with either another filedialog plugin or fixing this one: TODO
-    auto* texture = new medicimage::Texture2D(w,h); 
+    auto* texture = new medicimage::Texture2D("icon", w, h);
     Renderer::GetInstance().GetDeviceContext()->UpdateSubresource(texture->GetTexturePtr(), 0, 0, data, w*4, w*h*4);
     return reinterpret_cast<void*>(texture->GetShaderResourceView());
   }; 
@@ -542,16 +542,15 @@ void EditorUI::ShowThumbnails()
       constexpr ImVec2 uvMin = ImVec2(0.0f, 0.0f);                 // Top-left
       constexpr ImVec2 uvMax = ImVec2(1.0f, 1.0f);                 // Lower-right
       constexpr ImVec4 tintColor = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);   // No tint
-      ImGui::Text("%s", image->GetName().c_str());
+      ImGui::Text("%s", image.texture->GetName().c_str());
       ImVec2 pos = ImGui::GetCursorScreenPos();
       ImVec2 canvasSize = ImGui::GetContentRegionAvail();
       float aspectRatio = static_cast<float>(m_activeOriginalImage->GetWidth()) / static_cast<float>(m_activeOriginalImage->GetHeight());
-      if(ImGui::ImageButton(image->GetName().c_str(), image->GetShaderResourceView(), ImVec2{ canvasSize.x, canvasSize.x / aspectRatio }, uvMin, uvMax, backgroundColor, tintColor))
+      if(ImGui::ImageButton(image.texture->GetName().c_str(), image.texture->GetShaderResourceView(), ImVec2{ canvasSize.x, canvasSize.x / aspectRatio }, uvMin, uvMax, backgroundColor, tintColor))
       {
         // we can go into edit mode if we select an image from the thumbnails
         m_editorState = EditorState::EDITING;
-        auto imageName = m_imageSavers->GetSelectedSaver().GetNextImageName();
-        m_imageEditor.SetTextureForEditing(std::make_unique<Texture2D>(image->GetTexturePtr(), imageName));
+        m_imageEditor.SetTextureForEditing(std::make_unique<Texture2D>(image.texture->GetTexturePtr(), image.texture->GetName()), image.timestamp);
       }
 
       // little tooltip showing a zoomed version of the thumbnail image
@@ -570,7 +569,7 @@ void EditorUI::ShowThumbnails()
         ImGui::Text("Max: (%.2f, %.2f)", region.x + tooltipRegionSize, region.y + tooltipRegionSize);
         ImVec2 uv0 = ImVec2((region.x) / buttonSize.x, (region.y) / buttonSize.y);
         ImVec2 uv1 = ImVec2((region.x + tooltipRegionSize) / buttonSize.x, (region.y + tooltipRegionSize) / buttonSize.y);
-        ImGui::Image(image->GetShaderResourceView(), ImVec2(tooltipRegionSize* zoom, tooltipRegionSize* zoom), uv0, uv1, tintColor, backgroundColor);
+        ImGui::Image(image.texture->GetShaderResourceView(), ImVec2(tooltipRegionSize* zoom, tooltipRegionSize* zoom), uv0, uv1, tintColor, backgroundColor);
         ImGui::EndTooltip();
       }
     }

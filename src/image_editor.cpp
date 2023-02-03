@@ -46,17 +46,63 @@ void ImageEditor::ClearDrawing()
   m_tempText.reset();
 }
 
-void ImageEditor::SetTextureForEditing(std::unique_ptr<Texture2D> texture)
+void ImageEditor::SetTextureForEditing(std::unique_ptr<Texture2D> texture, const std::string& timestamp)
 {
   // cut the image from the border and the footer
   m_texture = std::move(texture);
   ClearDrawing();
+  m_timestamp = timestamp;
 }
 
 void ImageEditor::Init(ID3D11Device* device)
 {
+  std::vector<cv::ocl::PlatformInfo> platformInfos;
+  auto convertDeviceType = [](int type) {
+    std::string deviceType;
+    switch (type)
+    {
+    case 0:
+      deviceType = "DEFAULT";
+      break;
+    case 2:
+      deviceType = "CPU";
+      break;
+    case 4:
+      deviceType = "GPU";
+      break;
+    case (4 + (1<<16)):
+      deviceType = "IGPU";
+      break;
+    default:
+      deviceType = "some weird vendor type";
+      break;
+    }
+    return deviceType;
+  };
   if(cv::ocl::haveOpenCL())
-    cv::directx::ocl::initializeContextFromD3D11Device(device);
+  {
+    cv::ocl::getPlatfomsInfo(platformInfos);
+    for(auto& platform : platformInfos)
+    {
+      cv::ocl::Device device;
+      platform.getDevice(device, 0); // assuming there is one device per platform
+      auto type = device.type();
+      auto vendorId = device.vendorID();
+      auto name = platform.name();
+      auto vendor = platform.vendor();
+      std::string deviceType = convertDeviceType(type);
+      APP_CORE_INFO("Available openCL device: {} type:{} vendor: {} vendorID: {}", name, deviceType, vendor, vendorId);
+    }
+
+    m_context = cv::directx::ocl::initializeContextFromD3D11Device(device);
+
+    std::string deviceName = m_context.device(0).name();
+    auto vendorId = m_context.device(0).vendorID();
+    auto vendorName = m_context.device(0).vendorName();
+    auto type = m_context.device(0).type();
+    auto deviceType = convertDeviceType(type);
+    APP_CORE_INFO("Using the following device: {} type:{} vendor: {} vendorID: {}", deviceName, deviceType, vendorName, vendorId);
+  }
   else
     APP_CORE_ERR("Do not have OpenCL device!!");
 }
@@ -167,10 +213,7 @@ void ImageEditor::AddText(const std::string& text, ImVec2 bottomLeft, PrimitiveA
 std::shared_ptr<Texture2D> ImageEditor::Draw()
 {
   cv::directx::convertFromD3D11Texture2D(m_texture->GetTexturePtr(), m_opencvImage);
-  constexpr int sideBorder = 20;
-  constexpr int topBorder = 20;
-  constexpr int bottomBorder = 100;
-  m_opencvImage = m_opencvImage(cv::Range(m_topBorder, m_opencvImage.rows - m_topBorder - m_bottomBorder), cv::Range(m_sideBorder, m_opencvImage.cols - 2*m_sideBorder));
+  m_opencvImage = m_opencvImage(cv::Range(s_topBorder, m_opencvImage.rows - s_topBorder - s_bottomBorder), cv::Range(s_sideBorder, m_opencvImage.cols - 2*s_sideBorder));
   cv::UMat image;
   cv::cvtColor(m_opencvImage, image, cv::COLOR_RGBA2BGR);
   for(auto& rectangle : m_rectangles)
@@ -243,13 +286,10 @@ std::shared_ptr<Texture2D> ImageEditor::Draw()
   }
 
   // add image footer to the edited image, because we loaded the only the actual image without the border and the footer
-  auto in_time_t = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-  std::stringstream ss;
-  ss << std::put_time(std::localtime(&in_time_t), "%d-%b-%Y %X");
-  std::string footerText = m_texture->GetName() + " - " + ss.str();
+  std::string footerText = m_texture->GetName() + " - " + m_timestamp;
   auto borderedImage = AddFooter(image, footerText); 
   
-  std::shared_ptr<Texture2D> dstTexture = std::make_shared<Texture2D>(borderedImage.cols, borderedImage.rows);
+  std::shared_ptr<Texture2D> dstTexture = std::make_shared<Texture2D>(m_texture->GetName() ,borderedImage.cols, borderedImage.rows);
   cv::cvtColor(borderedImage, m_opencvImage, cv::COLOR_BGR2RGBA);
   cv::directx::convertToD3D11Texture2D(m_opencvImage, dstTexture->GetTexturePtr());
   return dstTexture;
@@ -260,9 +300,26 @@ cv::UMat ImageEditor::AddFooter(cv::UMat image, const std::string& footerText)
   // add a sticker to the bottom with the image name, date and time
   // assuming the original texture has 1920x1080 resolution, expanding with 20-20 pixels left/right and 30 bottom, 20 top
   cv::UMat borderedImage;
-  cv::copyMakeBorder(image, borderedImage, m_topBorder, m_bottomBorder, m_sideBorder, m_sideBorder, cv::BORDER_CONSTANT , cv::Scalar{255,255,255} ); // adding white border
+  cv::copyMakeBorder(image, borderedImage, s_topBorder, s_bottomBorder, s_sideBorder, s_sideBorder, cv::BORDER_CONSTANT , cv::Scalar{255,255,255} ); // adding white border
   cv::putText(borderedImage, footerText, cv::Point{20, borderedImage.rows - 20}, cv::FONT_HERSHEY_PLAIN, 4, cv::Scalar{128,128,128}, 3);
   return borderedImage;
+}
+
+std::shared_ptr<Texture2D> ImageEditor::ReplaceImageFooter(const std::string& footerText, std::shared_ptr<Texture2D> texture)
+{
+  cv::UMat image;
+  cv::directx::convertFromD3D11Texture2D(texture->GetTexturePtr(), image);
+  image = image(cv::Range(s_topBorder, image.rows - s_topBorder - s_bottomBorder), cv::Range(s_sideBorder, image.cols - 2*s_sideBorder));
+  cv::cvtColor(image, image, cv::COLOR_RGBA2BGR);
+  
+  cv::UMat borderedImage = AddFooter(image, footerText);
+  
+  std::shared_ptr<Texture2D> dstTexture = std::make_shared<Texture2D>(texture->GetName(), borderedImage.cols, borderedImage.rows);
+  dstTexture->SetName(texture->GetName());
+  cv::cvtColor(borderedImage, borderedImage, cv::COLOR_BGR2RGBA);
+  cv::directx::convertToD3D11Texture2D(borderedImage, dstTexture->GetTexturePtr());
+  return dstTexture;
+
 }
 
 std::shared_ptr<Texture2D> ImageEditor::AddImageFooter(const std::string& footerText, std::shared_ptr<Texture2D> texture)
@@ -273,7 +330,7 @@ std::shared_ptr<Texture2D> ImageEditor::AddImageFooter(const std::string& footer
   
   cv::UMat borderedImage = AddFooter(image, footerText);
   
-  std::shared_ptr<Texture2D> dstTexture = std::make_shared<Texture2D>(borderedImage.cols, borderedImage.rows);
+  std::shared_ptr<Texture2D> dstTexture = std::make_shared<Texture2D>(texture->GetName(), borderedImage.cols, borderedImage.rows);
   dstTexture->SetName(texture->GetName());
   cv::cvtColor(borderedImage, borderedImage, cv::COLOR_BGR2RGBA);
   cv::directx::convertToD3D11Texture2D(borderedImage, dstTexture->GetTexturePtr());

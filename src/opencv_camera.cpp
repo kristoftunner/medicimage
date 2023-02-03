@@ -38,7 +38,7 @@ CameraAPI::Frame OpenCvCamera::CaptureFrame()
   m_cap.read(frame);
   cv::cvtColor(frame, frame, cv::COLOR_BGR2RGBA);
   cv::resize(frame, frame, cv::Size(width,height));
-  Frame frameTexture = std::make_unique<Texture2D>(width, height);
+  Frame frameTexture = std::make_unique<Texture2D>("frame", width, height);
   Renderer::GetInstance().GetDeviceContext()->UpdateSubresource(frameTexture.value()->GetTexturePtr(), 0, 0, frame.data, (UINT)frame.step[0], (UINT)frame.total());
   frame.release();
   return std::move(frameTexture);

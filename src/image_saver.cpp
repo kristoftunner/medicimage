@@ -92,12 +92,12 @@ void ImageSaver::CreatePatientDir()
 void ImageSaver::LoadImage(std::string imageName, const std::filesystem::path& filePath)
 {
   // assuming there are only one annotated and original variant of an image
-  auto findByName = [&](const ImageRef_t& image){return image->GetName() == imageName;};
+  auto findByName = [&](const ImageDoc& image){return image.texture->GetName() == imageName;};
   
   auto it = std::find_if(m_savedImages.begin(), m_savedImages.end(), findByName);
   if(it == m_savedImages.end())
   { 
-    m_savedImages.push_back(std::make_shared<Texture2D>(imageName, filePath.string()));
+    m_savedImages.push_back({ "",std::make_shared<Texture2D>(imageName, filePath.string()) });
   }
 }
 
@@ -107,17 +107,18 @@ void ImageSaver::SaveImage(std::shared_ptr<Texture2D> texture, bool hasFooter)
   std::string name = m_uuid + "_" + std::to_string(m_savedImages.size());
   texture->SetName(name);
 
-  if(!hasFooter)
-  {
-    // need to add footer only to the original image, because for the annotated the original image is used as a base
-    auto in_time_t = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-    std::stringstream ss;
-    ss << std::put_time(std::localtime(&in_time_t), "%d-%b-%Y %X");
-    std::string footerText = texture->GetName() + " - " + ss.str();
+  // need to add footer only to the original image, because for the annotated the original image is used as a base
+  auto in_time_t = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+  std::stringstream ss;
+  ss << std::put_time(std::localtime(&in_time_t), "%d-%b-%Y %X");
+  std::string footerText = texture->GetName() + " - " + ss.str();
+  
+  if(hasFooter)
+    texture = ImageEditor::ReplaceImageFooter(footerText, texture);
+  else
     texture = ImageEditor::AddImageFooter(footerText, texture);
-  }
 
-  m_savedImages.push_back(texture);
+  m_savedImages.push_back({ss.str(), texture});
     
   name += ".jpeg";
   std::filesystem::path imagePath = m_dirPath / name;
@@ -134,19 +135,19 @@ void ImageSaver::SaveImage(std::shared_ptr<Texture2D> texture, bool hasFooter)
 
 void ImageSaver::DeleteImage(const std::string& imageName)
 {
-  auto findByName = [&](const ImageRef_t& image){return image->GetName() == imageName;};
+  auto findByName = [&](const ImageDoc& image){return image.texture->GetName() == imageName;};
 
   auto it = std::find_if(m_savedImages.begin(), m_savedImages.end(), findByName);
   if(it != m_savedImages.end())
   {
     auto image = *it;
-    std::filesystem::path imagePath = m_dirPath / (image->GetName() + ".jpeg");;
-    std::filesystem::path thumbImagePath = m_dirPath / "thumbs" / (image->GetName() + ".jpeg");;
+    std::filesystem::path imagePath = m_dirPath / (image.texture->GetName() + ".jpeg");;
+    std::filesystem::path thumbImagePath = m_dirPath / "thumbs" / (image.texture->GetName() + ".jpeg");;
     if(!std::filesystem::remove(imagePath) || !(std::filesystem::remove(thumbImagePath)))
       APP_CORE_ERR("Something went wrong deleting this image:{}", imagePath.string());
     else
     {
-      m_fileLogger->LogFileOperation(image->GetName() + ".jpeg", FileLogger::FileOperation::FILE_DELETE);
+      m_fileLogger->LogFileOperation(image.texture->GetName() + ".jpeg", FileLogger::FileOperation::FILE_DELETE);
       APP_CORE_INFO("Image: {} deleted", imagePath.string());
     }
     m_savedImages.erase(it);
@@ -167,12 +168,13 @@ void ImageSaverContainer::SelectImageSaver(const std::string& uuid)
 {
   if(uuid != "")
   {
-    // first clear the images saved into memory, add the saver if doesnt exist in the container and select it 
+    // first clear the images saved into memory, add the saver if doesnt exist in the container, select and load the images 
     if(m_selectedSaver != "")
       m_savers[m_selectedSaver].ClearSavedImages();
     if(m_savers.find(uuid) == m_savers.end())
       AddSaver(uuid);
     m_selectedSaver = uuid;
+    m_savers[m_selectedSaver].LoadPatientsFolder();
   }
   else
     APP_CORE_WARN("Please select a valid uuid for patient");

@@ -26,11 +26,16 @@ private:
   std::filesystem::path m_logFileName;
 };
 
+struct ImageDoc
+{
+  std::string timestamp;
+  std::shared_ptr<Texture2D> texture; 
+};
+
 class ImageSaver
 {
   //TODO: implement error handling
 public:
-  using ImageRef_t = std::shared_ptr<Texture2D>;
   ImageSaver() = default;
   ImageSaver(const std::string& uuid, const std::filesystem::path& baseFolder);
   // original images are saved only once when doing a screenshot of the image. The original's annotated pair can be replaced multiple
@@ -43,15 +48,14 @@ public:
   void LoadImage(std::string imageName, const std::filesystem::path& filePath);
   void DeleteImage(const std::string& imageName);
   std::string GetUuid() const {return m_uuid;}
-  std::string GetNextImageName(){return m_uuid + "_" + std::to_string(m_savedImages.size());}
   const std::filesystem::path& GetPatientFolder() { return m_dirPath; }
 
   // returns a vector of both the original and annotated pair of the image
-  const std::vector<ImageRef_t>& GetSavedImages(){return m_savedImages;}
+  const std::vector<ImageDoc>& GetSavedImages(){return m_savedImages;}
 private:
   std::string m_uuid;
   std::filesystem::path m_dirPath;
-  std::vector<ImageRef_t> m_savedImages;
+  std::vector<ImageDoc> m_savedImages;
   std::unique_ptr<FileLogger> m_fileLogger;
 };
 

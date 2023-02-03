@@ -10,6 +10,8 @@
 #include <iostream>
 #include <d3dcompiler.h>
 
+#include "log.h"
+
 namespace medicimage
 {
 
@@ -123,6 +125,16 @@ void Renderer::CreateDevice(HWND hwnd, const WindowProps& windowProperties)
   D3D_FEATURE_LEVEL featureLevel;
   const D3D_FEATURE_LEVEL featureLevelArray[2] = { D3D_FEATURE_LEVEL_11_0, D3D_FEATURE_LEVEL_10_0, };
   ThrowIfFailed(D3D11CreateDeviceAndSwapChain(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, createDeviceFlags, featureLevelArray, 2, D3D11_SDK_VERSION, &sd, &m_swapchain, &m_device, &featureLevel, &m_deviceContext)); 
+  
+  // for debug
+  IDXGIDevice* deviceInterface = nullptr;
+  ThrowIfFailed(m_device->QueryInterface(IID_PPV_ARGS(&deviceInterface)));
+  IDXGIAdapter1* adapter = nullptr;
+  ThrowIfFailed(deviceInterface->GetParent(IID_PPV_ARGS(&adapter)));
+  DXGI_ADAPTER_DESC1 desc;
+  adapter->GetDesc1(&desc);
+  std::wstring gpuDescription(desc.Description);
+  APP_CORE_INFO("Graphics card selected by DirectX:{}", std::string(gpuDescription.begin(), gpuDescription.end()));
 }
 
 void Renderer::Resize()

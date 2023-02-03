@@ -18,7 +18,7 @@ private:
 	ID3D11SamplerState* m_samplerState;
 	D3D11_SAMPLER_DESC m_samplerDesc;
 public:
-	Texture2D(unsigned int width, unsigned int height);
+	Texture2D(const std::string& name, unsigned int width, unsigned int height);
 	Texture2D(const std::string& name, const std::string& filename); // TODO: make the filename std::filesystem::path
   Texture2D(ID3D11Texture2D* srcTexture, const std::string& name);
   Texture2D(Texture2D& texture);

@@ -1,8 +1,8 @@
 cmake_minimum_required(VERSION 3.16)
 
-add_executable(sandbox sandbox.cpp)
-target_link_libraries(sandbox PUBLIC medicimage)
-set_property(TARGET sandbox PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+add_executable(medical_imaging sandbox.cpp)
+target_link_libraries(medical_imaging PUBLIC medicimage)
+set_property(TARGET medical_imaging PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 install(DIRECTORY assets DESTINATION "")
 
 

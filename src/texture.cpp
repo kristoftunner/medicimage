@@ -7,8 +7,8 @@
 namespace medicimage
 {
 
-  Texture2D::Texture2D(unsigned int width, unsigned int height)
-    : m_fileName("NULL")
+  Texture2D::Texture2D(const std::string& name, unsigned int width, unsigned int height)
+    : m_fileName("NULL"), m_name(name)
   {
     m_width = width;
     m_height = height;
