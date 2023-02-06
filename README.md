@@ -5,3 +5,9 @@ For the icons I use this lib: https://www.flaticon.com/search?style_id=1219&auth
 
 ## Dear ImGui related:
 Input text using the enter key for completion: https://github.com/ocornut/imgui/issues/589
+
+## Priorities, next tasks:
+1. Licensing
+2. Updateing
+3. Industrial camera
+4. Entity component system

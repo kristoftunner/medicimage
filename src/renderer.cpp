@@ -9,7 +9,7 @@
 
 #include <iostream>
 #include <d3dcompiler.h>
-
+#include <dxgi1_6.h>
 #include "log.h"
 
 namespace medicimage
@@ -101,8 +101,37 @@ void Renderer::SetupBuffers()
 
 }
 
+static void GetHardwareAdapter(
+  IDXGIFactory1* pFactory,
+  IDXGIAdapter1** ppAdapter,
+  bool requestHighPerformanceAdapter)
+{
+  *ppAdapter = nullptr;
+
+  IDXGIAdapter1* adapter;
+
+  IDXGIFactory6* factory6;
+  ThrowIfFailed(pFactory->QueryInterface(IID_PPV_ARGS(&factory6)));
+  
+  if (!SUCCEEDED(factory6->EnumAdapterByGpuPreference(0, DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE, IID_PPV_ARGS(&adapter))))
+    APP_CORE_ERR("Havent find a high performance GPU for DirectX");
+  
+  DXGI_ADAPTER_DESC1 desc;
+  adapter->GetDesc1(&desc);
+  *ppAdapter = adapter;
+}
+
 void Renderer::CreateDevice(HWND hwnd, const WindowProps& windowProperties)
 {
+  // querying the devices
+  UINT dxgiFactoryFlags = 0;
+
+  IDXGIFactory4* factory;
+  ThrowIfFailed(CreateDXGIFactory2(dxgiFactoryFlags, IID_PPV_ARGS(&factory)));
+
+  IDXGIAdapter1* hardwareAdapter;
+  GetHardwareAdapter(factory, &hardwareAdapter, true);
+
   // Setup swap chain
   DXGI_SWAP_CHAIN_DESC sd;
   ZeroMemory(&sd, sizeof(sd));
@@ -121,10 +150,11 @@ void Renderer::CreateDevice(HWND hwnd, const WindowProps& windowProperties)
   sd.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
 
   UINT createDeviceFlags = 0;
-  //createDeviceFlags |= D3D11_CREATE_DEVICE_DEBUG;
   D3D_FEATURE_LEVEL featureLevel;
   const D3D_FEATURE_LEVEL featureLevelArray[2] = { D3D_FEATURE_LEVEL_11_0, D3D_FEATURE_LEVEL_10_0, };
-  ThrowIfFailed(D3D11CreateDeviceAndSwapChain(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, createDeviceFlags, featureLevelArray, 2, D3D11_SDK_VERSION, &sd, &m_swapchain, &m_device, &featureLevel, &m_deviceContext)); 
+  ThrowIfFailed(D3D11CreateDevice(hardwareAdapter, D3D_DRIVER_TYPE_UNKNOWN, NULL, createDeviceFlags, featureLevelArray, 2, D3D11_SDK_VERSION, &m_device, &featureLevel, &m_deviceContext)); 
+  ThrowIfFailed(factory->CreateSwapChain(m_device, &sd, &m_swapchain));
+  //ThrowIfFailed(D3D11CreateDeviceAndSwapChain(hardwareAdapter, D3D_DRIVER_TYPE_HARDWARE, NULL, createDeviceFlags, featureLevelArray, 2, D3D11_SDK_VERSION, &sd, &m_swapchain, &m_device, &featureLevel, &m_deviceContext)); 
   
   // for debug
   IDXGIDevice* deviceInterface = nullptr;
