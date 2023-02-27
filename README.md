@@ -11,3 +11,50 @@ Input text using the enter key for completion: https://github.com/ocornut/imgui/
 2. Updateing
 3. Industrial camera
 4. Entity component system
+
+## Notes on the ECS integration and objects on the sheet
+- Drawing object has to have the following components
+  - Transform component:
+    - with the attirbutes of translation, rotation and (scale??)
+    - scale can have multiple DoF(degrees of freedom), in case of a rectangle: 2 - this should be in the geomtery component
+  - Color component - rgba
+  - Tag component:
+    - basecally to name/tag the component
+  - Bounding box
+- These are optional components:
+  - Group component - optional
+    - to tag if the component is grouped
+- Geomtery description components:
+  - Circle
+  - Rectangle
+  - Text
+  - Ellipse
+  - Arrow
+
+## Drawing sheet concept
+To be cleared: how to handle mouse events correctly when editing the scene(sheet - have correct naming here). A solution could be to have a <code>DrawingSheet</code>
+class that contains the entt integration and all the drawing objects, which pass these objects to the draw command(wrapper opencv draw functions).
+
+### Drawing states for the various commands:
+**Draw circle/rectangle/arrow/**  
+1) Initial -- just hovering on the document -> Left click - 2)
+2) Draw first point
+3) Drawing second point(left button down)
+4) Second point drawn (left button released)
+5) Object selected. Left click anywhere outside the pick area-> Draw first point  
+
+**Add text**  
+1) Initial -- just hovering on the document
+2) Left click on the document -> 3) 
+3) Adding text -> Left clock on the document -> 1)
+
+**Select object**
+1) Initial - just hovering over the document
+2) Left click on the document -> 3)
+3) Selecting. Left mouse button down -> select area. Left mouse button released -> selecting an object
+4) Left mouse button released -> selected objects in the select area -> 5)
+5) Object selected. Left mouse button pressed -> 2)
+
+**Discussion with samer**
+For line: draw multiple separate line continuously
+For shape: after drawing an object -> select that object and go back to selection mode

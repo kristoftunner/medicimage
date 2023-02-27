@@ -1,5 +1,5 @@
 #include "editor_ui.h"
-#include "log.h"
+#include "core/log.h"
 #include "widgets/ImFileDialog.h"
 
 #include <assert.h>
@@ -113,7 +113,7 @@ bool EditorUI::OnKeyTextInputEvent(KeyTextInputEvent* e)
   if ((m_activeCommand.commandState == DrawCommandState::FIRST_CLICK) && m_activeCommand.commandType == DrawCommandType::ADD_TEXT)
   {
     // text drawing rectangle bottom left point added, receiving text input
-    m_editText += e->GetInputTextText();
+   m_editText += e->GetInputTextText();
     return true;
   }
   else

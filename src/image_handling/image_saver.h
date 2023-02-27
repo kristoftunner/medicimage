@@ -26,7 +26,7 @@ private:
   std::filesystem::path m_logFileName;
 };
 
-struct ImageDoc
+struct ImageDocument
 {
   std::string timestamp;
   std::shared_ptr<Texture2D> texture; 
@@ -51,11 +51,11 @@ public:
   const std::filesystem::path& GetPatientFolder() { return m_dirPath; }
 
   // returns a vector of both the original and annotated pair of the image
-  const std::vector<ImageDoc>& GetSavedImages(){return m_savedImages;}
+  const std::vector<ImageDocument>& GetSavedImages(){return m_savedImages;}
 private:
   std::string m_uuid;
   std::filesystem::path m_dirPath;
-  std::vector<ImageDoc> m_savedImages;
+  std::vector<ImageDocument> m_savedImages;
   std::unique_ptr<FileLogger> m_fileLogger;
 };
 

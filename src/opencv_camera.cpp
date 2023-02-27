@@ -1,5 +1,5 @@
 #include "opencv_camera.h"
-#include "log.h"
+#include "core/log.h"
 #include "opencv2/core/directx.hpp"
 #include "opencv2/core/ocl.hpp"
 #include <opencv2/imgproc.hpp>

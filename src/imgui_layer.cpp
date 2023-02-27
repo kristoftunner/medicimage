@@ -4,7 +4,7 @@
 #include "backends/imgui_impl_dx11.h"
 #include "texture.h"
 #include <iostream>
-#include "log.h"
+#include "core/log.h"
 
 namespace medicimage
 {

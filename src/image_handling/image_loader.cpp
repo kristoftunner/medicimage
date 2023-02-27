@@ -1,7 +1,7 @@
 
 #include <iostream>
 
-#include "image_loader.h"
+#include "image_handling/image_loader.h"
 #include "stb_image.h"
 #include "stb_image_resize.h"
 

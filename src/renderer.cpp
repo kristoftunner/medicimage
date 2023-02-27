@@ -1,7 +1,7 @@
 #include "renderer.h"
 #include "backends/imgui_impl_sdl.h"
 #include "backends/imgui_impl_dx11.h"
-#include "image_loader.h"
+#include "image_handling/image_loader.h"
 
 #include <opencv2/core.hpp>
 #include <opencv2/imgcodecs.hpp>
@@ -10,7 +10,7 @@
 #include <iostream>
 #include <d3dcompiler.h>
 #include <dxgi1_6.h>
-#include "log.h"
+#include "core/log.h"
 
 namespace medicimage
 {

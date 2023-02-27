@@ -1,8 +1,8 @@
 #include "texture.h"
-#include "image_loader.h"
+#include "image_handling/image_loader.h"
 #include <iostream>
 #include <assert.h>
-#include "log.h"
+#include "core/log.h"
 
 namespace medicimage
 {

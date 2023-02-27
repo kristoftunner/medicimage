@@ -1,6 +1,6 @@
 #include "application.h"
 #include "texture.h"
-#include "log.h"
+#include "core/log.h"
 #include <ctime>
 
 namespace medicimage

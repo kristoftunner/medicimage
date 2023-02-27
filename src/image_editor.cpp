@@ -1,5 +1,5 @@
 #include "image_editor.h"
-#include "log.h"
+#include "core/log.h"
 #include <fstream>
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/highgui.hpp>

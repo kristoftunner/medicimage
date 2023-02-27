@@ -1,10 +1,10 @@
 #pragma once
 
-#include "application_event.h"
+#include "event/application_event.h"
 #include "imgui_layer.h"
 #include "window.h"
 #include "renderer.h"
-#include "event.h"
+#include "event/event.h"
 #include "editor_ui.h"
 
 namespace medicimage

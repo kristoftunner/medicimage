@@ -5,8 +5,8 @@
 #include "texture.h"
 #include "image_editor.h"
 #include "opencv_camera.h"
-#include "image_saver.h"
-#include "log.h"
+#include "image_handling/image_saver.h"
+#include "core/log.h"
 #include "utils.h"
 #include "key_event.h"
 

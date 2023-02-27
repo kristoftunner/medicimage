@@ -1,5 +1,5 @@
-#include "image_saver.h"
-#include "log.h"
+#include "image_handling/image_saver.h"
+#include "core/log.h"
 #include "image_editor.h"
 
 #include "opencv2/core/directx.hpp"
@@ -92,7 +92,7 @@ void ImageSaver::CreatePatientDir()
 void ImageSaver::LoadImage(std::string imageName, const std::filesystem::path& filePath)
 {
   // assuming there are only one annotated and original variant of an image
-  auto findByName = [&](const ImageDoc& image){return image.texture->GetName() == imageName;};
+  auto findByName = [&](const ImageDocument& image){return image.texture->GetName() == imageName;};
   
   auto it = std::find_if(m_savedImages.begin(), m_savedImages.end(), findByName);
   if(it == m_savedImages.end())
@@ -135,7 +135,7 @@ void ImageSaver::SaveImage(std::shared_ptr<Texture2D> texture, bool hasFooter)
 
 void ImageSaver::DeleteImage(const std::string& imageName)
 {
-  auto findByName = [&](const ImageDoc& image){return image.texture->GetName() == imageName;};
+  auto findByName = [&](const ImageDocument& image){return image.texture->GetName() == imageName;};
 
   auto it = std::find_if(m_savedImages.begin(), m_savedImages.end(), findByName);
   if(it != m_savedImages.end())
