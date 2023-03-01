@@ -28,8 +28,28 @@ private:
 
 struct ImageDocument
 {
-  std::string timestamp;
-  std::shared_ptr<Texture2D> texture; 
+public:  
+  ImageDocument() = default;
+  ImageDocument(std::unique_ptr<Texture2D> tex) : texture(std::move(tex)){}
+  ImageDocument(const ImageDocument& doc)
+  {
+    timestamp = doc.timestamp;
+    documentId = doc.documentId;
+    texture = std::make_unique<Texture2D>(doc.texture->GetTexturePtr(), "texture");
+  }
+  ImageDocument& operator=(const ImageDocument& doc)
+  {
+    timestamp = doc.timestamp;
+    documentId = doc.documentId;
+    texture = std::make_unique<Texture2D>(doc.texture->GetTexturePtr(), "texture");
+    return *this;
+  }
+  std::unique_ptr<Texture2D> DrawFooter();
+
+public:
+  std::time_t timestamp;
+  std::string documentId = "";
+  std::unique_ptr<Texture2D> texture;
 };
 
 class ImageSaver
@@ -41,7 +61,7 @@ public:
   // original images are saved only once when doing a screenshot of the image. The original's annotated pair can be replaced multiple
   // times, when it is selected from the thumbnails, edited and then saved as a ANNOTATED image. The original pair can be found
   // by the texture name
-  void SaveImage(std::shared_ptr<Texture2D> texture, bool hasFooter);
+  void SaveImage(ImageDocument& doc, bool hasFooter);
   void ClearSavedImages();
   void LoadPatientsFolder();
   void CreatePatientDir();

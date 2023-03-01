@@ -32,7 +32,7 @@ void EditorUI::OnUpdate()
     // load a frame from the camera
     auto frame = std::move(m_camera.CaptureFrame());
     if (frame)
-      m_activeOriginalImage = std::move(frame.value());
+      m_frame = std::move(frame.value());
     frame.reset();
   }
 }
@@ -68,11 +68,7 @@ void EditorUI::OnAttach()
   m_undoIcon  = std::move(std::make_unique<Texture2D>("add-text","assets/icons/left-arrow.png"));
 
   // initieliaze the frames 
-  m_activeOriginalImage = std::make_unique<Texture2D>("checkerboard", "assets/textures/Checkerboard.png"); 
-  m_activeEditedImage = std::make_unique<Texture2D>("initial checkerboard", "assets/textures/Checkerboard.png"); // initialize the edited frame with the current frame and later update only the current frame in OnUpdate
-
-  m_imageEditor.SetTextureForEditing(std::move(std::make_unique<Texture2D>(m_activeOriginalImage->GetTexturePtr(), "currently edited texture")),""); // initialize image editor as well
-
+  m_frame = std::make_unique<Texture2D>("initial checkerboard", "assets/textures/Checkerboard.png"); // initialize the edited frame with the current frame and later update only the current frame in OnUpdate
   m_camera.Open();
   
   // init file dialog
@@ -110,75 +106,30 @@ void EditorUI::OnEvent(Event* event)
 
 bool EditorUI::OnKeyTextInputEvent(KeyTextInputEvent* e)
 {
-  if ((m_activeCommand.commandState == DrawCommandState::FIRST_CLICK) && m_activeCommand.commandType == DrawCommandType::ADD_TEXT)
+  if(m_editorState == EditorState::EDITING) // text input is handled by either ImGui or the drawing sheet
   {
-    // text drawing rectangle bottom left point added, receiving text input
-   m_editText += e->GetInputTextText();
-    return true;
+    m_drawingSheet.OnTextInput(e->GetInputTextText());
   }
-  else
-    return false;
+  return true;
 }
 
 bool EditorUI::OnKeyPressedEvent(KeyPressedEvent* e)
 {
-  if ((m_activeCommand.commandState == DrawCommandState::FIRST_CLICK) && m_activeCommand.commandType == DrawCommandType::ADD_TEXT)
-  {
-    if(e->GetKeyCode() == Key::MDIK_RETURN)
-    {
-      m_activeCommand.commandState = DrawCommandState::FINISH;
-      return true;
-    }
-    else
-      return false;
-  }
-  else
-    return false;
+  // TODO: implement this
+  //if ((m_activeCommand.commandState == DrawCommandState::FIRST_CLICK) && m_activeCommand.commandType == DrawCommand::ADD_TEXT)
+  //{
+  //  if(e->GetKeyCode() == Key::MDIK_RETURN)
+  //  {
+  //    m_activeCommand.commandState = DrawCommandState::FINISH;
+  //    return true;
+  //  }
+  //  else
+  //    return false;
+  //}
+  //else
+  //  return false;
 
-}
-
-void EditorUI::Draw(PrimitiveAddingType addType, ImVec2 imageSize)
-{
-  constexpr float circleRadiusSpeed = 1.5;
-  switch(m_activeCommand.commandType) // TODO: refactor this multiple control indirection on editType
-  {
-    case DrawCommandType::DRAW_CIRCLE:
-    {
-      ImVec2 centerPoint = {m_cursorEditPoints[0].x / imageSize.x, m_cursorEditPoints[0].y / imageSize.y};
-      ImVec2 secondPoint = {m_cursorEditPoints[1].x / imageSize.x, m_cursorEditPoints[1].y / imageSize.y};
-      ImVec2 diff = { abs(centerPoint.x - secondPoint.x), abs(centerPoint.y - secondPoint.y) };
-      float radius = sqrt(diff.x * diff.x + diff.y * diff.y) / 2 * circleRadiusSpeed ;
-      m_imageEditor.AddCircle(centerPoint, radius, addType, m_thickness, m_color);
-      break;
-    }
-    case DrawCommandType::DRAW_RECTANGLE:
-    {
-      ImVec2 topLeft = {m_cursorEditPoints[0].x / imageSize.x, m_cursorEditPoints[0].y / imageSize.y};
-      ImVec2 bottomRight = {m_cursorEditPoints[1].x / imageSize.x, m_cursorEditPoints[1].y / imageSize.y};
-      m_imageEditor.AddRectangle(topLeft, bottomRight, addType, m_thickness, m_color);
-      break;
-    }
-    case DrawCommandType::DRAW_LINE:
-    {
-      ImVec2 begin = {m_cursorEditPoints[0].x / imageSize.x, m_cursorEditPoints[0].y / imageSize.y};
-      ImVec2 end = {m_cursorEditPoints[1].x / imageSize.x, m_cursorEditPoints[1].y / imageSize.y};
-      m_imageEditor.AddLine(begin, end, addType, m_thickness, m_color);
-      break;
-    }
-    case DrawCommandType::DRAW_ARROW:
-    {
-      ImVec2 begin = {m_cursorEditPoints[0].x / imageSize.x, m_cursorEditPoints[0].y / imageSize.y};
-      ImVec2 end = {m_cursorEditPoints[1].x / imageSize.x, m_cursorEditPoints[1].y / imageSize.y};
-      m_imageEditor.AddArrow(begin, end, addType, m_thickness, m_color);
-      break;
-    }
-    case DrawCommandType::ADD_TEXT:
-    {
-      ImVec2 begin = {m_cursorEditPoints[0].x / imageSize.x, m_cursorEditPoints[0].y / imageSize.y};
-      m_imageEditor.AddText(m_editText, begin, addType, m_drawnTextFontSize, {255,255,255});
-      break;
-    }
-  }
+  return true;
 }
 
 void EditorUI::ShowImageWindow()
@@ -194,67 +145,51 @@ void EditorUI::ShowImageWindow()
   constexpr ImVec4 tintColor = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);   // No tint
   constexpr ImVec4 borderColor = ImVec4(1.0f, 1.0f, 1.0f, 0.0f); // 50% opaque white
   ImVec2 canvasSize = ImGui::GetContentRegionAvail();   // Resize canvas to what's available
-  canvasSize.y = canvasSize.y - 60; // TODO: not hardcode these values
 
   if(m_editorState == EditorState::EDITING)
   {
-    m_activeEditedImage = m_imageEditor.Draw(); // TODO: maybe move this to OnUpdate()
-    ImVec2 imageTopLeft = ImGui::GetCursorScreenPos();      
-    ImGui::Image(m_activeEditedImage->GetShaderResourceView(), canvasSize, uvMin, uvMax, tintColor, borderColor);
-    ImVec2 imageSize = ImGui::GetItemRectSize();
-    const bool isImageHovered = ImGui::IsItemHovered(); // Hovered  
-
-    // calculate the mouse position, TODO: in texture coordinates(0,1), and do something with scrolling 
-    const ImVec2 mousePosOnImage(io.MousePos.x - imageTopLeft.x, io.MousePos.y - imageTopLeft.y);
-    // Add first and second point
-    if (isImageHovered && (m_activeCommand.commandState == DrawCommandState::INITIAL) && ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+    m_frame = m_drawingSheet.Draw(); // TODO: maybe move this to OnUpdate()
+  
+    ImGui::Image(m_frame->GetShaderResourceView(), canvasSize, uvMin, uvMax, tintColor, borderColor);
+    auto viewportMinRegion = ImGui::GetWindowContentRegionMin();
+    auto viewportMaxRegion = ImGui::GetWindowContentRegionMax();
+    auto viewportOffset = ImGui::GetWindowPos();
+    glm::vec2 drawingSheetSize = {viewportMaxRegion.x - viewportMinRegion.x, viewportMaxRegion.y - viewportMinRegion.y};
+    m_drawingSheet.SetDrawingSheetSize(drawingSheetSize);
+    
+    // Mouse button actions are prioritized over the hovering 
+    if(ImGui::IsItemHovered())
     {
-      m_cursorEditPoints.push_back(mousePosOnImage);
-      m_cursorEditPoints.push_back(mousePosOnImage);
-      m_activeCommand.commandState = DrawCommandState::FIRST_CLICK;
-    }
-    else if((m_activeCommand.commandState == DrawCommandState::FIRST_CLICK) && m_activeCommand.commandType == DrawCommandType::ADD_TEXT)
-    {
-      Draw(PrimitiveAddingType::TEMPORARY, imageSize);
-    }
-    else if((m_activeCommand.commandState == DrawCommandState::FINISH) && m_activeCommand.commandType == DrawCommandType::ADD_TEXT)
-    {
-      Draw(PrimitiveAddingType::PERMANENT, imageSize);
-      m_editText = "";
-      m_activeCommand = {m_activeCommand.commandType, DrawCommandState::INITIAL};
-      m_cursorEditPoints.clear();
-    }
-    else if(isImageHovered && (m_activeCommand.commandState == DrawCommandState::FIRST_CLICK))
-    {
-      if(ImGui::IsMouseDown(ImGuiMouseButton_Left))
-      {
-        m_cursorEditPoints.back() = mousePosOnImage;
-        // draw temporary primitive
-        m_cursorEditPoints.back() = mousePosOnImage;
-        Draw(PrimitiveAddingType::TEMPORARY, imageSize);
-      }
+      // calculate the mouse position, TODO: in texture coordinates(0,1), and do something with scrolling 
+      auto mousePos = ImGui::GetMousePos();
+      const ImVec2 mousePosOnImage(mousePos.x - viewportOffset.x - viewportMinRegion.x, mousePos.y - viewportOffset.y - viewportMinRegion.y);
+      APP_CORE_INFO("Window content region min:{}:{}", viewportMinRegion.x, viewportMinRegion.y);
+      APP_CORE_INFO("Window content region max:{}:{}", viewportMaxRegion.x, viewportMaxRegion.y);
+      APP_CORE_INFO("Drawing sheet size:{}:{}", drawingSheetSize.x, drawingSheetSize.y);
+      APP_CORE_INFO("Window position:{}:{}", viewportOffset.x, viewportOffset.y);
+      APP_CORE_INFO("Mouse position:{}:{}", mousePos.x, mousePos.y);
+      APP_CORE_INFO("Corrected mouse position:{}:{}", mousePosOnImage.x, mousePosOnImage.y);
+     
+      if(ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+        m_drawingSheet.OnMouseButtonPressed({mousePosOnImage.x, mousePosOnImage.y});
+      else if(ImGui::IsMouseDown(ImGuiMouseButton_Left))
+        m_drawingSheet.OnMouseButtonDown({mousePosOnImage.x, mousePosOnImage.y});
+      else if(ImGui::IsMouseReleased(ImGuiMouseButton_Left))
+        m_drawingSheet.OnMouseButtonReleased({mousePosOnImage.x, mousePosOnImage.y});
       else
-        m_activeCommand.commandState = DrawCommandState::MOUSE_DOWN;
+        m_drawingSheet.OnMouseHovered({mousePosOnImage.x, mousePosOnImage.y});
     }
-    else if(isImageHovered && (m_activeCommand.commandState == DrawCommandState::MOUSE_DOWN))
-    {
-      m_cursorEditPoints.back() = mousePosOnImage;
-      Draw(PrimitiveAddingType::PERMANENT, imageSize);
-
-      // go back the initial state so that we can draw another shape of the chosen type
-      m_activeCommand = {m_activeCommand.commandType, DrawCommandState::INITIAL};
-      m_cursorEditPoints.clear();
-    }
-      
   }
-  else if((m_editorState == EditorState::SHOW_CAMERA) || (m_editorState == EditorState::SCREENSHOT))
-  {
-    ImGui::Image(m_activeOriginalImage->GetShaderResourceView(), canvasSize, uvMin, uvMax, tintColor, borderColor);
+  else
+  { // just show the frame from the camera
+    ImGui::Image(m_frame->GetShaderResourceView(), canvasSize, uvMin, uvMax, tintColor, borderColor);
   }
+  ImGui::End();
   
   // uuid input
+  bool openUuidInput = true;
+  ImGui::Begin("UuidInput", &openUuidInput , ImGuiWindowFlags_NoTitleBar);
   static bool uuidTextInputTriggered = false;
-
   ImGui::PushFont(m_largeFont); 
   ImGui::PushItemWidth(-260); // TODO: do not hardcode it
   float sz = ImGui::GetTextLineHeight();
@@ -332,10 +267,13 @@ void EditorUI::ShowToolbox()
   {
     if(m_editorState == EditorState::SHOW_CAMERA)
     {
-      if(m_activeOriginalImage.get() != nullptr)
+      if(m_frame.get() != nullptr)
       {
         if (m_imageSavers->HasSelectedSaver()) //TODO: should select it with an optional<ImageSaver> return type
-          m_imageSavers->GetSelectedSaver().SaveImage(std::make_shared<Texture2D>(m_activeOriginalImage->GetTexturePtr(), m_activeOriginalImage->GetName()), false);
+        { // create the ImageDocument here, because the screenshot is made here
+          m_activeDocument = ImageDocument(std::make_unique<Texture2D>(m_frame->GetTexturePtr(), m_frame->GetName()));
+          m_imageSavers->GetSelectedSaver().SaveImage(m_activeDocument, false);
+        }
         else
         {
           APP_CORE_ERR("Please input valid UUID for saving the current image!");
@@ -356,16 +294,20 @@ void EditorUI::ShowToolbox()
   {
     if(m_editorState == EditorState::EDITING)
     {
-      if(m_activeEditedImage.get() != nullptr)
+      if(m_activeDocument.texture.get() != nullptr)
       {
         if (m_imageSavers->HasSelectedSaver()) //TODO: should select it with an optional<ImageSaver> return type
-          m_imageSavers->GetSelectedSaver().SaveImage(std::make_shared<Texture2D>(m_activeEditedImage->GetTexturePtr(), m_activeEditedImage->GetName()), true);
+        { // update the texture in the document with the frame, because from this point it is not needed to store the original image
+          m_activeDocument.texture = std::make_unique<Texture2D>(*m_frame.get());
+          m_imageSavers->GetSelectedSaver().SaveImage(m_activeDocument, true);
+
+        }
         else
           APP_CORE_ERR("Please input valid UUID for saving the current image!");
       }
       // we can get out of edit mode only with saving the image
       m_editorState = EditorState::SHOW_CAMERA;
-      m_activeCommand = {DrawCommandType::DO_NOTHING, DrawCommandState::INITIAL};
+      m_drawingSheet.SetDrawCommand(DrawCommand::DO_NOTHING);
       ImGui::BeginDisabled();
     }
   } 
@@ -385,7 +327,7 @@ void EditorUI::ShowToolbox()
   {
     if (ImGui::BeginPopupModal("delete", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
     {
-      std::string imageName = m_activeEditedImage->GetName(); 
+      std::string imageName = m_activeDocument.documentId; 
       ImGui::Text("Are you sure you want to delete image %s?\n deletion cannot be undone!", imageName.c_str());
       ImGui::Separator();
       bool beginDisabling = false;
@@ -393,7 +335,7 @@ void EditorUI::ShowToolbox()
       { 
         ImGui::CloseCurrentPopup();
         if(m_imageSavers->HasSelectedSaver())
-          m_imageSavers->GetSelectedSaver().DeleteImage(m_activeEditedImage->GetName());
+          m_imageSavers->GetSelectedSaver().DeleteImage(imageName);
         m_editorState = EditorState::SHOW_CAMERA;
         beginDisabling = true;
       }
@@ -408,7 +350,7 @@ void EditorUI::ShowToolbox()
       ImGui::EndPopup();
       if (beginDisabling)
         ImGui::BeginDisabled();
-      m_activeCommand = {DrawCommandType::DO_NOTHING, DrawCommandState::INITIAL};
+      m_drawingSheet.SetDrawCommand(DrawCommand::DO_NOTHING);
     }
   } 
 
@@ -427,14 +369,13 @@ void EditorUI::ShowToolbox()
   {
     if (ImGui::BeginPopupModal("undo", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
     {
-      std::string imageName = m_activeEditedImage->GetName(); 
+      std::string imageName = m_activeDocument.documentId; 
       ImGui::Text("Are you sure you want to clear the annotations?");
       ImGui::Separator();
       bool beginDisabling = false;
       if (ImGui::Button("OK", ImVec2(120, 0))) 
       { 
         ImGui::CloseCurrentPopup();
-        m_imageEditor.ClearDrawing();
         m_editorState = EditorState::SHOW_CAMERA;
         beginDisabling = true;
       }
@@ -447,51 +388,53 @@ void EditorUI::ShowToolbox()
       ImGui::EndPopup();
       if (beginDisabling)
         ImGui::BeginDisabled();
-      m_activeCommand = {DrawCommandType::DO_NOTHING, DrawCommandState::INITIAL};
+      m_drawingSheet.SetDrawCommand(DrawCommand::DO_NOTHING);
     }
   } 
   
   // setting green border for the selected button
   ImGuiStyle& style = ImGui::GetStyle();
   
-  style.Colors[ImGuiCol_Button] = m_activeCommand.commandType == DrawCommandType::ADD_TEXT ? m_toolUsedBgColor : m_defaultFrameBgColor; 
+  //style.Colors[ImGuiCol_Button] = m_activeCommand.commandType == DrawCommand::ADD_TEXT ? m_toolUsedBgColor : m_defaultFrameBgColor; 
+  style.Colors[ImGuiCol_Button] =  m_defaultFrameBgColor; 
   if (ImGui::ImageButton("addText", m_addTextIcon->GetShaderResourceView(), smallIconSize, uvMin, uvMax, iconBg, tintColor))
   {
     if(m_editorState == EditorState::EDITING)
-      m_activeCommand = {DrawCommandType::ADD_TEXT, DrawCommandState::INITIAL};
+      m_drawingSheet.SetDrawCommand(DrawCommand::DRAW_TEXT);
   }
-  //ImGui::SameLine();
-  //if (ImGui::ImageButton("pencil", m_pencilIcon->GetShaderResourceView(), smallIconSize, uvMin, uvMax, iconBg, tintColor))
-  //{
-  //}
-  style.Colors[ImGuiCol_Button] = m_activeCommand.commandType == DrawCommandType::DRAW_CIRCLE ? m_toolUsedBgColor : m_defaultFrameBgColor; 
+  
+  //style.Colors[ImGuiCol_Button] = m_activeCommand.commandType == DrawCommand::DRAW_CIRCLE ? m_toolUsedBgColor : m_defaultFrameBgColor; 
+  style.Colors[ImGuiCol_Button] = m_defaultFrameBgColor; 
   if (ImGui::ImageButton("circle", m_circleIcon->GetShaderResourceView(), smallIconSize, uvMin, uvMax, iconBg, tintColor))
   {
     if(m_editorState == EditorState::EDITING)
-      m_activeCommand = {DrawCommandType::DRAW_CIRCLE, DrawCommandState::INITIAL};
+      m_drawingSheet.SetDrawCommand(DrawCommand::DRAW_CIRCLE);
   }
   ImGui::SameLine();
   
-  style.Colors[ImGuiCol_Button] = m_activeCommand.commandType == DrawCommandType::DRAW_LINE ? m_toolUsedBgColor : m_defaultFrameBgColor; 
+  //style.Colors[ImGuiCol_Button] = m_activeCommand.commandType == DrawCommand::DRAW_LINE ? m_toolUsedBgColor : m_defaultFrameBgColor; 
+  style.Colors[ImGuiCol_Button] = m_defaultFrameBgColor; 
   if (ImGui::ImageButton("line", m_lineIcon->GetShaderResourceView(), smallIconSize, uvMin, uvMax, iconBg, tintColor))
   {
     if(m_editorState == EditorState::EDITING)
-      m_activeCommand = {DrawCommandType::DRAW_LINE, DrawCommandState::INITIAL};
+      m_drawingSheet.SetDrawCommand(DrawCommand::DRAW_LINE);
   }
   
-  style.Colors[ImGuiCol_Button] = m_activeCommand.commandType == DrawCommandType::DRAW_RECTANGLE ? m_toolUsedBgColor : m_defaultFrameBgColor; 
+  //style.Colors[ImGuiCol_Button] = m_activeCommand.commandType == DrawCommand::DRAW_RECTANGLE ? m_toolUsedBgColor : m_defaultFrameBgColor; 
+  style.Colors[ImGuiCol_Button] = m_defaultFrameBgColor; 
   if (ImGui::ImageButton("rectangle", m_rectangleIcon->GetShaderResourceView(), smallIconSize, uvMin, uvMax, iconBg, tintColor))
   {
     if(m_editorState == EditorState::EDITING)
-      m_activeCommand = {DrawCommandType::DRAW_RECTANGLE, DrawCommandState::INITIAL};
+      m_drawingSheet.SetDrawCommand(DrawCommand::DRAW_RECTANGLE);
   }
   ImGui::SameLine();
 
-  style.Colors[ImGuiCol_Button] = m_activeCommand.commandType == DrawCommandType::DRAW_ARROW ? m_toolUsedBgColor : m_defaultFrameBgColor; 
+  //style.Colors[ImGuiCol_Button] = m_activeCommand.commandType == DrawCommand::DRAW_ARROW ? m_toolUsedBgColor : m_defaultFrameBgColor; 
+  style.Colors[ImGuiCol_Button] = m_defaultFrameBgColor; 
   if (ImGui::ImageButton("arrow", m_arrowIcon->GetShaderResourceView(), smallIconSize, uvMin, uvMax, iconBg, tintColor))
   {
     if(m_editorState == EditorState::EDITING)
-      m_activeCommand = {DrawCommandType::DRAW_ARROW, DrawCommandState::INITIAL};
+      m_drawingSheet.SetDrawCommand(DrawCommand::DRAW_ARROW);
   }
 
   if(m_editorState != EditorState::EDITING)
@@ -545,12 +488,13 @@ void EditorUI::ShowThumbnails()
       ImGui::Text("%s", image.texture->GetName().c_str());
       ImVec2 pos = ImGui::GetCursorScreenPos();
       ImVec2 canvasSize = ImGui::GetContentRegionAvail();
-      float aspectRatio = static_cast<float>(m_activeOriginalImage->GetWidth()) / static_cast<float>(m_activeOriginalImage->GetHeight());
+      float aspectRatio = static_cast<float>(m_frame->GetWidth()) / static_cast<float>(m_frame->GetHeight());
       if(ImGui::ImageButton(image.texture->GetName().c_str(), image.texture->GetShaderResourceView(), ImVec2{ canvasSize.x, canvasSize.x / aspectRatio }, uvMin, uvMax, backgroundColor, tintColor))
       {
         // we can go into edit mode if we select an image from the thumbnails
         m_editorState = EditorState::EDITING;
-        m_imageEditor.SetTextureForEditing(std::make_unique<Texture2D>(image.texture->GetTexturePtr(), image.texture->GetName()), image.timestamp);
+        m_drawingSheet.SetDocument(std::move(std::make_unique<ImageDocument>(image)), {image.texture->GetWidth(), image.texture->GetHeight()});  // BIG TODO: update store the image size somewhere 
+        m_drawingSheet.ChangeDrawState(std::make_unique<ObjectSelectInitialState>(&m_drawingSheet));
       }
 
       // little tooltip showing a zoomed version of the thumbnail image

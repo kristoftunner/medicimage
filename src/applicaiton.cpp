@@ -15,7 +15,7 @@ Application::Application()
 
   Renderer& renderer = Renderer::GetInstance();
   m_imguiLayer = std::make_shared<ImguiLayer>(m_window->GetNativeWindow(), renderer.GetDevice(), renderer.GetDeviceContext());
-  m_inputHandler = std::move(std::make_unique<EventInputHandler>(m_imguiLayer, m_window->GetNativeWindow()));
+  m_inputHandler = std::make_unique<EventInputHandler>(m_imguiLayer, m_window->GetNativeWindow());
 }
 
 Application::~Application()

@@ -9,6 +9,7 @@
 #include <opencv2/highgui.hpp>
 #include <fstream>
 #include <json.hpp>
+#include "image_saver.h"
 
 namespace medicimage
 {
@@ -91,41 +92,37 @@ void ImageSaver::CreatePatientDir()
 
 void ImageSaver::LoadImage(std::string imageName, const std::filesystem::path& filePath)
 {
-  // assuming there are only one annotated and original variant of an image
+  // TODO: load correctly the document metadata from a meta file
   auto findByName = [&](const ImageDocument& image){return image.texture->GetName() == imageName;};
   
   auto it = std::find_if(m_savedImages.begin(), m_savedImages.end(), findByName);
   if(it == m_savedImages.end())
   { 
-    m_savedImages.push_back({ "",std::make_shared<Texture2D>(imageName, filePath.string()) });
+    auto timestamp = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+    m_savedImages.push_back({std::make_unique<Texture2D>(imageName, filePath.string())});
   }
 }
 
-void ImageSaver::SaveImage(std::shared_ptr<Texture2D> texture, bool hasFooter)
+void ImageSaver::SaveImage(ImageDocument& doc, bool hasFooter)
 {
-  
+  // fill out the image timestamp and id only here, because the document should have the timestamp when it is saved 
   std::string name = m_uuid + "_" + std::to_string(m_savedImages.size());
-  texture->SetName(name);
+  doc.documentId = name;
+  doc.timestamp = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
 
-  // need to add footer only to the original image, because for the annotated the original image is used as a base
-  auto in_time_t = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-  std::stringstream ss;
-  ss << std::put_time(std::localtime(&in_time_t), "%d-%b-%Y %X");
-  std::string footerText = texture->GetName() + " - " + ss.str();
-  
-  if(hasFooter)
-    texture = ImageEditor::ReplaceImageFooter(footerText, texture);
-  else
-    texture = ImageEditor::AddImageFooter(footerText, texture);
-
-  m_savedImages.push_back({ss.str(), texture});
+  m_savedImages.push_back(doc);
     
   name += ".jpeg";
   std::filesystem::path imagePath = m_dirPath / name;
   std::filesystem::path thumbImagePath = m_dirPath / "thumbs" / name;
- 
+  
+  std::stringstream ss;
+  ss << std::put_time(std::localtime(&(doc.timestamp)), "%d-%b-%Y %X");
+  std::string footerText = doc.documentId + " - " + ss.str();
+  auto borderedImage = ImageEditor::AddImageFooter(footerText, doc.texture.get());
+
   cv::UMat ocvImage;
-  cv::directx::convertFromD3D11Texture2D(texture->GetTexturePtr(), ocvImage);
+  cv::directx::convertFromD3D11Texture2D(borderedImage->GetTexturePtr(), ocvImage);
   cv::cvtColor(ocvImage, ocvImage, cv::COLOR_RGBA2BGR);
   cv::imwrite(imagePath.string(), ocvImage);
   cv::resize(ocvImage, ocvImage, cv::Size(640,360) );
@@ -140,14 +137,13 @@ void ImageSaver::DeleteImage(const std::string& imageName)
   auto it = std::find_if(m_savedImages.begin(), m_savedImages.end(), findByName);
   if(it != m_savedImages.end())
   {
-    auto image = *it;
-    std::filesystem::path imagePath = m_dirPath / (image.texture->GetName() + ".jpeg");;
-    std::filesystem::path thumbImagePath = m_dirPath / "thumbs" / (image.texture->GetName() + ".jpeg");;
+    std::filesystem::path imagePath = m_dirPath / (it->texture->GetName() + ".jpeg");;
+    std::filesystem::path thumbImagePath = m_dirPath / "thumbs" / (it->texture->GetName() + ".jpeg");;
     if(!std::filesystem::remove(imagePath) || !(std::filesystem::remove(thumbImagePath)))
       APP_CORE_ERR("Something went wrong deleting this image:{}", imagePath.string());
     else
     {
-      m_fileLogger->LogFileOperation(image.texture->GetName() + ".jpeg", FileLogger::FileOperation::FILE_DELETE);
+      m_fileLogger->LogFileOperation(it->texture->GetName() + ".jpeg", FileLogger::FileOperation::FILE_DELETE);
       APP_CORE_INFO("Image: {} deleted", imagePath.string());
     }
     m_savedImages.erase(it);
@@ -202,6 +198,14 @@ void ImageSaverContainer::UpdateAppFolder(const std::filesystem::path& appFolder
   m_dataFolder = appFolder;
   if (!std::filesystem::create_directory(m_dataFolder))
     APP_CORE_INFO("Directory: {} alredy created, using that one", m_dataFolder);
+}
+
+std::unique_ptr<Texture2D> medicimage::ImageDocument::DrawFooter()
+{
+  std::stringstream ss;
+  ss << std::put_time(std::localtime(&timestamp), "%d-%b-%Y %X");
+  std::string footerText = documentId + " - " + ss.str();
+  return ImageEditor::AddImageFooter(footerText, texture.get());
 }
 
 } // namespace medicimage

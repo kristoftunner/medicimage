@@ -36,6 +36,7 @@ To be cleared: how to handle mouse events correctly when editing the scene(sheet
 class that contains the entt integration and all the drawing objects, which pass these objects to the draw command(wrapper opencv draw functions).
 
 ### Drawing states for the various commands:
+During editing the default state is object selection. If a draw command is selected then the initial draw state should be set
 **Draw circle/rectangle/arrow/**  
 1) Initial -- just hovering on the document -> Left click - 2)
 2) Draw first point

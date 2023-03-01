@@ -43,7 +43,7 @@ namespace medicimage
 
   struct ColorComponent
   {
-    glm::vec4 color{1.0f, 1.0f, 1.0f, 1.0f};
+    glm::vec4 color{0.0f, 0.0f, 0.0f, 0.0f};
 
     ColorComponent() = default;
     ColorComponent(glm::vec4 color) : color(color){}
@@ -52,11 +52,12 @@ namespace medicimage
   struct CircleComponent
   {
     // center is described by the translation in the transform component
-    float radius = 0.0f;
-    float thickness = 1.0f; // might extract this attribute also out into a component
+    float radius = 0.0f;  // normalized
+    int thickness = 5.0f; // might extract this attribute also out into a component
     bool temporary = true;
-
-    CircleComponent(float radius = 0.0f, float thickness = 1.0f, bool temporary)
+  
+    CircleComponent() = default;
+    CircleComponent(float radius, int thickness, bool temporary)
       : radius(radius), thickness(thickness), temporary(temporary) {}
   };
 
@@ -65,21 +66,22 @@ namespace medicimage
     // width and height are also relative, should be scaled by the pixel size of the image 
     float height = 0.0f;
     float width = 0.0f;
-    float thickness = 1.0f;
+    float thickness = 5.0f;
     bool temporary = true;
-
-    RectangleComponent(float width = 0.0f, float height = 0.0f, float thickness = 1.0f, bool temporary)
+  
+    RectangleComponent() = default;
+    RectangleComponent(float width, float height, float thickness, bool temporary)
       : width(width), height(height), thickness(thickness), temporary(temporary) {}
   };
 
   struct ArrowComponent
   {
-    glm::vec2 begin = {0.0f, 0.0f};
-    glm::vec2 end {0.0f, 0.0f};
-    float thickness = 1.0f;
+    glm::vec2 end {0.0f, 0.0f}; // only need and end, because the begin is defined by the translation
+    float thickness = 5.0f;
     bool temporary = true;
-
-    ArrowComponent(glm::vec2 begin, glm::vec2 end, float thickness, bool temporary)
-      : begin(begin), end(end), thickness(thickness), temporary(temporary) {}
+    
+    ArrowComponent() = default;
+    ArrowComponent(glm::vec2 end, float thickness, bool temporary)
+      : end(end), thickness(thickness), temporary(temporary) {}
   };
 } // namespace medicimage
