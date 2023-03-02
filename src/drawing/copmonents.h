@@ -41,6 +41,14 @@ namespace medicimage
 			: translation(translation) {}
 	};
 
+  struct BoundingContourComponent
+  {
+    std::vector<glm::vec2> cornerPoints;
+    BoundingContourComponent() = default;
+    BoundingContourComponent(const BoundingContourComponent&) = default;
+    BoundingContourComponent(const std::vector<glm::vec2>& points) : cornerPoints(points) {}
+  };
+
   struct ColorComponent
   {
     glm::vec4 color{0.0f, 0.0f, 0.0f, 0.0f};

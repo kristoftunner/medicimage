@@ -3,6 +3,10 @@
 #include "drawing_sheet.h"
 #include "core/log.h"
 #include "image_editor.h"
+#include <algorithm>
+
+#include <glm/gtx/perpendicular.hpp>
+
 namespace medicimage
 {
   DrawingSheet::Entity::Entity(entt::entity handle, DrawingSheet* sheet)
@@ -119,7 +123,24 @@ namespace medicimage
 
   std::optional<Entity> DrawingSheet::GetHoveredEntity(const glm::vec2 pos)
   {
-    // TODO: calculate if there is an entity hovered or not
+    // TODO: may want to move this into editor ui, so here only relative coordinates are handled
+    const glm::vec2 relPos = pos / m_sheetSize;
+    auto view = m_registry.view<BoundingContourComponent>();
+    for(auto e : view)
+    {
+      Entity entity = {e, this};
+      auto& boundingContour = entity.GetComponent<BoundingContourComponent>().cornerPoints;
+      if(boundingContour.size() == 0)
+        continue;
+
+      std::vector<cv::Point2f> contour;
+      std::transform(boundingContour.begin(), boundingContour.end(), std::back_inserter(contour), [](glm::vec2 vec) {return cv::Point2f{ vec.x, vec.y }; });
+      if(cv::pointPolygonTest(contour, cv::Point2f{relPos.x, relPos.y}, false)  >= 0)
+      {
+        APP_CORE_INFO("Entity:{} is hovered", entity.GetComponent<IDComponent>().ID);
+        return entity;
+      }
+    }
     return std::optional<Entity>();
   }
 
@@ -141,9 +162,19 @@ namespace medicimage
 
     auto& color = entity.AddComponent<ColorComponent>();  
     auto& rectangle = entity.AddComponent<RectangleComponent>();
+    auto& boundingBox = entity.AddComponent<BoundingContourComponent>();
+
     rectangle.width = abs(bottomRight.x - topLeft.x);
     rectangle.height = abs(topLeft.y - bottomRight.y); 
     rectangle.temporary = objectType == DrawObjectType::TEMPORARY ? true : false;
+    
+    boundingBox.cornerPoints = {topLeft, topLeft + glm::vec2{rectangle.width, 0}, bottomRight, topLeft + glm::vec2{0, rectangle.height}};
+    
+    auto tl = topLeft * m_sheetSize;
+    auto br = bottomRight * m_sheetSize;
+    glm::vec2 vec = tl - br; 
+    glm::vec2 perp = glm::normalize(glm::vec2{-vec.y, vec.x});
+    auto& corners = boundingBox.cornerPoints;
     return entity;
   }
 
@@ -155,8 +186,18 @@ namespace medicimage
 
     auto& color = entity.AddComponent<ColorComponent>();  
     auto& circle = entity.AddComponent<CircleComponent>();
+    auto& boundingBox = entity.AddComponent<BoundingContourComponent>();
+    
     circle.radius = glm::length(topLeft - bottomRight);
     circle.temporary = objectType == DrawObjectType::TEMPORARY ? true : false;
+    auto radius = circle.radius;
+
+    // bounding polyigon of the circle is a square actually
+    boundingBox.cornerPoints = {topLeft + glm::vec2{-radius, -radius}, topLeft + glm::vec2{radius, -radius}, topLeft + glm::vec2{radius, radius}, topLeft + glm::vec2{-radius, radius}};
+    auto& corners = boundingBox.cornerPoints;
+    //APP_CORE_INFO("Circle added: center:{}:{} radius:{}", topLeft.x, topLeft.y, radius);
+    //APP_CORE_INFO("With bounding box:tl:{}:{} tr:{}:{} br:{}:{} bl:{}:{}", corners[0].x, corners[0].y, corners[1].x, corners[1].y, corners[2].x, corners[2].y, corners[3].x, corners[3].y);
+    
     return entity;
   }
 
@@ -168,8 +209,18 @@ namespace medicimage
 
     auto& color = entity.AddComponent<ColorComponent>();  
     auto& arrow = entity.AddComponent<ArrowComponent>();
+    auto& boundingBox = entity.AddComponent<BoundingContourComponent>();
+    
     arrow.end = bottomRight;
     arrow.temporary = objectType == DrawObjectType::TEMPORARY ? true : false;
+
+    glm::vec2 vec = topLeft - bottomRight; 
+    glm::vec2 perp = glm::normalize(glm::vec2{-vec.y, vec.x});
+    glm::vec2 offset = perp * glm::length(vec) * glm::vec2(0.2);
+    boundingBox.cornerPoints = {topLeft + offset, bottomRight + offset, bottomRight - offset, topLeft - offset};
+    auto& corners = boundingBox.cornerPoints;
+    //APP_CORE_INFO("Arrow added: begin:{}:{} end:{}:{}", topLeft.x, topLeft.y, bottomRight.x, bottomRight.y);
+    //APP_CORE_INFO("With bounding box:tl:{}:{} tr:{}:{} br:{}:{} bl:{}:{}", corners[0].x, corners[0].y, corners[1].x, corners[1].y, corners[2].x, corners[2].y, corners[3].x, corners[3].y);
     return entity;
   }
 
@@ -213,38 +264,32 @@ namespace medicimage
     m_sheet->ChangeDrawState(std::make_unique<InitialObjectDrawState>(m_sheet));
   }
 
+
   void DrawingTemporaryState::OnMouseButtonDown(const glm::vec2 pos)
   {
     m_sheet->m_secondPoint = pos / m_sheet->m_sheetSize;
     Entity entity;
-
-    auto deleteTemporaries = [&]<typename Component>(entt::entity e)
-    {
-      Entity entity = {e, m_sheet};
-      if(entity.GetComponent<Component>().temporary)
-        m_sheet->DestroyEntity(entity); 
-    };
 
     switch(m_sheet->m_currentDrawCommand)
     {
       case DrawCommand::DRAW_CIRCLE:
       {
         auto view = m_sheet->m_registry.view<CircleComponent>();
-        std::for_each(view.begin(), view.end(), deleteTemporaries<CircleComponent>);
+        std::for_each(view.begin(), view.end(), DeleteTemporaries<CircleComponent>());
         entity = m_sheet->CreateCircle(m_sheet->m_firstPoint, m_sheet->m_secondPoint, DrawObjectType::TEMPORARY);
         break;
       }
       case DrawCommand::DRAW_RECTANGLE:
       {
         auto view = m_sheet->m_registry.view<RectangleComponent>();
-        std::for_each(view.begin(), view.end(), deleteTemporaries<RectangleComponent>);
+        std::for_each(view.begin(), view.end(), DeleteTemporaries<RectangleComponent>());
         entity = m_sheet->CreateRectangle(m_sheet->m_firstPoint, m_sheet->m_secondPoint, DrawObjectType::TEMPORARY);
         break;
       }
       case DrawCommand::DRAW_ARROW:
       {
         auto view = m_sheet->m_registry.view<ArrowComponent>();
-        std::for_each(view.begin(), view.end(), deleteTemporaries<ArrowComponent>);
+        std::for_each(view.begin(), view.end(), DeleteTemporaries<ArrowComponent>());
         entity = m_sheet->CreateArrow(m_sheet->m_firstPoint, m_sheet->m_secondPoint, DrawObjectType::TEMPORARY);
         break;
       }
@@ -256,32 +301,26 @@ namespace medicimage
     // delete the temporary object and add the permanent
     m_sheet->m_secondPoint = pos / m_sheet->m_sheetSize;
     Entity entity;
-    auto deleteTemporaries = [&](entt::entity e)
-    {
-      Entity entity = {e, m_sheet};
-      if(entity.GetComponent<CircleComponent>().temporary)
-        m_sheet->DestroyEntity(entity); 
-    };
     switch(m_sheet->m_currentDrawCommand)
     {
       case DrawCommand::DRAW_CIRCLE:
       {
         auto view = m_sheet->m_registry.view<CircleComponent>();
-        std::for_each(view.begin(), view.end(), deleteTemporaries);
+        std::for_each(view.begin(), view.end(), DeleteTemporaries<CircleComponent>());
         entity = m_sheet->CreateCircle(m_sheet->m_firstPoint, m_sheet->m_secondPoint, DrawObjectType::PERMANENT);
         break;
       }
       case DrawCommand::DRAW_RECTANGLE:
       {
         auto view = m_sheet->m_registry.view<RectangleComponent>();
-        std::for_each(view.begin(), view.end(), deleteTemporaries);
+        std::for_each(view.begin(), view.end(), DeleteTemporaries<RectangleComponent>());
         entity = m_sheet->CreateRectangle(m_sheet->m_firstPoint, m_sheet->m_secondPoint, DrawObjectType::PERMANENT);
         break;
       }
       case DrawCommand::DRAW_ARROW:
       {
         auto view = m_sheet->m_registry.view<ArrowComponent>();
-        std::for_each(view.begin(), view.end(), deleteTemporaries);
+        std::for_each(view.begin(), view.end(), DeleteTemporaries<ArrowComponent>());
         entity = m_sheet->CreateArrow(m_sheet->m_firstPoint, m_sheet->m_secondPoint, DrawObjectType::PERMANENT);
         break;
       }

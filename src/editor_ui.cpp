@@ -148,7 +148,7 @@ void EditorUI::ShowImageWindow()
 
   if(m_editorState == EditorState::EDITING)
   {
-    m_frame = m_drawingSheet.Draw(); // TODO: maybe move this to OnUpdate()
+    m_frame = m_drawingSheet.Draw(); 
   
     ImGui::Image(m_frame->GetShaderResourceView(), canvasSize, uvMin, uvMax, tintColor, borderColor);
     auto viewportMinRegion = ImGui::GetWindowContentRegionMin();
@@ -160,15 +160,8 @@ void EditorUI::ShowImageWindow()
     // Mouse button actions are prioritized over the hovering 
     if(ImGui::IsItemHovered())
     {
-      // calculate the mouse position, TODO: in texture coordinates(0,1), and do something with scrolling 
       auto mousePos = ImGui::GetMousePos();
       const ImVec2 mousePosOnImage(mousePos.x - viewportOffset.x - viewportMinRegion.x, mousePos.y - viewportOffset.y - viewportMinRegion.y);
-      APP_CORE_INFO("Window content region min:{}:{}", viewportMinRegion.x, viewportMinRegion.y);
-      APP_CORE_INFO("Window content region max:{}:{}", viewportMaxRegion.x, viewportMaxRegion.y);
-      APP_CORE_INFO("Drawing sheet size:{}:{}", drawingSheetSize.x, drawingSheetSize.y);
-      APP_CORE_INFO("Window position:{}:{}", viewportOffset.x, viewportOffset.y);
-      APP_CORE_INFO("Mouse position:{}:{}", mousePos.x, mousePos.y);
-      APP_CORE_INFO("Corrected mouse position:{}:{}", mousePosOnImage.x, mousePosOnImage.y);
      
       if(ImGui::IsMouseClicked(ImGuiMouseButton_Left))
         m_drawingSheet.OnMouseButtonPressed({mousePosOnImage.x, mousePosOnImage.y});

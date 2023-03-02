@@ -160,12 +160,14 @@ public:
   virtual void OnMouseButtonReleased(const glm::vec2 pos) {}
   virtual void OnTextInput(const std::string& inputText) {}
 
-  template<typename Component>
-  void DeleteTemporaryComponent(entt::entity e)
+  template<typename T>
+  std::function<void(entt::entity)> DeleteTemporaries()
   {
-    Entity entity = {e, m_sheet};
-    if(entity.GetComponent<Component>().temporary)
-      m_sheet->DestroyEntity(entity); 
+    return [&](entt::entity e) {
+      Entity entity = {e, m_sheet};
+      if (entity.GetComponent<T>().temporary)
+        m_sheet->DestroyEntity(entity);
+    };
   }
 protected:
   DrawingSheet* m_sheet;
