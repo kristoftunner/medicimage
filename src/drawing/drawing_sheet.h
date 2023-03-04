@@ -108,15 +108,16 @@ public:
   void OnMouseButtonDown(const glm::vec2 pos);
   void OnMouseButtonReleased(const glm::vec2 pos);
   void OnTextInput(const std::string& inputText);
-
-  void AddToSelection(Entity entity);
-  void ClearSelection();
+  
+  // These are only for debug purpose
+  BaseDrawState* GetDrawState() { return m_drawState.get(); }
+  std::vector<glm::vec2> GetDrawingPoints(){ return std::vector<glm::vec2>{m_firstPoint, m_secondPoint};}
 
   // Hovering could be done in OnMouseHovered function, instead this functionality is covered by the draw states
   // because there can be a case when hovering is disabled by the draw command and the specific draw state
   std::optional<Entity> GetHoveredEntity(const glm::vec2 pos);
   void SetHoveredEntity(Entity entity);
-  std::vector<Entity> GetEntitiesUnderSelection();
+  std::vector<Entity> SelectEntitiesUnderSelection();
 
   Entity CreateRectangle(glm::vec2 topLeft, glm::vec2 bottomRight, DrawObjectType objectType);
   Entity CreateCircle(glm::vec2 topLeft, glm::vec2 bottomRight, DrawObjectType objectType);
@@ -128,7 +129,6 @@ private:
   std::unique_ptr<ImageDocument> m_originalDoc;
   std::unique_ptr<Texture2D> m_drawing;
 
-  std::vector<Entity> m_selectedEntities;
   Entity m_hoveredEntity;
 
   DrawCommand m_currentDrawCommand;
@@ -153,7 +153,8 @@ using Entity = DrawingSheet::Entity;
 class BaseDrawState
 {
 public:
-  BaseDrawState(DrawingSheet* sheet) : m_sheet(sheet) {}
+  BaseDrawState(DrawingSheet* sheet, const std::string& stateName = "BaseDrawState") : m_sheet(sheet), m_stateName(stateName) {}
+  const std::string& GetName() const {return m_stateName;}
   virtual void OnMouseHovered(const glm::vec2 pos) {}
   virtual void OnMouseButtonPressed(const glm::vec2 pos) {}
   virtual void OnMouseButtonDown(const glm::vec2 pos) {}
@@ -171,12 +172,13 @@ public:
   }
 protected:
   DrawingSheet* m_sheet;
+  std::string m_stateName;
 };
 
 class InitialObjectDrawState : public BaseDrawState
 {
 public:
-  InitialObjectDrawState(DrawingSheet* sheet) : BaseDrawState(sheet) {}
+  InitialObjectDrawState(DrawingSheet* sheet) : BaseDrawState(sheet, "InitialObjectDrawState") {}
   void OnMouseHovered(const glm::vec2 pos) override;
   void OnMouseButtonPressed(const glm::vec2 pos) override;
 };
@@ -184,7 +186,7 @@ public:
 class FirstClickRecievedState : public BaseDrawState
 {
 public:
-  FirstClickRecievedState(DrawingSheet* sheet) : BaseDrawState(sheet) {}
+  FirstClickRecievedState(DrawingSheet* sheet) : BaseDrawState(sheet, "FirstClickRecievedState") {}
   void OnMouseButtonDown(const glm::vec2 pos) override;       
   void OnMouseButtonReleased(const glm::vec2 pos) override;   
 };
@@ -192,7 +194,7 @@ public:
 class DrawingTemporaryState : public BaseDrawState
 {
 public:
-  DrawingTemporaryState(DrawingSheet* sheet) : BaseDrawState(sheet) {}
+  DrawingTemporaryState(DrawingSheet* sheet) : BaseDrawState(sheet, "DrawingTemporaryState") {}
   void OnMouseButtonDown(const glm::vec2 pos) override;       
   void OnMouseButtonReleased(const glm::vec2 pos) override;   
 };
@@ -201,7 +203,7 @@ public:
 class ObjectSelectInitialState : public BaseDrawState
 {
 public:
-  ObjectSelectInitialState(DrawingSheet* sheet) : BaseDrawState(sheet) {}
+  ObjectSelectInitialState(DrawingSheet* sheet) : BaseDrawState(sheet, "ObjectSelectInitialState") {}
   void OnMouseHovered(const glm::vec2 pos) override;   
   void OnMouseButtonPressed(const glm::vec2 pos) override;
 };
@@ -209,7 +211,7 @@ public:
 class ObjectSelectionState : public BaseDrawState
 {
 public:
-  ObjectSelectionState(DrawingSheet* sheet) : BaseDrawState(sheet) {}
+  ObjectSelectionState(DrawingSheet* sheet) : BaseDrawState(sheet, "ObjectSelectionState") {}
   void OnMouseButtonDown(const glm::vec2 pos) override; 
   void OnMouseButtonReleased(const glm::vec2 pos) override;
 };
@@ -217,7 +219,7 @@ public:
 class ObjectsSelectedState : public BaseDrawState
 {
 public:
-  ObjectsSelectedState(DrawingSheet* sheet) : BaseDrawState(sheet) {}
+  ObjectsSelectedState(DrawingSheet* sheet) : BaseDrawState(sheet, "ObjectSelectedState") {}
   void OnMouseButtonPressed(const glm::vec2 pos);
 };
 

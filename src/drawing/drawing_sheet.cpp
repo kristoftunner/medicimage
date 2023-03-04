@@ -47,26 +47,45 @@ namespace medicimage
   std::unique_ptr<Texture2D> DrawingSheet::Draw()
   {
     m_drawing = std::make_unique<Texture2D>(*(m_originalDoc->texture.get())); // start to draw to a clean document
+
     auto circles = m_registry.view<CircleComponent>();
     for(auto e : circles)
     {
       Entity entity = {e, this};
-      ImageEditor::DrawCircle(m_drawing.get(), entity);
+      auto& transform  = entity.GetComponent<TransformComponent>();
+      auto& circle = entity.GetComponent<CircleComponent>();
+      auto& color = entity.GetComponent<ColorComponent>().color;
+      auto& center = transform.translation;
+      ImageEditor::DrawCircle(m_drawing.get(), center, circle.radius, color, circle.thickness);
     }
 
     auto rectangles = m_registry.view<RectangleComponent>();
     for(auto e : rectangles)
     {
       Entity entity = {e, this};
-      ImageEditor::DrawRectangle(m_drawing.get(), entity);
+      auto& transform  = entity.GetComponent<TransformComponent>();
+      auto& rectangle = entity.GetComponent<RectangleComponent>();
+      auto& color = entity.GetComponent<ColorComponent>().color;
+      auto& topleft = transform.translation;
+      auto bottomright = topleft + glm::vec2{rectangle.width, rectangle.height}; 
+      ImageEditor::DrawRectangle(m_drawing.get(), topleft, bottomright, color, rectangle.thickness);
     }
     
     auto arrows = m_registry.view<ArrowComponent>();
     for(auto e : arrows)
     {
       Entity entity = {e, this};
-      ImageEditor::DrawArrow(m_drawing.get(), entity);
+      auto& transform  = entity.GetComponent<TransformComponent>();
+      auto& arrow = entity.GetComponent<ArrowComponent>();
+      auto& color = entity.GetComponent<ColorComponent>().color;
+      auto& begin = transform.translation; 
+      auto& end = arrow.end; 
+      ImageEditor::DrawArrow(m_drawing.get(), begin, end, color, arrow.thickness, 0.1);
     }
+    
+    std::for_each(circles.begin(), circles.end(), m_drawState->DeleteTemporaries<CircleComponent>());
+    std::for_each(rectangles.begin(), rectangles.end(), m_drawState->DeleteTemporaries<RectangleComponent>());
+    std::for_each(arrows.begin(), arrows.end(), m_drawState->DeleteTemporaries<ArrowComponent>());
 
     return std::move(std::make_unique<Texture2D>(*m_drawing.get()));
   }
@@ -111,15 +130,6 @@ namespace medicimage
       m_drawState->OnTextInput(inputText);
   }
 
-  void DrawingSheet::AddToSelection(Entity entity)
-  {
-    m_selectedEntities.push_back(entity);
-  }
-
-  void DrawingSheet::ClearSelection()
-  {
-    m_selectedEntities.clear();
-  }
 
   std::optional<Entity> DrawingSheet::GetHoveredEntity(const glm::vec2 pos)
   {
@@ -137,7 +147,7 @@ namespace medicimage
       std::transform(boundingContour.begin(), boundingContour.end(), std::back_inserter(contour), [](glm::vec2 vec) {return cv::Point2f{ vec.x, vec.y }; });
       if(cv::pointPolygonTest(contour, cv::Point2f{relPos.x, relPos.y}, false)  >= 0)
       {
-        APP_CORE_INFO("Entity:{} is hovered", entity.GetComponent<IDComponent>().ID);
+        APP_CORE_TRACE("Entity:{} is hovered", entity.GetComponent<IDComponent>().ID);
         return entity;
       }
     }
@@ -149,9 +159,35 @@ namespace medicimage
     m_hoveredEntity = entity;
   }
 
-  std::vector<Entity> DrawingSheet::GetEntitiesUnderSelection()
+  std::vector<Entity> DrawingSheet::SelectEntitiesUnderSelection()
   {
-    return std::vector<Entity>(); // TODO: implement
+    std::vector<Entity> selectedEntities;
+    static int counter = 0;
+    auto view = m_registry.view<BoundingContourComponent>();
+    for(auto e : view)
+    {
+      Entity entity = {e, this};
+      auto& boundingBox = entity.GetComponent<BoundingContourComponent>().cornerPoints;
+      std::vector<cv::Point2f> entityContour;
+      std::transform(boundingBox.begin(), boundingBox.end(), std::back_inserter(entityContour), [](glm::vec2 vec) {return cv::Point2f{ vec.x, vec.y }; });
+      
+      auto dx = m_secondPoint.x - m_firstPoint.x;
+      auto dy = m_secondPoint.y - m_firstPoint.y;
+      std::vector<cv::Point2f> selectContour{cv::Point2f{m_firstPoint.x, m_firstPoint.y}, cv::Point2f{m_firstPoint.x + dx, m_firstPoint.y},
+        cv::Point2f{m_secondPoint.x, m_secondPoint.y}, cv::Point2f{m_secondPoint.x - dx, m_secondPoint.y}};
+      
+      std::vector<cv::Point2f> tmp;
+      if (cv::intersectConvexConvex(selectContour, entityContour, tmp, true) > 0.0)
+      {
+        if(cv::intersectConvexConvex(selectContour, entityContour, tmp, false) == 0.0)
+        {
+          APP_CORE_INFO("Entity:{} selected with bb: tl:{}:{}, tr:{}:{}, br:{}:{}, bl:{}:{}", entity.GetComponent<IDComponent>().ID,
+            boundingBox[0].x, boundingBox[0].y, boundingBox[1].x, boundingBox[1].y, boundingBox[2].x, boundingBox[2].y, boundingBox[3].x, boundingBox[3].y);
+          selectedEntities.push_back(entity);
+        }
+      }
+    }
+    return std::vector<Entity>();
   }
 
   Entity DrawingSheet::CreateRectangle(glm::vec2 topLeft, glm::vec2 bottomRight, DrawObjectType objectType)
@@ -163,18 +199,17 @@ namespace medicimage
     auto& color = entity.AddComponent<ColorComponent>();  
     auto& rectangle = entity.AddComponent<RectangleComponent>();
     auto& boundingBox = entity.AddComponent<BoundingContourComponent>();
+    auto& pickPoints = entity.AddComponent<PickPointsComponent>();
 
     rectangle.width = abs(bottomRight.x - topLeft.x);
     rectangle.height = abs(topLeft.y - bottomRight.y); 
     rectangle.temporary = objectType == DrawObjectType::TEMPORARY ? true : false;
     
-    boundingBox.cornerPoints = {topLeft, topLeft + glm::vec2{rectangle.width, 0}, bottomRight, topLeft + glm::vec2{0, rectangle.height}};
+    boundingBox.cornerPoints = {topLeft, topLeft + glm::vec2{rectangle.width, 0}, bottomRight, topLeft + glm::vec2{0, rectangle.height}, topLeft};
     
-    auto tl = topLeft * m_sheetSize;
-    auto br = bottomRight * m_sheetSize;
-    glm::vec2 vec = tl - br; 
-    glm::vec2 perp = glm::normalize(glm::vec2{-vec.y, vec.x});
-    auto& corners = boundingBox.cornerPoints;
+    pickPoints.pickPoints = {topLeft + glm::vec2{rectangle.width / 2, 0}, bottomRight + glm::vec2{0, -rectangle.height / 2},
+      bottomRight + glm::vec2{-rectangle.width / 2, 0}, topLeft + glm::vec2{0, rectangle.height / 2}};
+    
     return entity;
   }
 
@@ -193,10 +228,10 @@ namespace medicimage
     auto radius = circle.radius;
 
     // bounding polyigon of the circle is a square actually
-    boundingBox.cornerPoints = {topLeft + glm::vec2{-radius, -radius}, topLeft + glm::vec2{radius, -radius}, topLeft + glm::vec2{radius, radius}, topLeft + glm::vec2{-radius, radius}};
+    boundingBox.cornerPoints = {topLeft + glm::vec2{-radius, -radius}, topLeft + glm::vec2{radius, -radius}, topLeft + glm::vec2{radius, radius}, topLeft + glm::vec2{-radius, radius}, topLeft};
     auto& corners = boundingBox.cornerPoints;
-    //APP_CORE_INFO("Circle added: center:{}:{} radius:{}", topLeft.x, topLeft.y, radius);
-    //APP_CORE_INFO("With bounding box:tl:{}:{} tr:{}:{} br:{}:{} bl:{}:{}", corners[0].x, corners[0].y, corners[1].x, corners[1].y, corners[2].x, corners[2].y, corners[3].x, corners[3].y);
+    APP_CORE_TRACE("Circle added: center:{}:{} radius:{}", topLeft.x, topLeft.y, radius);
+    APP_CORE_TRACE("With bounding box:tl:{}:{} tr:{}:{} br:{}:{} bl:{}:{}", corners[0].x, corners[0].y, corners[1].x, corners[1].y, corners[2].x, corners[2].y, corners[3].x, corners[3].y);
     
     return entity;
   }
@@ -217,10 +252,10 @@ namespace medicimage
     glm::vec2 vec = topLeft - bottomRight; 
     glm::vec2 perp = glm::normalize(glm::vec2{-vec.y, vec.x});
     glm::vec2 offset = perp * glm::length(vec) * glm::vec2(0.2);
-    boundingBox.cornerPoints = {topLeft + offset, bottomRight + offset, bottomRight - offset, topLeft - offset};
+    boundingBox.cornerPoints = {topLeft + offset, bottomRight + offset, bottomRight - offset, topLeft - offset, topLeft + offset};
     auto& corners = boundingBox.cornerPoints;
-    //APP_CORE_INFO("Arrow added: begin:{}:{} end:{}:{}", topLeft.x, topLeft.y, bottomRight.x, bottomRight.y);
-    //APP_CORE_INFO("With bounding box:tl:{}:{} tr:{}:{} br:{}:{} bl:{}:{}", corners[0].x, corners[0].y, corners[1].x, corners[1].y, corners[2].x, corners[2].y, corners[3].x, corners[3].y);
+    APP_CORE_TRACE("Arrow added: begin:{}:{} end:{}:{}", topLeft.x, topLeft.y, bottomRight.x, bottomRight.y);
+    APP_CORE_TRACE("With bounding box:tl:{}:{} tr:{}:{} br:{}:{} bl:{}:{}", corners[0].x, corners[0].y, corners[1].x, corners[1].y, corners[2].x, corners[2].y, corners[3].x, corners[3].y);
     return entity;
   }
 
@@ -274,22 +309,16 @@ namespace medicimage
     {
       case DrawCommand::DRAW_CIRCLE:
       {
-        auto view = m_sheet->m_registry.view<CircleComponent>();
-        std::for_each(view.begin(), view.end(), DeleteTemporaries<CircleComponent>());
         entity = m_sheet->CreateCircle(m_sheet->m_firstPoint, m_sheet->m_secondPoint, DrawObjectType::TEMPORARY);
         break;
       }
       case DrawCommand::DRAW_RECTANGLE:
       {
-        auto view = m_sheet->m_registry.view<RectangleComponent>();
-        std::for_each(view.begin(), view.end(), DeleteTemporaries<RectangleComponent>());
         entity = m_sheet->CreateRectangle(m_sheet->m_firstPoint, m_sheet->m_secondPoint, DrawObjectType::TEMPORARY);
         break;
       }
       case DrawCommand::DRAW_ARROW:
       {
-        auto view = m_sheet->m_registry.view<ArrowComponent>();
-        std::for_each(view.begin(), view.end(), DeleteTemporaries<ArrowComponent>());
         entity = m_sheet->CreateArrow(m_sheet->m_firstPoint, m_sheet->m_secondPoint, DrawObjectType::TEMPORARY);
         break;
       }
@@ -298,35 +327,27 @@ namespace medicimage
 
   void DrawingTemporaryState::OnMouseButtonReleased(const glm::vec2 pos)
   {
-    // delete the temporary object and add the permanent
     m_sheet->m_secondPoint = pos / m_sheet->m_sheetSize;
     Entity entity;
     switch(m_sheet->m_currentDrawCommand)
     {
       case DrawCommand::DRAW_CIRCLE:
       {
-        auto view = m_sheet->m_registry.view<CircleComponent>();
-        std::for_each(view.begin(), view.end(), DeleteTemporaries<CircleComponent>());
         entity = m_sheet->CreateCircle(m_sheet->m_firstPoint, m_sheet->m_secondPoint, DrawObjectType::PERMANENT);
         break;
       }
       case DrawCommand::DRAW_RECTANGLE:
       {
-        auto view = m_sheet->m_registry.view<RectangleComponent>();
-        std::for_each(view.begin(), view.end(), DeleteTemporaries<RectangleComponent>());
         entity = m_sheet->CreateRectangle(m_sheet->m_firstPoint, m_sheet->m_secondPoint, DrawObjectType::PERMANENT);
         break;
       }
       case DrawCommand::DRAW_ARROW:
       {
-        auto view = m_sheet->m_registry.view<ArrowComponent>();
-        std::for_each(view.begin(), view.end(), DeleteTemporaries<ArrowComponent>());
         entity = m_sheet->CreateArrow(m_sheet->m_firstPoint, m_sheet->m_secondPoint, DrawObjectType::PERMANENT);
         break;
       }
     }
     
-    m_sheet->m_selectedEntities.clear();  // just to have a cleared selection before moving into selection
     m_sheet->SetDrawCommand(DrawCommand::OBJECT_SELECT); 
     m_sheet->ChangeDrawState(std::make_unique<ObjectSelectInitialState>(m_sheet));
   }
@@ -347,23 +368,18 @@ namespace medicimage
   void ObjectSelectionState::OnMouseButtonDown(const glm::vec2 pos)
   {
     m_sheet->m_secondPoint = pos / m_sheet->m_sheetSize;
-    auto entities = m_sheet->GetEntitiesUnderSelection();
-    for(auto& entity : entities)
+    m_sheet->SelectEntitiesUnderSelection();
+    auto& firstPoint = m_sheet->m_firstPoint;
+    auto& secondPoint = m_sheet->m_secondPoint;
+    if ((firstPoint.x != secondPoint.x) && (firstPoint.y != secondPoint.y)) // TODO: may not need this
     {
-      auto it = std::find_if(m_sheet->m_selectedEntities.begin(), m_sheet->m_selectedEntities.end(), 
-      [&](Entity e)
-      {
-        return e.GetComponent<IDComponent>().ID == entity.GetComponent<IDComponent>().ID;
-      });
-      if(it != m_sheet->m_selectedEntities.end())
-        m_sheet->m_selectedEntities.push_back(entity);
+      auto entity = m_sheet->CreateRectangle(m_sheet->m_firstPoint, m_sheet->m_secondPoint, DrawObjectType::TEMPORARY); // TODO: add color and opacity
     }
   }
 
   void ObjectSelectionState::OnMouseButtonReleased(const glm::vec2 pos)
   {
-    m_sheet->ChangeDrawState(std::make_unique<ObjectSelectionState>(m_sheet)); 
-
+    m_sheet->ChangeDrawState(std::make_unique<ObjectsSelectedState>(m_sheet)); 
   }
 
   void ObjectsSelectedState::OnMouseButtonPressed(const glm::vec2 pos)

@@ -135,7 +135,7 @@ bool EditorUI::OnKeyPressedEvent(KeyPressedEvent* e)
 void EditorUI::ShowImageWindow()
 {
   // Main window containing the stream and uuid input
-  ImGui::Begin("Currently captured frame window", nullptr, ImGuiWindowFlags_NoTitleBar| ImGuiWindowFlags_NoMove);
+  ImGui::Begin("Currently captured frame window", nullptr);
   
   // Camera stream
   ImGuiIO& io = ImGui::GetIO();
@@ -519,6 +519,17 @@ void EditorUI::ShowThumbnails()
   ImGui::End();
 }
 
+static std::string EditorStateName(EditorState state)
+{
+  switch(state)
+  {
+    case EditorState::EDITING:      return "Editing";
+    case EditorState::SCREENSHOT:   return "Screenshot";
+    case EditorState::SHOW_CAMERA:  return "ShowCamera";
+    default: return "undefined";
+  }
+}
+
 void EditorUI::OnImguiRender()
 {
   // DockSpace
@@ -582,9 +593,17 @@ void EditorUI::OnImguiRender()
   ShowToolbox();
   ShowThumbnails(); 
 
-  // some profiling
+  // some profiling and debug info 
   ImGui::Begin("Profiling");
   ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
+  auto state = m_drawingSheet.GetDrawState()->GetName();
+  ImGui::Text("Editor State:%s", state.c_str());
+  ImGui::SameLine();
+  auto drawPoints = m_drawingSheet.GetDrawingPoints();
+  ImGui::Text("FirstPoint: %.2f:%.2f SecondPoint: %.2f:%.2f", drawPoints[0].x, drawPoints[0].y, drawPoints[1].x, drawPoints[1].y);
+  
+  auto editorState = EditorStateName(m_editorState);
+  ImGui::Text("Editor state:%s", editorState.c_str());
   ImGui::End();
 } 
 

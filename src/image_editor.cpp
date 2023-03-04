@@ -84,63 +84,58 @@ void ImageEditor::Init(ID3D11Device* device)
     APP_CORE_ERR("Do not have OpenCL device!!");
 }
 
-void ImageEditor::DrawCircle(Texture2D* texture, Entity entity)
+void ImageEditor::DrawCircle(Texture2D* texture, glm::vec2 center, float radius, glm::vec4 color, float thickness)
 {
   cv::UMat image;
   cv::directx::convertFromD3D11Texture2D(texture->GetTexturePtr(), image);
   cv::cvtColor(image, image, cv::COLOR_RGBA2BGR);
 
-  auto& transform  = entity.GetComponent<TransformComponent>();
-  auto& circle = entity.GetComponent<CircleComponent>();
-  auto& color = entity.GetComponent<ColorComponent>().color;
   glm::vec2 imageSize = {texture->GetWidth(), texture->GetHeight()};
-  auto center = transform.translation * imageSize;
-  auto length = glm::length(imageSize);
-  auto radius = circle.radius * length;
- 
-  cv::circle(image, cv::Point{static_cast<int>(center.x), static_cast<int>(center.y)}, static_cast<int>(radius), cv::Scalar(color.b * 255.0, color.g * 255.0, color.r * 255.0), circle.thickness); 
+  center *= imageSize;
+  radius = radius * glm::length(imageSize);
+  color *= 255.0;
+  cv::circle(image, cv::Point{static_cast<int>(center.x), static_cast<int>(center.y)}, static_cast<int>(radius), cv::Scalar(color.b, color.g,  color.r), thickness); 
 
   //TODO: add rotation 
   cv::cvtColor(image, image, cv::COLOR_BGR2RGBA);
   cv::directx::convertToD3D11Texture2D(image, texture->GetTexturePtr());
 }
 
-void ImageEditor::DrawRectangle(Texture2D* texture, Entity entity)
+void ImageEditor::DrawRectangle(Texture2D* texture, glm::vec2 topleft, glm::vec2 bottomright, glm::vec4 color, float thickness)
 {
   cv::UMat image;
   cv::directx::convertFromD3D11Texture2D(texture->GetTexturePtr(), image);
   cv::cvtColor(image, image, cv::COLOR_RGBA2BGR);
 
-  auto& transform  = entity.GetComponent<TransformComponent>();
-  auto& rectangle = entity.GetComponent<RectangleComponent>();
-  auto& color = entity.GetComponent<ColorComponent>().color;
   glm::vec2 imageSize = {texture->GetWidth(), texture->GetHeight()};
-  auto topleft = transform.translation * imageSize;
-  auto bottomright = topleft + glm::vec2{rectangle.width, rectangle.height} * imageSize; 
- 
-  cv::rectangle(image, cv::Point{static_cast<int>(topleft.x), static_cast<int>(topleft.y)}, cv::Point{static_cast<int>(bottomright.x), static_cast<int>(bottomright.y)}, 
-    cv::Scalar(color.b, color.g, color.r), static_cast<int>(rectangle.thickness));
+  topleft *= imageSize;
+  bottomright *= imageSize; 
+  color *= 255.0;
+  
+  if ((static_cast<int>(topleft.x) != static_cast<int>(bottomright.x)) && (static_cast<int>(topleft.y) != static_cast<int>(bottomright.y)))
+  {
+    cv::rectangle(image, cv::Point{ static_cast<int>(topleft.x), static_cast<int>(topleft.y) }, cv::Point{ static_cast<int>(bottomright.x), static_cast<int>(bottomright.y) },
+      cv::Scalar(color.b, color.g, color.r), static_cast<int>(thickness), cv::LineTypes::FILLED);
+  }
 
   //TODO: add rotation 
   cv::cvtColor(image, image, cv::COLOR_BGR2RGBA);
   cv::directx::convertToD3D11Texture2D(image, texture->GetTexturePtr()); 
 }
 
-void ImageEditor::DrawArrow(Texture2D* texture, Entity entity)
+void ImageEditor::DrawArrow(Texture2D* texture, glm::vec2 begin, glm::vec2 end, glm::vec4 color, float thickness, double tipLength)
 {
   cv::UMat image;
   cv::directx::convertFromD3D11Texture2D(texture->GetTexturePtr(), image);
   cv::cvtColor(image, image, cv::COLOR_RGBA2BGR);
 
-  auto& transform  = entity.GetComponent<TransformComponent>();
-  auto& arrow = entity.GetComponent<ArrowComponent>();
-  auto& color = entity.GetComponent<ColorComponent>().color;
   glm::vec2 imageSize = {texture->GetWidth(), texture->GetHeight()};
-  auto begin = transform.translation * imageSize; 
-  auto end = arrow.end * imageSize; 
+  begin *= imageSize; 
+  end *= imageSize; 
+  color *= 255.0;
 
   cv::arrowedLine(image, cv::Point(static_cast<int>(begin.x), static_cast<int>(begin.y)), cv::Point(static_cast<int>(end.x), static_cast<int>(end.y)), 
-    cv::Scalar(color.b, color.g, color.r), static_cast<int>(arrow.thickness));
+    cv::Scalar(color.b, color.g, color.r), static_cast<int>(thickness));
 
   //TODO: add rotation 
   cv::cvtColor(image, image, cv::COLOR_BGR2RGBA);
