@@ -43,7 +43,7 @@ namespace medicimage
 
   struct BoundingContourComponent
   {
-    std::vector<glm::vec2> cornerPoints;  // storing the contour of the bounding contour 
+    std::vector<glm::vec2> cornerPoints;  // storing the contour of the bounding contour
     BoundingContourComponent() = default;
     BoundingContourComponent(const BoundingContourComponent&) = default;
     BoundingContourComponent(const std::vector<glm::vec2>& points) : cornerPoints(points) {}
@@ -52,6 +52,7 @@ namespace medicimage
   struct PickPointsComponent
   {
     std::vector<glm::vec2> pickPoints;
+    int selectedPoint = -1;
     PickPointsComponent() = default;
     PickPointsComponent(const PickPointsComponent&) = default;
     PickPointsComponent(const std::vector<glm::vec2>& points) : pickPoints(points) {}
@@ -65,17 +66,23 @@ namespace medicimage
     ColorComponent(glm::vec4 color) : color(color){}
   };
 
+  struct CommonAttributesComponent
+  {
+    bool selected = false;
+    bool temporary = true;
+    CommonAttributesComponent() = default;
+    CommonAttributesComponent(bool selected, bool temporary) : selected(selected), temporary(temporary){} 
+  };
+
   struct CircleComponent
   {
     // center is described by the translation in the transform component
     float radius = 0.0f;  // normalized
     int thickness = 5.0f; // might extract this attribute also out into a component
-    bool temporary = true;
-    bool selected = false;
   
     CircleComponent() = default;
-    CircleComponent(float radius, int thickness, bool temporary, bool selected)
-      : radius(radius), thickness(thickness), temporary(temporary), selected(selected) {}
+    CircleComponent(float radius, int thickness)
+      : radius(radius), thickness(thickness){}
   };
 
   struct RectangleComponent
@@ -84,24 +91,19 @@ namespace medicimage
     float height = 0.0f;
     float width = 0.0f;
     float thickness = 5.0f;
-    bool temporary = true;
-    bool selected = false;
-    bool selectRectangle = false;
   
     RectangleComponent() = default;
-    RectangleComponent(float width, float height, float thickness, bool temporary, bool selected, bool selectRectangle)
-      : width(width), height(height), thickness(thickness), temporary(temporary), selected(selected), selectRectangle(selectRectangle) {}
+    RectangleComponent(float width, float height, float thickness)
+      : width(width), height(height), thickness(thickness) {}
   };
 
   struct ArrowComponent
   {
     glm::vec2 end {0.0f, 0.0f}; // only need and end, because the begin is defined by the translation
     float thickness = 5.0f;
-    bool temporary = true;
-    bool selected = false;
     
     ArrowComponent() = default;
-    ArrowComponent(glm::vec2 end, float thickness, bool temporary, bool selected)
-      : end(end), thickness(thickness), temporary(temporary), selected(selected) {}
+    ArrowComponent(glm::vec2 end, float thickness)
+      : end(end), thickness(thickness) {}
   };
 } // namespace medicimage

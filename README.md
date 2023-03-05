@@ -20,7 +20,8 @@ Input text using the enter key for completion: https://github.com/ocornut/imgui/
   - Color component - rgba
   - Tag component:
     - basecally to name/tag the component
-  - Bounding box
+  - Bounding contour
+  - Pick points for changing visually attributes of the component by dragging the pick points 
 - These are optional components:
   - Group component - optional
     - to tag if the component is grouped
@@ -50,11 +51,11 @@ During editing the default state is object selection. If a draw command is selec
 3) Adding text -> Left clock on the document -> 1)
 
 **Select object**
-1) Initial - just hovering over the document
-2) Left click on the document -> 3)
-3) Selecting. Left mouse button down -> select area. Left mouse button released -> selecting an object
-4) Left mouse button released -> selected objects in the select area -> 5)
-5) Object selected. Left mouse button pressed -> 2)
+1) ObjectSelectionInitialState. Mouse pressed -> 2) 
+2) ObjectSelectionState. Mouse down: updating the selection area. Mouse released: if objects selected -> 3) else -> 1)
+3) ObjectSelectedState. Mouse press on pick point -> 4) Mouse press on drag area -> 5)  Mouse press outside -> clear selection, 1)
+4) PickPointSelectedState. Mouse down -> change attribute of the component. Mouse relesead -> 3)
+5) ObjectDraggingState. Mouse down -> change the translation of the component. Mouse released -> 3)
 
 **Discussion with samer**
 For line: draw multiple separate line continuously

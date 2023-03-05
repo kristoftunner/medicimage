@@ -2,8 +2,6 @@
 
 #include "texture.h"
 #include "imgui.h"
-#include "image_editor.h"
-#include "drawing/entity.h"
 
 #include <d3d11.h>
 #include "opencv2/core/directx.hpp"
@@ -13,6 +11,7 @@
 #include <memory>
 #include <vector>
 #include <optional>
+#include <glm/glm.hpp>
 
 namespace medicimage
 {

@@ -164,11 +164,17 @@ void EditorUI::ShowImageWindow()
       const ImVec2 mousePosOnImage(mousePos.x - viewportOffset.x - viewportMinRegion.x, mousePos.y - viewportOffset.y - viewportMinRegion.y);
      
       if(ImGui::IsMouseClicked(ImGuiMouseButton_Left))
+      {
         m_drawingSheet.OnMouseButtonPressed({mousePosOnImage.x, mousePosOnImage.y});
+      }
       else if(ImGui::IsMouseDown(ImGuiMouseButton_Left))
+      {
         m_drawingSheet.OnMouseButtonDown({mousePosOnImage.x, mousePosOnImage.y});
+      }
       else if(ImGui::IsMouseReleased(ImGuiMouseButton_Left))
+      {
         m_drawingSheet.OnMouseButtonReleased({mousePosOnImage.x, mousePosOnImage.y});
+      }
       else
         m_drawingSheet.OnMouseHovered({mousePosOnImage.x, mousePosOnImage.y});
     }

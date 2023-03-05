@@ -1,7 +1,7 @@
 #pragma once
 
 #include "image_handling/image_saver.h"
-#include "drawing/copmonents.h"
+#include "drawing/components.h"
 #include "core/assert.h"
 
 #include <glm/glm.hpp>
@@ -19,6 +19,9 @@ class FirstClickRecievedState;
 class DrawingTemporaryState;
 class ObjectSelectInitialState;
 class ObjectSelectionState; 
+class ObjectSelectedState;
+class PickPointSelectedState;
+class ObjectDraggingState; 
 
 enum class DrawCommand{DO_NOTHING, OBJECT_SELECT, DRAW_LINE, DRAW_CIRCLE, DRAW_RECTANGLE, DRAW_ARROW, DRAW_ELLIPSE, DRAW_TEXT}; // Possible commands: DRAG(MOVE), 
 enum class DrawObjectType{TEMPORARY, PERMANENT};
@@ -117,9 +120,12 @@ public:
   // because there can be a case when hovering is disabled by the draw command and the specific draw state
   std::optional<Entity> GetHoveredEntity(const glm::vec2 pos);
   void SetHoveredEntity(Entity entity);
-  std::vector<Entity> SelectEntitiesUnderSelection();
 
-  Entity CreateRectangle(glm::vec2 topLeft, glm::vec2 bottomRight, DrawObjectType objectType);
+  bool IsUnderSelectArea(Entity entity, glm::vec2 pos);
+  bool IsPickpointSelected(Entity entity, glm::vec2 pos);
+  bool IsDragAreaSelected(Entity entity, glm::vec2 pos);
+
+  Entity CreateRectangle(glm::vec2 firstPoint, glm::vec2 secondPoint, DrawObjectType objectType);
   Entity CreateCircle(glm::vec2 topLeft, glm::vec2 bottomRight, DrawObjectType objectType);
   Entity CreateArrow(glm::vec2 topLeft, glm::vec2 bottomRight, DrawObjectType objectType);
   Entity CreateEntity(int id, const std::string& name);
@@ -130,6 +136,7 @@ private:
   std::unique_ptr<Texture2D> m_drawing;
 
   Entity m_hoveredEntity;
+  Entity m_draggedEntity;
 
   DrawCommand m_currentDrawCommand;
   std::unique_ptr<BaseDrawState> m_drawState; 
@@ -137,14 +144,21 @@ private:
   glm::vec2 m_firstPoint{1.0f, 1.0f};
   glm::vec2 m_secondPoint{1.0f, 1.0f}; 
   glm::vec2 m_sheetSize{1.0f, 1.0f}; 
+  
+  // configs 
+  static constexpr glm::vec4 s_selectBoxColor{0.23, 0.55, 0.70, 1.0};
+  static constexpr glm::vec4 s_pickPointColor{0.14, 0.50, 0.62, 1.0};
+  static constexpr float s_pickPointBoxSize = 0.01;
   friend class Entity;
-
   // state classes can be friend`s, because they are altering frequently the DrawingSheet`s variables
   friend class InitialObjectDrawState;
   friend class FirstClickRecievedState; 
   friend class DrawingTemporaryState;
   friend class ObjectSelectInitialState;
-  friend class ObjectSelectionState; 
+  friend class ObjectSelectionState;
+  friend class ObjectSelectedState;
+  friend class PickPointSelectedState;
+  friend class ObjectDraggingState; 
 };
 
 using Entity = DrawingSheet::Entity;
@@ -161,12 +175,11 @@ public:
   virtual void OnMouseButtonReleased(const glm::vec2 pos) {}
   virtual void OnTextInput(const std::string& inputText) {}
 
-  template<typename T>
   std::function<void(entt::entity)> DeleteTemporaries()
   {
     return [&](entt::entity e) {
       Entity entity = {e, m_sheet};
-      if (entity.GetComponent<T>().temporary)
+      if (entity.GetComponent<CommonAttributesComponent>().temporary)
         m_sheet->DestroyEntity(entity);
     };
   }
@@ -216,11 +229,26 @@ public:
   void OnMouseButtonReleased(const glm::vec2 pos) override;
 };
 
-class ObjectsSelectedState : public BaseDrawState
+class ObjectSelectedState : public BaseDrawState
 {
 public:
-  ObjectsSelectedState(DrawingSheet* sheet) : BaseDrawState(sheet, "ObjectSelectedState") {}
-  void OnMouseButtonPressed(const glm::vec2 pos);
+  ObjectSelectedState(DrawingSheet* sheet) : BaseDrawState(sheet, "ObjectSelectedState") {}
+  void OnMouseButtonPressed(const glm::vec2 pos) override;
 };
 
+class PickPointSelectedState : public BaseDrawState
+{
+public:
+  PickPointSelectedState(DrawingSheet* sheet) : BaseDrawState(sheet, "PickPointSelectedState") {}
+  void OnMouseButtonDown(const glm::vec2 pos) override;
+  void OnMouseButtonReleased(const glm::vec2 pos) override;
+};
+
+class ObjectDraggingState : public BaseDrawState
+{
+public:
+  ObjectDraggingState(DrawingSheet* sheet) : BaseDrawState(sheet, "ObjectDraggingState") {}
+  void OnMouseButtonDown(const glm::vec2 pos) override;
+  void OnMouseButtonReleased(const glm::vec2 pos) override;
+};
 } // namespace medicimage
