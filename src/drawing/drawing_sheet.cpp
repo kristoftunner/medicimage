@@ -62,9 +62,11 @@ namespace medicimage
       if(selected)
       {
         auto& pickPoints = entity.GetComponent<PickPointsComponent>().pickPoints;
+        auto& translation = entity.GetComponent<TransformComponent>().translation;
         for(auto& point : pickPoints)
         {
-          ImageEditor::DrawCircle(m_drawing.get(), point, 0.01, s_pickPointColor, 2);
+          
+          ImageEditor::DrawCircle(m_drawing.get(), point + translation, s_pickPointBoxSize / 2, s_pickPointColor, 2);
         }
       } 
     }
@@ -86,7 +88,7 @@ namespace medicimage
         auto& pickPoints = entity.GetComponent<PickPointsComponent>().pickPoints;
         for(auto& point : pickPoints)
         {
-          ImageEditor::DrawCircle(m_drawing.get(), point, 0.01, s_pickPointColor, 2);
+          ImageEditor::DrawCircle(m_drawing.get(), point + transform.translation, s_pickPointBoxSize / 2, s_pickPointColor, 2);
         }
       }
     }
@@ -99,8 +101,8 @@ namespace medicimage
       auto selected = entity.GetComponent<CommonAttributesComponent>().selected;
       auto& arrow = entity.GetComponent<ArrowComponent>();
       auto& color = entity.GetComponent<ColorComponent>().color;
-      auto& begin = transform.translation; 
-      auto& end = arrow.end; 
+      auto begin = arrow.begin + transform.translation; 
+      auto end = arrow.end + transform.translation; 
       ImageEditor::DrawArrow(m_drawing.get(), begin, end, color, arrow.thickness, 0.1);
     
       if(selected)
@@ -108,7 +110,7 @@ namespace medicimage
         auto& pickPoints = entity.GetComponent<PickPointsComponent>().pickPoints;
         for(auto& point : pickPoints)
         {
-          ImageEditor::DrawCircle(m_drawing.get(), point, 0.01, s_pickPointColor, 2);
+          ImageEditor::DrawCircle(m_drawing.get(), point + transform.translation, s_pickPointBoxSize / 2, s_pickPointColor, 2);
         }
       }
     }
@@ -169,10 +171,13 @@ namespace medicimage
     for(auto e : view)
     {
       Entity entity = {e, this};
-      auto& boundingContour = entity.GetComponent<BoundingContourComponent>().cornerPoints;
+      auto boundingContour = entity.GetComponent<BoundingContourComponent>().cornerPoints;
       if(boundingContour.size() == 0)
         continue;
 
+      auto translation = entity.GetComponent<TransformComponent>().translation;
+      for(auto& c : boundingContour)
+        c += translation;
       std::vector<cv::Point2f> contour;
       std::transform(boundingContour.begin(), boundingContour.end(), std::back_inserter(contour), [](glm::vec2 vec) {return cv::Point2f{ vec.x, vec.y }; });
       if(cv::pointPolygonTest(contour, cv::Point2f{relPos.x, relPos.y}, false)  >= 0)
@@ -191,9 +196,12 @@ namespace medicimage
 
   bool DrawingSheet::IsUnderSelectArea(Entity entity, glm::vec2 pos)
   {
-    auto& boundingBox = entity.GetComponent<BoundingContourComponent>().cornerPoints;
+    auto boundingContour = entity.GetComponent<BoundingContourComponent>().cornerPoints;
+    auto translation = entity.GetComponent<TransformComponent>().translation;
+    for(auto& c : boundingContour)
+      c += translation;
     std::vector<cv::Point2f> entityContour;
-    std::transform(boundingBox.begin(), boundingBox.end(), std::back_inserter(entityContour), [](glm::vec2 vec) {return cv::Point2f{ vec.x, vec.y }; });
+    std::transform(boundingContour.begin(), boundingContour.end(), std::back_inserter(entityContour), [](glm::vec2 vec) {return cv::Point2f{ vec.x, vec.y }; });
       
     auto dx = m_secondPoint.x - m_firstPoint.x;
     auto dy = m_secondPoint.y - m_firstPoint.y;
@@ -206,7 +214,7 @@ namespace medicimage
       if(cv::intersectConvexConvex(selectContour, entityContour, tmp, false) == 0.0)
       {
         APP_CORE_INFO("Entity:{} selected with bb: tl:{}:{}, tr:{}:{}, br:{}:{}, bl:{}:{}", entity.GetComponent<IDComponent>().ID,
-          boundingBox[0].x, boundingBox[0].y, boundingBox[1].x, boundingBox[1].y, boundingBox[2].x, boundingBox[2].y, boundingBox[3].x, boundingBox[3].y);
+          boundingContour[0].x, boundingContour[0].y, boundingContour[1].x, boundingContour[1].y, boundingContour[2].x, boundingContour[2].y, boundingContour[3].x, boundingContour[3].y);
         return true;
       }
     }
@@ -215,8 +223,11 @@ namespace medicimage
 
   bool DrawingSheet::IsPickpointSelected(Entity entity, glm::vec2 pos)
   {
-    auto& pickPoints = entity.GetComponent<PickPointsComponent>().pickPoints;
+    auto pickPoints = entity.GetComponent<PickPointsComponent>().pickPoints;
     assert(pickPoints.size() != 0);
+    auto translation = entity.GetComponent<TransformComponent>().translation;
+    for(auto& p : pickPoints)
+      p += translation;
     for(int i = 0; i < pickPoints.size(); i++)
     {
       auto point = pickPoints[i];
@@ -233,8 +244,11 @@ namespace medicimage
 
   bool DrawingSheet::IsDragAreaSelected(Entity entity, glm::vec2 pos)
   {
-    auto& boundingContour = entity.GetComponent<BoundingContourComponent>().cornerPoints;
+    auto boundingContour = entity.GetComponent<BoundingContourComponent>().cornerPoints;
     assert(boundingContour.size() != 0);
+    auto translation = entity.GetComponent<TransformComponent>().translation;
+    for(auto& c : boundingContour)
+      c += translation;
     std::vector<cv::Point2f> contour;
     std::transform(boundingContour.begin(), boundingContour.end(), std::back_inserter(contour), [](glm::vec2 vec) {return cv::Point2f{ vec.x, vec.y }; });
     if(cv::pointPolygonTest(contour, cv::Point2f{pos.x, pos.y}, false)  >= 0)
@@ -260,15 +274,21 @@ namespace medicimage
     rectangle.height = tmpRect.height; 
 
     glm::vec2 topleft{tmpRect.tl().x, tmpRect.tl().y};
-    glm::vec2 bottomright{tmpRect.br().x, tmpRect.br().y};
     transform.translation = topleft;
 
-    boundingBox.cornerPoints = {topleft, topleft + glm::vec2{rectangle.width, 0}, bottomright, topleft + glm::vec2{0, rectangle.height}, topleft};
-    
-    pickPoints.pickPoints = {topleft + glm::vec2{rectangle.width / 2, 0}, bottomright + glm::vec2{0, -rectangle.height / 2},
-      bottomright + glm::vec2{-rectangle.width / 2, 0}, topleft + glm::vec2{0, rectangle.height / 2}};
-    
+    UpdateRectangleShapeAttributes(entity);
     return entity;
+  }
+  
+  void DrawingSheet::UpdateRectangleShapeAttributes(Entity entity)
+  {
+    auto& rectangle = entity.GetComponent<RectangleComponent>();
+    auto& boundingBox = entity.GetComponent<BoundingContourComponent>();
+    auto& pickPoints = entity.GetComponent<PickPointsComponent>();
+    
+    boundingBox.cornerPoints = {{0,0}, {rectangle.width, 0}, {rectangle.width, rectangle.height}, {0, rectangle.height}, {0,0}};
+    pickPoints.pickPoints = {glm::vec2{rectangle.width, rectangle.height} + glm::vec2{0, -rectangle.height / 2},
+      glm::vec2{rectangle.width, rectangle.height} + glm::vec2{-rectangle.width / 2, 0}, {0, rectangle.height / 2}, glm::vec2{rectangle.width / 2, 0}};
   }
 
   Entity DrawingSheet::CreateCircle(glm::vec2 topLeft, glm::vec2 bottomRight, DrawObjectType objectType)
@@ -277,28 +297,27 @@ namespace medicimage
     entity.GetComponent<CommonAttributesComponent>().temporary = objectType == DrawObjectType::TEMPORARY ? true : false;
     
     auto& transform = entity.GetComponent<TransformComponent>();
+    auto& boundingBox = entity.AddComponent<BoundingContourComponent>();
+    auto& pickPoints = entity.AddComponent<PickPointsComponent>();
     transform.translation = topLeft;
 
     auto& color = entity.AddComponent<ColorComponent>();  
     auto& circle = entity.AddComponent<CircleComponent>();
-    auto& boundingBox = entity.AddComponent<BoundingContourComponent>();
-    auto& pickPoints = entity.AddComponent<PickPointsComponent>();
-    
     circle.radius = glm::length(topLeft - bottomRight);
-    auto radius = circle.radius;
 
-    // bounding polyigon of the circle is a square actually
-    boundingBox.cornerPoints = {topLeft + glm::vec2{-radius, -radius}, topLeft + glm::vec2{radius, -radius}, topLeft + glm::vec2{radius, radius}, topLeft + glm::vec2{-radius, radius}, topLeft};
-    auto& corners = boundingBox.cornerPoints;
-
-    auto& center = transform.translation;
-    pickPoints.pickPoints = {center + glm::vec2{radius, 0}, center + glm::vec2{0, circle.radius},
-      center + glm::vec2{-circle.radius, 0}, center + glm::vec2{0, -circle.radius}};
-    
-    APP_CORE_TRACE("Circle added: center:{}:{} radius:{}", topLeft.x, topLeft.y, radius);
-    APP_CORE_TRACE("With bounding box:tl:{}:{} tr:{}:{} br:{}:{} bl:{}:{}", corners[0].x, corners[0].y, corners[1].x, corners[1].y, corners[2].x, corners[2].y, corners[3].x, corners[3].y);
-    
+    UpdateCircleShapeAttributes(entity);
     return entity;
+  }
+
+  void DrawingSheet::UpdateCircleShapeAttributes(Entity entity)
+  {
+    auto& circle = entity.GetComponent<CircleComponent>();
+    auto& boundingBox = entity.GetComponent<BoundingContourComponent>();
+    auto& pickPoints = entity.GetComponent<PickPointsComponent>();
+    auto radius = circle.radius;
+    // bounding polyigon of the circle is a square actually
+    boundingBox.cornerPoints = {{-radius, -radius}, {radius, -radius}, {radius, radius}, {-radius, radius}, {0,0}};
+    pickPoints.pickPoints = {{radius, 0}, {0, circle.radius}, {-circle.radius, 0}, {0, -circle.radius}};
   }
 
   Entity DrawingSheet::CreateArrow(glm::vec2 topLeft, glm::vec2 bottomRight, DrawObjectType objectType)
@@ -307,27 +326,31 @@ namespace medicimage
     entity.GetComponent<CommonAttributesComponent>().temporary = objectType == DrawObjectType::TEMPORARY ? true : false;
     
     auto& transform = entity.GetComponent<TransformComponent>();
+    auto& boundingBox = entity.AddComponent<BoundingContourComponent>();
+    auto& pickPoints = entity.AddComponent<PickPointsComponent>();
     transform.translation = topLeft;
 
     auto& color = entity.AddComponent<ColorComponent>();  
     auto& arrow = entity.AddComponent<ArrowComponent>();
-    auto& boundingBox = entity.AddComponent<BoundingContourComponent>();
-    auto& pickPoints = entity.AddComponent<PickPointsComponent>();
-    
-    arrow.end = bottomRight;
+    arrow.end = bottomRight - topLeft;
 
-    glm::vec2 vec = topLeft - bottomRight; 
-    glm::vec2 perp = glm::normalize(glm::vec2{-vec.y, vec.x});
-    glm::vec2 offset = perp * glm::length(vec) * glm::vec2(0.2);
-    boundingBox.cornerPoints = {topLeft + offset, bottomRight + offset, bottomRight - offset, topLeft - offset, topLeft + offset};
-    auto& corners = boundingBox.cornerPoints;
-    
-    pickPoints.pickPoints = {transform.translation, arrow.end};
-    APP_CORE_TRACE("Arrow added: begin:{}:{} end:{}:{}", topLeft.x, topLeft.y, bottomRight.x, bottomRight.y);
-    APP_CORE_TRACE("With bounding box:tl:{}:{} tr:{}:{} br:{}:{} bl:{}:{}", corners[0].x, corners[0].y, corners[1].x, corners[1].y, corners[2].x, corners[2].y, corners[3].x, corners[3].y);
+    UpdateArrowShapeAttributes(entity);
     return entity;
   }
 
+  void DrawingSheet::UpdateArrowShapeAttributes(Entity entity)
+  {
+    auto& arrow = entity.GetComponent<ArrowComponent>();
+    auto& boundingBox = entity.GetComponent<BoundingContourComponent>();
+    auto& pickPoints = entity.GetComponent<PickPointsComponent>();
+
+    glm::vec2 vec = arrow.begin - arrow.end; 
+    glm::vec2 perp = glm::normalize(glm::vec2{-vec.y, vec.x});
+    glm::vec2 offset = perp * glm::length(vec) * glm::vec2(0.2);
+    boundingBox.cornerPoints = {offset, arrow.end + offset, arrow.end - offset, -offset, offset};
+    pickPoints.pickPoints = {arrow.begin, arrow.end};
+  }
+  
   Entity DrawingSheet::CreateEntity(int id, const std::string &name)
   {
 		Entity entity = { m_registry.create(), this };
@@ -505,28 +528,109 @@ namespace medicimage
 
   void PickPointSelectedState::OnMouseButtonDown(const glm::vec2 pos)
   {
-    m_sheet->m_secondPoint = pos / m_sheet->m_sheetSize;
-    auto diff = m_sheet->m_firstPoint - m_sheet->m_secondPoint;
+    auto currentPoint = pos / m_sheet->m_sheetSize; 
+    auto diff = (currentPoint - m_sheet->m_firstPoint) * glm::vec2(1.0);
+    m_sheet->m_firstPoint = pos / m_sheet->m_sheetSize;
     auto view = m_sheet->m_registry.view<PickPointsComponent>();
     for(auto e : view)
     {
       Entity entity = {e, m_sheet};
-      if(entity.GetComponent<PickPointsComponent>().selectedPoint != -1)
+      auto selectedPointIndex = entity.GetComponent<PickPointsComponent>().selectedPoint;
+      if(selectedPointIndex != -1)
       {
-        ; // do something    
+        if (entity.HasComponent<RectangleComponent>())
+        {
+          switch(selectedPointIndex)  // [TODO REFACTOR]: extract these out into functions
+          {
+            case static_cast<int>(RectanglePicPoints::RIGHT):
+            {
+              entity.GetComponent<RectangleComponent>().width += diff.x;
+              break;
+            }
+            case static_cast<int>(RectanglePicPoints::BOTTOM):
+            {
+              entity.GetComponent<RectangleComponent>().height += diff.y;
+              break;
+            }
+            case static_cast<int>(RectanglePicPoints::LEFT):
+            {
+              entity.GetComponent<RectangleComponent>().width += -diff.x;
+              entity.GetComponent<TransformComponent>().translation += glm::vec2{diff.x, 0};
+              break;
+            }
+            case static_cast<int>(RectanglePicPoints::TOP):
+            {
+              entity.GetComponent<RectangleComponent>().height += -diff.y;
+              entity.GetComponent<TransformComponent>().translation += glm::vec2{0, diff.y};
+              break;
+            }
+            default:
+              APP_CORE_ERR("Wrong pickpoint index({}) at component:{}", selectedPointIndex, entity.GetComponent<IDComponent>().ID);
+              break;
+          } 
+          m_sheet->UpdateRectangleShapeAttributes(entity);
+        }
+        else if(entity.HasComponent<CircleComponent>())
+        {
+          switch(selectedPointIndex)  // [TODO REFACTOR]: extract these out into functions
+          {
+            case static_cast<int>(CirclePickPoints::RIGHT):
+              entity.GetComponent<CircleComponent>().radius += diff.x;
+              break;
+            case static_cast<int>(CirclePickPoints::LEFT):
+              entity.GetComponent<CircleComponent>().radius += -diff.x;
+              break;
+            case static_cast<int>(CirclePickPoints::BOTTOM):
+              entity.GetComponent<CircleComponent>().radius += diff.y;
+              break;
+            case static_cast<int>(CirclePickPoints::TOP):
+              entity.GetComponent<CircleComponent>().radius += -diff.y;
+              break;
+            default:
+              APP_CORE_ERR("Wrong pickpoint index({}) at component:{}", selectedPointIndex, entity.GetComponent<IDComponent>().ID);
+              break;
+          } 
+          m_sheet->UpdateCircleShapeAttributes(entity);
+        }
+        else if(entity.HasComponent<ArrowComponent>())
+        {
+          switch(selectedPointIndex)  // [TODO REFACTOR]: extract these out into functions
+          {
+            case static_cast<int>(ArrowPickPoints::BEGIN):
+              entity.GetComponent<ArrowComponent>().begin += diff;
+              break;
+            case static_cast<int>(ArrowPickPoints::END):
+              entity.GetComponent<ArrowComponent>().end += diff;
+              break;
+            default:
+              APP_CORE_ERR("Wrong pickpoint index({}) at component:{}", selectedPointIndex, entity.GetComponent<IDComponent>().ID);
+              break;
+          } 
+          m_sheet->UpdateArrowShapeAttributes(entity);
+        }
+        else
+          APP_CORE_ERR("WTF this component");
       }
     }
   }
 
   void PickPointSelectedState::OnMouseButtonReleased(const glm::vec2 pos)
   {
+    // clear pickpoint selection
+    auto view = m_sheet->m_registry.view<PickPointsComponent>();
+    for(auto e : view)
+    {
+      Entity entity = {e, m_sheet};
+      entity.GetComponent<PickPointsComponent>().selectedPoint = -1;
+    }
     m_sheet->ChangeDrawState(std::make_unique<ObjectSelectedState>(m_sheet));
   }
 
   void ObjectDraggingState::OnMouseButtonDown(const glm::vec2 pos)
   {
-    m_sheet->m_secondPoint = pos / m_sheet->m_sheetSize;
-    auto diff = (m_sheet->m_secondPoint - m_sheet->m_firstPoint) * glm::vec2(0.2);
+    auto currentPoint = pos / m_sheet->m_sheetSize; 
+    auto diff = (currentPoint - m_sheet->m_firstPoint) * glm::vec2(1.0);
+    m_sheet->m_firstPoint = pos / m_sheet->m_sheetSize;
     auto& transform = m_sheet->m_draggedEntity.GetComponent<TransformComponent>();
     transform.translation += diff;
   }

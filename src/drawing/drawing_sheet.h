@@ -28,7 +28,7 @@ enum class DrawObjectType{TEMPORARY, PERMANENT};
 
 // TODO: 1) color handling
 //       2) shape thickness handling
-//       3) handle rotation and translation
+//       3) handle rotation 
 //       4) implement correct UUID handling
 //       5) handle various aspect ratios
 class DrawingSheet
@@ -44,7 +44,7 @@ public:
   	template<typename T, typename... Args>
   	T& AddComponent(Args&&... args)
   	{
-  		//MI_CORE_ASSERT(!HasComponent<T>(), "Entity already has component!");  // TODO: do something with has component
+  		MI_CORE_ASSERT(!HasComponent<T>(), "Entity already has component!");  
   		T& component = m_sheet->m_registry.emplace<T>(m_entityHandle, std::forward<Args>(args)...);
   		//m_sheet->OnComponentAdded<T>(*this, component);
   		return component;
@@ -61,20 +61,20 @@ public:
   	template<typename T>
   	T& GetComponent()
   	{
-  		//MI_CORE_ASSERT(HasComponent<T>(), "Entity does not have component!");
+  		MI_CORE_ASSERT(HasComponent<T>(), "Entity does not have component!");
   		return m_sheet->m_registry.get<T>(m_entityHandle);
   	}
 
-  	//template<typename T>
-  	//bool HasComponent()
-  	//{
-  	//	return m_sheet->m_registry.has<T>(m_entityHandle);
-  	//}
+  	template<typename T>
+  	bool HasComponent()
+  	{
+      return m_sheet->m_registry.any_of<T>(m_entityHandle);
+  	}
 
   	template<typename T>
   	void RemoveComponent()
   	{
-  		//MI_CORE_ASSERT(HasComponent<T>(), "Entity does not have component!");
+  		MI_CORE_ASSERT(HasComponent<T>(), "Entity does not have component!");
   		m_sheet->m_registry.remove<T>(m_entityHandle);
   	}
 
@@ -126,8 +126,11 @@ public:
   bool IsDragAreaSelected(Entity entity, glm::vec2 pos);
 
   Entity CreateRectangle(glm::vec2 firstPoint, glm::vec2 secondPoint, DrawObjectType objectType);
+  void   UpdateRectangleShapeAttributes(Entity entity);
   Entity CreateCircle(glm::vec2 topLeft, glm::vec2 bottomRight, DrawObjectType objectType);
+  void   UpdateCircleShapeAttributes(Entity entity);
   Entity CreateArrow(glm::vec2 topLeft, glm::vec2 bottomRight, DrawObjectType objectType);
+  void   UpdateArrowShapeAttributes(Entity entity);
   Entity CreateEntity(int id, const std::string& name);
   void DestroyEntity(Entity entity);
 private:
@@ -148,7 +151,7 @@ private:
   // configs 
   static constexpr glm::vec4 s_selectBoxColor{0.23, 0.55, 0.70, 1.0};
   static constexpr glm::vec4 s_pickPointColor{0.14, 0.50, 0.62, 1.0};
-  static constexpr float s_pickPointBoxSize = 0.01;
+  static constexpr float s_pickPointBoxSize = 0.02;
   friend class Entity;
   // state classes can be friend`s, because they are altering frequently the DrawingSheet`s variables
   friend class InitialObjectDrawState;

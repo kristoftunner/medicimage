@@ -58,6 +58,10 @@ namespace medicimage
     PickPointsComponent(const std::vector<glm::vec2>& points) : pickPoints(points) {}
   };
 
+  enum class RectanglePicPoints {RIGHT=0, BOTTOM=1, LEFT=2, TOP=3};
+  enum class CirclePickPoints {RIGHT=0, BOTTOM=1, LEFT=2, TOP=3};
+  enum class ArrowPickPoints {BEGIN=0, END=1};
+
   struct ColorComponent
   {
     glm::vec4 color{0.0f, 0.0f, 0.0f, 0.0f};
@@ -99,11 +103,12 @@ namespace medicimage
 
   struct ArrowComponent
   {
-    glm::vec2 end {0.0f, 0.0f}; // only need and end, because the begin is defined by the translation
+    glm::vec2 begin{0.0f, 0.0f};  // this is 0,0 in most cases, only changes when editing with pickpoints, because it seems logicaly correct to use instead of the transform
+    glm::vec2 end {0.0f, 0.0f}; 
     float thickness = 5.0f;
     
     ArrowComponent() = default;
-    ArrowComponent(glm::vec2 end, float thickness)
-      : end(end), thickness(thickness) {}
+    ArrowComponent(glm::vec2 end, glm::vec2 begin, float thickness)
+      : end(end), begin(begin), thickness(thickness) {}
   };
 } // namespace medicimage
