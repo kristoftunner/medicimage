@@ -93,13 +93,13 @@ void ImageSaver::CreatePatientDir()
 void ImageSaver::LoadImage(std::string imageName, const std::filesystem::path& filePath)
 {
   // TODO: load correctly the document metadata from a meta file
-  auto findByName = [&](const ImageDocument& image){return image.texture->GetName() == imageName;};
+  auto findByName = [&](const ImageDocument& image){return image.documentId == imageName;};
   
   auto it = std::find_if(m_savedImages.begin(), m_savedImages.end(), findByName);
   if(it == m_savedImages.end())
   { 
     auto timestamp = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-    m_savedImages.push_back({std::make_unique<Texture2D>(imageName, filePath.string())});
+    m_savedImages.push_back({std::make_unique<Texture2D>(imageName, filePath.string()), filePath.stem().string()});
   }
 }
 

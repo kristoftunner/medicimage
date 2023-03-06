@@ -74,6 +74,7 @@ namespace medicimage
   {
     bool selected = false;
     bool temporary = true;
+    bool filled = false;
     CommonAttributesComponent() = default;
     CommonAttributesComponent(bool selected, bool temporary) : selected(selected), temporary(temporary){} 
   };

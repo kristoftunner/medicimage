@@ -478,17 +478,18 @@ void EditorUI::ShowThumbnails()
   {
     int numOfCurrentThumbs = 0;
     ImVec4 backgroundColor = ImVec4(1.0f, 1.0f, 1.0f, 0.0f); // 50% opaque white
-    for (const auto& image : m_imageSavers->GetSelectedSaver().GetSavedImages())
+    auto& images = m_imageSavers->GetSelectedSaver().GetSavedImages();
+    for (const auto& image : images)
     {
       numOfCurrentThumbs++;
       constexpr ImVec2 uvMin = ImVec2(0.0f, 0.0f);                 // Top-left
       constexpr ImVec2 uvMax = ImVec2(1.0f, 1.0f);                 // Lower-right
       constexpr ImVec4 tintColor = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);   // No tint
-      ImGui::Text("%s", image.texture->GetName().c_str());
+      ImGui::Text("%s", image.documentId.c_str());
       ImVec2 pos = ImGui::GetCursorScreenPos();
       ImVec2 canvasSize = ImGui::GetContentRegionAvail();
       float aspectRatio = static_cast<float>(m_frame->GetWidth()) / static_cast<float>(m_frame->GetHeight());
-      if(ImGui::ImageButton(image.texture->GetName().c_str(), image.texture->GetShaderResourceView(), ImVec2{ canvasSize.x, canvasSize.x / aspectRatio }, uvMin, uvMax, backgroundColor, tintColor))
+      if(ImGui::ImageButton("##button", image.texture->GetShaderResourceView(), ImVec2{canvasSize.x, canvasSize.x / aspectRatio}, uvMin, uvMax, backgroundColor, tintColor))
       {
         // we can go into edit mode if we select an image from the thumbnails
         m_editorState = EditorState::EDITING;

@@ -84,38 +84,54 @@ void ImageEditor::Init(ID3D11Device* device)
     APP_CORE_ERR("Do not have OpenCL device!!");
 }
 
-void ImageEditor::DrawCircle(Texture2D* texture, glm::vec2 center, float radius, glm::vec4 color, float thickness)
+void ImageEditor::DrawCircle(Texture2D* texture, glm::vec2 center, float radius, glm::vec4 color, float thickness, bool filled)
 {
-  cv::UMat image;
+  cv::UMat image, overlay;
   cv::directx::convertFromD3D11Texture2D(texture->GetTexturePtr(), image);
   cv::cvtColor(image, image, cv::COLOR_RGBA2BGR);
 
   glm::vec2 imageSize = {texture->GetWidth(), texture->GetHeight()};
   center *= imageSize;
   radius = radius * glm::length(imageSize);
+  auto alpha = color.a;
   color *= 255.0;
-  cv::circle(image, cv::Point{static_cast<int>(center.x), static_cast<int>(center.y)}, static_cast<int>(radius), cv::Scalar(color.b, color.g,  color.r), thickness); 
+  if(filled)
+  {
+    image.copyTo(overlay);
+    cv::circle(image, cv::Point{static_cast<int>(center.x), static_cast<int>(center.y)}, static_cast<int>(radius), cv::Scalar(color.b, color.g,  color.r), -1); 
+    cv::addWeighted(overlay, alpha, image, 1 - alpha, 0, image);
+  }
+  else
+    cv::circle(image, cv::Point{static_cast<int>(center.x), static_cast<int>(center.y)}, static_cast<int>(radius), cv::Scalar(color.b, color.g,  color.r), thickness); 
 
   //TODO: add rotation 
   cv::cvtColor(image, image, cv::COLOR_BGR2RGBA);
   cv::directx::convertToD3D11Texture2D(image, texture->GetTexturePtr());
 }
 
-void ImageEditor::DrawRectangle(Texture2D* texture, glm::vec2 topleft, glm::vec2 bottomright, glm::vec4 color, float thickness)
+void ImageEditor::DrawRectangle(Texture2D* texture, glm::vec2 topleft, glm::vec2 bottomright, glm::vec4 color, float thickness, bool filled)
 {
-  cv::UMat image;
+  cv::UMat image, overlay;
   cv::directx::convertFromD3D11Texture2D(texture->GetTexturePtr(), image);
   cv::cvtColor(image, image, cv::COLOR_RGBA2BGR);
-
   glm::vec2 imageSize = {texture->GetWidth(), texture->GetHeight()};
   topleft *= imageSize;
   bottomright *= imageSize; 
-  color *= 255.0;
   
   if ((static_cast<int>(topleft.x) != static_cast<int>(bottomright.x)) && (static_cast<int>(topleft.y) != static_cast<int>(bottomright.y)))
   {
-    cv::rectangle(image, cv::Point{ static_cast<int>(topleft.x), static_cast<int>(topleft.y) }, cv::Point{ static_cast<int>(bottomright.x), static_cast<int>(bottomright.y) },
-      cv::Scalar(color.b, color.g, color.r), static_cast<int>(thickness), cv::LineTypes::FILLED);
+    float alpha = color.a;
+    color *= 255.0;
+    if(filled)
+    {
+      image.copyTo(overlay);
+      cv::rectangle(overlay, cv::Point{ static_cast<int>(topleft.x), static_cast<int>(topleft.y) }, cv::Point{ static_cast<int>(bottomright.x), static_cast<int>(bottomright.y) },
+        cv::Scalar(color.b, color.g, color.r), -1);
+      cv::addWeighted(overlay, alpha, image, 1 - alpha, 0, image);
+    }
+    else
+      cv::rectangle(image, cv::Point{ static_cast<int>(topleft.x), static_cast<int>(topleft.y) }, cv::Point{ static_cast<int>(bottomright.x), static_cast<int>(bottomright.y) },
+        cv::Scalar(color.b, color.g, color.r), static_cast<int>(thickness), cv::LineTypes::FILLED);
   }
 
   //TODO: add rotation 

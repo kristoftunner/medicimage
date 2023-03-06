@@ -149,8 +149,8 @@ private:
   glm::vec2 m_sheetSize{1.0f, 1.0f}; 
   
   // configs 
-  static constexpr glm::vec4 s_selectBoxColor{0.23, 0.55, 0.70, 1.0};
-  static constexpr glm::vec4 s_pickPointColor{0.14, 0.50, 0.62, 1.0};
+  static constexpr glm::vec4 s_selectBoxColor{0.23, 0.55, 0.70, 0.5};
+  static constexpr glm::vec4 s_pickPointColor{0.14, 0.50, 0.62, 0.5};
   static constexpr float s_pickPointBoxSize = 0.02;
   friend class Entity;
   // state classes can be friend`s, because they are altering frequently the DrawingSheet`s variables

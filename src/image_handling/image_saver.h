@@ -19,7 +19,7 @@ class FileLogger
 {
 public:
   enum class FileOperation{FILE_SAVE, FILE_DELETE};
-  FileLogger(const std::filesystem::path& logFileDir) : m_logFileName(logFileDir){m_logFileName /= "files.json";}
+  FileLogger(const std::filesystem::path& logFileDir) : m_logFileName(logFileDir){m_logFileName /= "file_operations.json";}
   void LogFileOperation(const std::string& filename, FileOperation fileOp);
   std::vector<std::pair<std::string,std::string>> GetSavedImages(); 
 private:
@@ -31,6 +31,7 @@ struct ImageDocument
 public:  
   ImageDocument() = default;
   ImageDocument(std::unique_ptr<Texture2D> tex) : texture(std::move(tex)){}
+  ImageDocument(std::unique_ptr<Texture2D> tex, const std::string& id) : texture(std::move(tex)), documentId(id){}
   ImageDocument(const ImageDocument& doc)
   {
     timestamp = doc.timestamp;

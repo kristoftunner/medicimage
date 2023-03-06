@@ -53,20 +53,20 @@ namespace medicimage
     {
       Entity entity = {e, this};
       auto& transform  = entity.GetComponent<TransformComponent>();
-      auto selected = entity.GetComponent<CommonAttributesComponent>().selected;
+      auto& commonAttributes = entity.GetComponent<CommonAttributesComponent>();
       auto& circle = entity.GetComponent<CircleComponent>();
       auto& color = entity.GetComponent<ColorComponent>().color;
       auto& center = transform.translation;
-      ImageEditor::DrawCircle(m_drawing.get(), center, circle.radius, color, circle.thickness);
+      ImageEditor::DrawCircle(m_drawing.get(), center, circle.radius, color, circle.thickness, commonAttributes.filled);
 
-      if(selected)
+      if(commonAttributes.selected)
       {
         auto& pickPoints = entity.GetComponent<PickPointsComponent>().pickPoints;
         auto& translation = entity.GetComponent<TransformComponent>().translation;
         for(auto& point : pickPoints)
         {
           
-          ImageEditor::DrawCircle(m_drawing.get(), point + translation, s_pickPointBoxSize / 2, s_pickPointColor, 2);
+          ImageEditor::DrawCircle(m_drawing.get(), point + translation, s_pickPointBoxSize / 2, s_pickPointColor, 2, true);
         }
       } 
     }
@@ -76,19 +76,19 @@ namespace medicimage
     {
       Entity entity = {e, this};
       auto& transform  = entity.GetComponent<TransformComponent>();
-      auto selected = entity.GetComponent<CommonAttributesComponent>().selected;
+      auto& commonAttributes = entity.GetComponent<CommonAttributesComponent>();
       auto& rectangle = entity.GetComponent<RectangleComponent>();
       auto& color = entity.GetComponent<ColorComponent>().color;
       auto& topleft = transform.translation;
       auto bottomright = topleft + glm::vec2{rectangle.width, rectangle.height}; 
-      ImageEditor::DrawRectangle(m_drawing.get(), topleft, bottomright, color, rectangle.thickness);
+      ImageEditor::DrawRectangle(m_drawing.get(), topleft, bottomright, color, rectangle.thickness, commonAttributes.filled);
     
-      if(selected)
+      if(commonAttributes.selected)
       {
         auto& pickPoints = entity.GetComponent<PickPointsComponent>().pickPoints;
         for(auto& point : pickPoints)
         {
-          ImageEditor::DrawCircle(m_drawing.get(), point + transform.translation, s_pickPointBoxSize / 2, s_pickPointColor, 2);
+          ImageEditor::DrawCircle(m_drawing.get(), point + transform.translation, s_pickPointBoxSize / 2, s_pickPointColor, 2, true);
         }
       }
     }
@@ -98,19 +98,19 @@ namespace medicimage
     {
       Entity entity = {e, this};
       auto& transform  = entity.GetComponent<TransformComponent>();
-      auto selected = entity.GetComponent<CommonAttributesComponent>().selected;
+      auto& commonAttributes = entity.GetComponent<CommonAttributesComponent>();
       auto& arrow = entity.GetComponent<ArrowComponent>();
       auto& color = entity.GetComponent<ColorComponent>().color;
       auto begin = arrow.begin + transform.translation; 
       auto end = arrow.end + transform.translation; 
       ImageEditor::DrawArrow(m_drawing.get(), begin, end, color, arrow.thickness, 0.1);
     
-      if(selected)
+      if(commonAttributes.selected)
       {
         auto& pickPoints = entity.GetComponent<PickPointsComponent>().pickPoints;
         for(auto& point : pickPoints)
         {
-          ImageEditor::DrawCircle(m_drawing.get(), point + transform.translation, s_pickPointBoxSize / 2, s_pickPointColor, 2);
+          ImageEditor::DrawCircle(m_drawing.get(), point + transform.translation, s_pickPointBoxSize / 2, s_pickPointColor, 2, true);
         }
       }
     }
@@ -471,6 +471,7 @@ namespace medicimage
       auto entity = m_sheet->CreateRectangle(m_sheet->m_firstPoint, m_sheet->m_secondPoint, DrawObjectType::TEMPORARY); // TODO: add opacity
       entity.GetComponent<ColorComponent>().color = m_sheet->s_selectBoxColor;
       entity.GetComponent<RectangleComponent>().thickness = 2;
+      entity.GetComponent<CommonAttributesComponent>().filled = true;
     }
     
   }
