@@ -4,6 +4,7 @@
 #include "core/log.h"
 #include "image_editor.h"
 #include <algorithm>
+#include <chrono>
 
 #include <glm/gtx/perpendicular.hpp>
 
@@ -119,7 +120,10 @@ namespace medicimage
     std::for_each(rectangles.begin(), rectangles.end(), m_drawState->DeleteTemporaries());
     std::for_each(arrows.begin(), arrows.end(), m_drawState->DeleteTemporaries());
 
-    return std::move(std::make_unique<Texture2D>(*m_drawing.get()));
+    std::stringstream ss;
+    ss << std::put_time(std::localtime(&(m_originalDoc->timestamp)), "%d-%b-%Y %X");
+    std::string footerText = m_originalDoc->documentId + " - " + ss.str();
+    return ImageEditor::AddImageFooter(footerText, m_drawing.get());
   }
 
   void DrawingSheet::ChangeDrawState(std::unique_ptr<BaseDrawState> newState)

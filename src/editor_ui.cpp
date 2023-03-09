@@ -268,10 +268,9 @@ void EditorUI::ShowToolbox()
     {
       if(m_frame.get() != nullptr)
       {
-        if (m_imageSavers->HasSelectedSaver()) //TODO: should select it with an optional<ImageSaver> return type
+        if (m_imageSavers->HasSelectedSaver()) //TODO: should select it with an optional<ImageDocContainer> return type
         { // create the ImageDocument here, because the screenshot is made here
-          m_activeDocument = ImageDocument(std::make_unique<Texture2D>(m_frame->GetTexturePtr(), m_frame->GetName()));
-          m_imageSavers->GetSelectedSaver().SaveImage(m_activeDocument, false);
+          m_activeDocument = m_imageSavers->GetSelectedSaver().AddImage(*m_frame.get(), true);
         }
         else
         {
@@ -293,17 +292,13 @@ void EditorUI::ShowToolbox()
   {
     if(m_editorState == EditorState::EDITING)
     {
-      if(m_activeDocument.texture.get() != nullptr)
-      {
-        if (m_imageSavers->HasSelectedSaver()) //TODO: should select it with an optional<ImageSaver> return type
-        { // update the texture in the document with the frame, because from this point it is not needed to store the original image
-          m_activeDocument.texture = std::make_unique<Texture2D>(*m_frame.get());
-          m_imageSavers->GetSelectedSaver().SaveImage(m_activeDocument, true);
-
-        }
-        else
-          APP_CORE_ERR("Please input valid UUID for saving the current image!");
+      if (m_imageSavers->HasSelectedSaver()) 
+      { 
+        auto image = ImageEditor::RemoveFooter(m_frame.get()); // need to remove the footer, because ImageDocument should store it, not the actual image
+        m_imageSavers->GetSelectedSaver().AddImage(*image.get(), true);
       }
+      else
+        APP_CORE_ERR("Please input valid UUID for saving the current image!");
       // we can get out of edit mode only with saving the image
       m_editorState = EditorState::SHOW_CAMERA;
       m_drawingSheet.SetDrawCommand(DrawCommand::DO_NOTHING);
@@ -326,7 +321,7 @@ void EditorUI::ShowToolbox()
   {
     if (ImGui::BeginPopupModal("delete", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
     {
-      std::string imageName = m_activeDocument.documentId; 
+      std::string imageName = m_activeDocument->documentId; 
       ImGui::Text("Are you sure you want to delete image %s?\n deletion cannot be undone!", imageName.c_str());
       ImGui::Separator();
       bool beginDisabling = false;
@@ -334,7 +329,7 @@ void EditorUI::ShowToolbox()
       { 
         ImGui::CloseCurrentPopup();
         if(m_imageSavers->HasSelectedSaver())
-          m_imageSavers->GetSelectedSaver().DeleteImage(imageName);
+          m_imageSavers->GetSelectedSaver().DeleteImage(m_activeDocument);
         m_editorState = EditorState::SHOW_CAMERA;
         beginDisabling = true;
       }
@@ -368,7 +363,7 @@ void EditorUI::ShowToolbox()
   {
     if (ImGui::BeginPopupModal("undo", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
     {
-      std::string imageName = m_activeDocument.documentId; 
+      std::string imageName = m_activeDocument->documentId; 
       ImGui::Text("Are you sure you want to clear the annotations?");
       ImGui::Separator();
       bool beginDisabling = false;
@@ -479,21 +474,22 @@ void EditorUI::ShowThumbnails()
     int numOfCurrentThumbs = 0;
     ImVec4 backgroundColor = ImVec4(1.0f, 1.0f, 1.0f, 0.0f); // 50% opaque white
     auto& images = m_imageSavers->GetSelectedSaver().GetSavedImages();
-    for (const auto& image : images)
+    for (auto it = images.begin(); it < images.end(); it++)
     {
       numOfCurrentThumbs++;
       constexpr ImVec2 uvMin = ImVec2(0.0f, 0.0f);                 // Top-left
       constexpr ImVec2 uvMax = ImVec2(1.0f, 1.0f);                 // Lower-right
       constexpr ImVec4 tintColor = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);   // No tint
-      ImGui::Text("%s", image.documentId.c_str());
+      ImGui::Text("%s", it->documentId.c_str());
       ImVec2 pos = ImGui::GetCursorScreenPos();
       ImVec2 canvasSize = ImGui::GetContentRegionAvail();
       float aspectRatio = static_cast<float>(m_frame->GetWidth()) / static_cast<float>(m_frame->GetHeight());
-      if(ImGui::ImageButton("##button", image.texture->GetShaderResourceView(), ImVec2{canvasSize.x, canvasSize.x / aspectRatio}, uvMin, uvMax, backgroundColor, tintColor))
+      if(ImGui::ImageButton(it->documentId.c_str(), it->texture->GetShaderResourceView(), ImVec2{canvasSize.x, canvasSize.x / aspectRatio}, uvMin, uvMax, backgroundColor, tintColor))
       {
         // we can go into edit mode if we select an image from the thumbnails
         m_editorState = EditorState::EDITING;
-        m_drawingSheet.SetDocument(std::move(std::make_unique<ImageDocument>(image)), {image.texture->GetWidth(), image.texture->GetHeight()});  // BIG TODO: update store the image size somewhere 
+        m_activeDocument = it;
+        m_drawingSheet.SetDocument(std::move(std::make_unique<ImageDocument>(*it)), {it->texture->GetWidth(), it->texture->GetHeight()});  // BIG TODO: update store the image size somewhere 
         m_drawingSheet.ChangeDrawState(std::make_unique<ObjectSelectInitialState>(&m_drawingSheet));
       }
 
@@ -513,7 +509,7 @@ void EditorUI::ShowThumbnails()
         ImGui::Text("Max: (%.2f, %.2f)", region.x + tooltipRegionSize, region.y + tooltipRegionSize);
         ImVec2 uv0 = ImVec2((region.x) / buttonSize.x, (region.y) / buttonSize.y);
         ImVec2 uv1 = ImVec2((region.x + tooltipRegionSize) / buttonSize.x, (region.y + tooltipRegionSize) / buttonSize.y);
-        ImGui::Image(image.texture->GetShaderResourceView(), ImVec2(tooltipRegionSize* zoom, tooltipRegionSize* zoom), uv0, uv1, tintColor, backgroundColor);
+        ImGui::Image(it->texture->GetShaderResourceView(), ImVec2(tooltipRegionSize* zoom, tooltipRegionSize* zoom), uv0, uv1, tintColor, backgroundColor);
         ImGui::EndTooltip();
       }
     }

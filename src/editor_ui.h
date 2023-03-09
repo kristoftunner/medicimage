@@ -59,7 +59,7 @@ private:
   std::unique_ptr<Texture2D> m_circleIcon, m_lineIcon, m_pencilIcon, m_saveIcon, m_deleteIcon,
     m_rectangleIcon, m_arrowIcon, m_addTextIcon, m_screenshotIcon, m_undoIcon;
 
-  ImageDocument m_activeDocument;
+  std::vector<ImageDocument>::const_iterator m_activeDocument;
   std::unique_ptr<Texture2D> m_frame;
   OpenCvCamera m_camera = OpenCvCamera(0);
    

@@ -50,6 +50,12 @@ public:
     return *this;
   }
   std::unique_ptr<Texture2D> DrawFooter();
+  std::string GenerateFooterText()
+  {
+    std::stringstream ss;
+    ss << std::put_time(std::localtime(&(timestamp)), "%d-%b-%Y %X");
+    return ss.str();
+  }
 
 public:
   std::time_t timestamp;
@@ -57,27 +63,28 @@ public:
   std::unique_ptr<Texture2D> texture;
 };
 
-class ImageSaver
+class ImageDocContainer
 {
   //TODO: implement error handling
 public:
-  ImageSaver() = default;
-  ImageSaver(const std::string& uuid, const std::filesystem::path& baseFolder);
+  ImageDocContainer() = default;
+  ImageDocContainer(const std::string& uuid, const std::filesystem::path& baseFolder);
   // original images are saved only once when doing a screenshot of the image. The original's annotated pair can be replaced multiple
   // times, when it is selected from the thumbnails, edited and then saved as a ANNOTATED image. The original pair can be found
   // by the texture name
-  void SaveImage(ImageDocument& doc, bool hasFooter);
+  std::vector<ImageDocument>::iterator AddImage(Texture2D& texture, bool hasFooter);
   void ClearSavedImages();
   void LoadPatientsFolder();
   void CreatePatientDir();
   void LoadImage(std::string imageName, const std::filesystem::path& filePath, const std::time_t timestamp);
-  void DeleteImage(const std::string& imageName);
+  void DeleteImage(std::vector<ImageDocument>::const_iterator it);
   std::string GetUuid() const {return m_uuid;}
   const std::filesystem::path& GetPatientFolder() { return m_dirPath; }
 
   // returns a vector of both the original and annotated pair of the image
   const std::vector<ImageDocument>& GetSavedImages(){return m_savedImages;}
 private:
+  void UpdateDocListFile();
   std::string m_uuid;
   std::filesystem::path m_dirPath;
   std::vector<ImageDocument> m_savedImages;
@@ -94,12 +101,12 @@ public:
   bool HasSelectedSaver();
   void UpdateAppFolder(const std::filesystem::path& appFolder); //TODO: this API call is a bit weird, we should just create a new one in case of changing the app folder
   // API to load the previously saved images from disk at init time of the application
-  ImageSaver& GetSelectedSaver();
+  ImageDocContainer& GetSelectedSaver();
   const std::string& GetSelectedUuid(){return m_selectedSaver;}
-  const std::unordered_map<std::string, ImageSaver>& GetImageSavers(){return m_savers;} // TODO: this is a bit hacky   
+  const std::unordered_map<std::string, ImageDocContainer>& GetImageSavers(){return m_savers;} // TODO: this is a bit hacky   
 private:
   std::string m_selectedSaver = ""; // uuid of the saver
-  std::unordered_map<std::string, ImageSaver> m_savers;
+  std::unordered_map<std::string, ImageDocContainer> m_savers;
   std::filesystem::path m_dataFolder;
 };
 } // namespace medicimage

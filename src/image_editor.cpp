@@ -183,6 +183,20 @@ std::unique_ptr<Texture2D> ImageEditor::ReplaceImageFooter(const std::string& fo
   return std::move(dstTexture);
 }
 
+std::unique_ptr<Texture2D> ImageEditor::RemoveFooter(Texture2D *texture)
+{
+  cv::UMat image;
+  cv::directx::convertFromD3D11Texture2D(texture->GetTexturePtr(), image);
+  image = image(cv::Range(s_topBorder, image.rows - s_topBorder - s_bottomBorder), cv::Range(s_sideBorder, image.cols - 2*s_sideBorder));
+  cv::cvtColor(image, image, cv::COLOR_RGBA2BGR);
+  cv::cvtColor(image, image, cv::COLOR_BGR2RGBA);
+  
+  std::unique_ptr<Texture2D> dstTexture = std::make_unique<Texture2D>(texture->GetName(), image.cols, image.rows);
+  dstTexture->SetName(texture->GetName());
+  cv::directx::convertToD3D11Texture2D(image, dstTexture->GetTexturePtr());
+  return std::move(dstTexture);
+}
+
 std::unique_ptr<Texture2D> ImageEditor::AddImageFooter(const std::string& footerText, Texture2D* texture)
 {
   cv::UMat image;

@@ -24,6 +24,7 @@ public:
   // topLeft, width and height are relative to the texture size, between 0-1
   static std::unique_ptr<Texture2D> AddImageFooter(const std::string& footerText, Texture2D* texture);
   static std::unique_ptr<Texture2D> ReplaceImageFooter(const std::string& footerText, Texture2D* texture);
+  static std::unique_ptr<Texture2D> RemoveFooter(Texture2D* texture);
 
   static void DrawCircle(Texture2D* texture, glm::vec2 center, float radius, glm::vec4 color, float thickness, bool filled);
   static void DrawRectangle(Texture2D* texture, glm::vec2 topleft, glm::vec2 bottomright, glm::vec4 color, float thickness, bool filled);

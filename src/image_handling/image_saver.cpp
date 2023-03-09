@@ -71,19 +71,19 @@ void FileLogger::LogFileOperation(const std::string& filename, FileOperation fil
   }
 } 
 
-ImageSaver::ImageSaver(const std::string& uuid, const std::filesystem::path& baseFolder) : m_uuid(uuid), m_dirPath(baseFolder / uuid)
+ImageDocContainer::ImageDocContainer(const std::string& uuid, const std::filesystem::path& baseFolder) : m_uuid(uuid), m_dirPath(baseFolder / uuid)
 {
   m_fileLogger = std::make_unique<FileLogger>(m_dirPath);
   CreatePatientDir();
   m_descriptorsFileName = m_dirPath / "documents.json";
 }
 
-void ImageSaver::ClearSavedImages()
+void ImageDocContainer::ClearSavedImages()
 {
   m_savedImages.clear();
 }
 
-void ImageSaver::LoadPatientsFolder()
+void ImageDocContainer::LoadPatientsFolder()
 {
   json jsonData;
   std::ifstream fs(m_descriptorsFileName);
@@ -118,7 +118,7 @@ void ImageSaver::LoadPatientsFolder()
   }
 }
 
-void ImageSaver::CreatePatientDir()
+void ImageDocContainer::CreatePatientDir()
 {
   if (!(std::filesystem::create_directory(m_dirPath)))
     APP_CORE_INFO("Directory:{} already created, loading images from it.", m_dirPath.string());
@@ -127,35 +127,39 @@ void ImageSaver::CreatePatientDir()
 
 }
 
-void ImageSaver::LoadImage(std::string imageName, const std::filesystem::path& filePath, const std::time_t timestamp)
+void ImageDocContainer::LoadImage(std::string imageName, const std::filesystem::path& filePath, const std::time_t timestamp)
 {
   // TODO: load correctly the document metadata from a meta file
   auto findByName = [&](const ImageDocument& image){return image.documentId == imageName;};
   
   auto it = std::find_if(m_savedImages.begin(), m_savedImages.end(), findByName);
   if(it == m_savedImages.end())
-  { 
-    m_savedImages.push_back({std::make_unique<Texture2D>(imageName, filePath.string()), filePath.stem().string(), timestamp});
+  {
+    auto texture = std::make_unique<Texture2D>(imageName, filePath.string()); 
+    texture = std::move(ImageEditor::RemoveFooter(texture.get()));
+    m_savedImages.push_back({std::move(texture), filePath.stem().string(), timestamp});
   }
 }
 
-void ImageSaver::SaveImage(ImageDocument& doc, bool hasFooter)
+std::vector<ImageDocument>::iterator ImageDocContainer::AddImage(Texture2D& texture, bool hasFooter)
 {
   // fill out the image timestamp and id only here, because the document should have the timestamp when it is saved 
   std::string name = m_uuid + "_" + std::to_string(m_savedImages.size());
+  ImageDocument doc(std::make_unique<Texture2D>(texture.GetTexturePtr(), texture.GetName()));
   doc.documentId = name;
   doc.timestamp = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-
   m_savedImages.push_back(doc);
     
   name += ".jpeg";
   std::filesystem::path imagePath = m_dirPath / name;
   std::filesystem::path thumbImagePath = m_dirPath / "thumbs" / name;
   
-  std::stringstream ss;
-  ss << std::put_time(std::localtime(&(doc.timestamp)), "%d-%b-%Y %X");
-  std::string footerText = doc.documentId + " - " + ss.str();
-  auto borderedImage = ImageEditor::AddImageFooter(footerText, doc.texture.get());
+  std::string footerText = doc.GenerateFooterText();
+  std::unique_ptr<Texture2D> borderedImage;
+  if(hasFooter)
+    borderedImage = ImageEditor::ReplaceImageFooter(footerText, doc.texture.get());
+  else
+    borderedImage = ImageEditor::AddImageFooter(footerText, doc.texture.get());
 
   cv::UMat ocvImage;
   cv::directx::convertFromD3D11Texture2D(borderedImage->GetTexturePtr(), ocvImage);
@@ -164,13 +168,36 @@ void ImageSaver::SaveImage(ImageDocument& doc, bool hasFooter)
   cv::resize(ocvImage, ocvImage, cv::Size(640,360) );
   cv::imwrite(thumbImagePath.string(), ocvImage);
   m_fileLogger->LogFileOperation(name, FileLogger::FileOperation::FILE_SAVE);
+  UpdateDocListFile();
+  return m_savedImages.end();
+}
 
+void ImageDocContainer::DeleteImage(std::vector<ImageDocument>::const_iterator it)
+{
+  if(it != m_savedImages.end())
+  {
+    std::filesystem::path imagePath = m_dirPath / (it->documentId + ".jpeg");;
+    std::filesystem::path thumbImagePath = m_dirPath / "thumbs" / (it->documentId + ".jpeg");;
+    if(!std::filesystem::remove(imagePath) || !(std::filesystem::remove(thumbImagePath)))
+      APP_CORE_ERR("Something went wrong deleting this image:{}", imagePath.string());
+    else
+    {
+      m_fileLogger->LogFileOperation(it->documentId + ".jpeg", FileLogger::FileOperation::FILE_DELETE);
+      m_savedImages.erase(it);
+      UpdateDocListFile();
+      APP_CORE_INFO("Image: {} deleted", imagePath.string());
+    }
+  }
+  else
+    APP_CORE_ERR("Tried to erase image:{} but not found in the saved images", it->documentId);
+}
+void ImageDocContainer::UpdateDocListFile()
+{
   // update the json file containing the documents and the timestamp TODO REFACTOR: move this to a function
   json docEntries = json::array();
   for(auto& doc : m_savedImages)
   {
-    auto ts = ss.str();
-    json docEntry = {{"name", doc.documentId}, {"timestamp", ts}};
+    json docEntry = {{"name", doc.documentId}, {"timestamp", doc.GenerateFooterText()}};
     docEntries.push_back(docEntry);
   }
   std::fstream descFile(m_descriptorsFileName, std::ios::in | std::ios::out | std::ios::trunc);
@@ -185,34 +212,13 @@ void ImageSaver::SaveImage(ImageDocument& doc, bool hasFooter)
   {
     APP_CORE_ERR("Something went wrong with writing to {}", m_descriptorsFileName.string());
   }
+
 }
-
-void ImageSaver::DeleteImage(const std::string& imageName)
-{
-  auto findByName = [&](const ImageDocument& image){return image.texture->GetName() == imageName;};
-
-  auto it = std::find_if(m_savedImages.begin(), m_savedImages.end(), findByName);
-  if(it != m_savedImages.end())
-  {
-    std::filesystem::path imagePath = m_dirPath / (it->texture->GetName() + ".jpeg");;
-    std::filesystem::path thumbImagePath = m_dirPath / "thumbs" / (it->texture->GetName() + ".jpeg");;
-    if(!std::filesystem::remove(imagePath) || !(std::filesystem::remove(thumbImagePath)))
-      APP_CORE_ERR("Something went wrong deleting this image:{}", imagePath.string());
-    else
-    {
-      m_fileLogger->LogFileOperation(it->texture->GetName() + ".jpeg", FileLogger::FileOperation::FILE_DELETE);
-      APP_CORE_INFO("Image: {} deleted", imagePath.string());
-    }
-    m_savedImages.erase(it);
-  }
-  else
-    APP_CORE_ERR("Tried to erase image:{} but not found in the saved images", imageName);
-} 
 
 void ImageSaverContainer::AddSaver(const std::string& uuid)
 {
   if(uuid != "")
-    m_savers[uuid] =  ImageSaver(uuid, m_dataFolder);
+    m_savers[uuid] =  ImageDocContainer(uuid, m_dataFolder);
   else
     APP_CORE_WARN("Please add valid uuid for patient");
 }
@@ -238,7 +244,7 @@ bool ImageSaverContainer::HasSelectedSaver()
   return !m_savers.empty() && m_selectedSaver != "";
 }
 
-ImageSaver& ImageSaverContainer::GetSelectedSaver()
+ImageDocContainer& ImageSaverContainer::GetSelectedSaver()
 { 
   return m_savers[m_selectedSaver]; 
 }
@@ -259,9 +265,7 @@ void ImageSaverContainer::UpdateAppFolder(const std::filesystem::path& appFolder
 
 std::unique_ptr<Texture2D> medicimage::ImageDocument::DrawFooter()
 {
-  std::stringstream ss;
-  ss << std::put_time(std::localtime(&timestamp), "%d-%b-%Y %X");
-  std::string footerText = documentId + " - " + ss.str();
+  std::string footerText = GenerateFooterText();
   return ImageEditor::AddImageFooter(footerText, texture.get());
 }
 
