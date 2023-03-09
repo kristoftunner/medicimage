@@ -143,8 +143,22 @@ void ImageDocContainer::LoadImage(std::string imageName, const std::filesystem::
 
 std::vector<ImageDocument>::iterator ImageDocContainer::AddImage(Texture2D& texture, bool hasFooter)
 {
-  // fill out the image timestamp and id only here, because the document should have the timestamp when it is saved 
-  std::string name = m_uuid + "_" + std::to_string(m_savedImages.size());
+  json jsonData;
+  std::ifstream fs(m_descriptorsFileName);
+  int docNumber = 0;
+  if(fs.good())
+  {
+    fs >> jsonData;
+    json files = jsonData.at("documents");
+    if(files.size() != 0)
+    {
+      auto lastDocName = files.back()["name"].get<std::string>();
+      auto delimiter = lastDocName.find("_") + 1;
+      docNumber = std::stoi(lastDocName.substr(delimiter)) + 1;
+      APP_CORE_INFO("Last doc name:{}", lastDocName.c_str());
+    }
+  } 
+  std::string name = m_uuid + "_" + std::to_string(docNumber);
   ImageDocument doc(std::make_unique<Texture2D>(texture.GetTexturePtr(), texture.GetName()));
   doc.documentId = name;
   doc.timestamp = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
