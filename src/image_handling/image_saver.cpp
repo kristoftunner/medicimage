@@ -18,7 +18,6 @@ using json = nlohmann::json;
 
 void FileLogger::LogFileOperation(const std::string& filename, FileOperation fileOp)
 {
-  std::ifstream checkingStream(m_logFileName);
   std::string operation = fileOp == FileOperation::FILE_SAVE ? "saved" : "deleted"; 
   json fileEntry = {
     {"name", filename},
@@ -26,40 +25,57 @@ void FileLogger::LogFileOperation(const std::string& filename, FileOperation fil
     {"operation", operation} 
     };
 
-  json logData; 
-  if(!checkingStream.good())
+  json logData;
+  std::ifstream logfile(m_logFileName);
+  if(!logfile.good())
   {
-    APP_CORE_INFO("Log file not created for {}, creating log file", m_logFileName);
-    std::ofstream creatingStream(m_logFileName);
-    json fileEntries = json::array();
-    fileEntries.push_back(fileEntry);
-    logData["files"] = fileEntries;
-    creatingStream.close();
+    logfile.close();
+    std::ofstream file(m_logFileName);
+    file.close();
   }
-  else
-  {
-    checkingStream >> logData;
-    json files = logData.at("files");
-    files.emplace_back(fileEntry);
-    logData.at("files") = files;
-  }
+  logfile.close();
 
-  const std::string jsonString = logData.dump();
-  
-  std::ofstream outputFile(m_logFileName);
-  if (!outputFile.bad())
+  logfile.open(m_logFileName);
+  if(logfile.good())
   {
+    try 
+    {
+      logfile >> logData;
+    }
+    catch(const std::exception& e)
+    {
+      APP_CORE_ERR("Exception:{}", e.what());
+    }
+
+    json files;
+    if (logData.contains("files"))
+    {
+      files = logData.at("files");
+      files.emplace_back(fileEntry);
+    }
+    else
+    {
+      files = json::array();
+      files.emplace_back(fileEntry);
+    }
+    logData["files"] = files;
+    const std::string jsonString = logData.dump();
+    logfile.close();
+    
+    std::ofstream outputFile(m_logFileName);
     outputFile << jsonString;
-    outputFile.close();
   }
   else
-    APP_CORE_ERR("Could not dump json into this file:{}", m_logFileName);
+  {
+    APP_CORE_ERR("Error writing file operation log into:{}", m_logFileName.string());
+  }
 } 
 
 ImageSaver::ImageSaver(const std::string& uuid, const std::filesystem::path& baseFolder) : m_uuid(uuid), m_dirPath(baseFolder / uuid)
 {
   m_fileLogger = std::make_unique<FileLogger>(m_dirPath);
   CreatePatientDir();
+  m_descriptorsFileName = m_dirPath / "documents.json";
 }
 
 void ImageSaver::ClearSavedImages()
@@ -69,14 +85,35 @@ void ImageSaver::ClearSavedImages()
 
 void ImageSaver::LoadPatientsFolder()
 {
-  // iterate trough the files and load the conained images 
-  for(auto const& dirEntry : std::filesystem::directory_iterator(m_dirPath))
+  json jsonData;
+  std::ifstream fs(m_descriptorsFileName);
+  if(fs.good())
   {
-    if(dirEntry.path().extension() == ".jpeg")
+    fs >> jsonData;
+    json files = jsonData.at("documents");
+    // iterate trough the files and load the conained images 
+    for(auto const& dirEntry : std::filesystem::directory_iterator(m_dirPath))
     {
-      std::string name = dirEntry.path().stem().string(); 
-      LoadImage(name, dirEntry.path());
-      APP_CORE_INFO("Picture {} is loaded", dirEntry.path());
+      if(dirEntry.path().extension() == ".jpeg")
+      {
+        std::string name = dirEntry.path().stem().string(); 
+        auto it = std::find_if(files.begin(), files.end(), [&](auto fileDesc)
+        {
+          auto filename = fileDesc["name"].get<std::string>(); 
+          return name == filename; 
+        });
+        if(it != files.end())
+        {
+          auto jsonTimeStamp = *it;
+          std::string timestampStr = jsonTimeStamp["timestamp"].get<std::string>();
+          std::tm t{}; 
+          std::istringstream ss(timestampStr);
+          ss >> std::get_time(&t, "%d-%b-%Y %X");
+          std::time_t timestamp = mktime(&t);
+          LoadImage(name, dirEntry.path(), timestamp);
+          APP_CORE_INFO("Picture {} is loaded", dirEntry.path());
+        }
+      }
     }
   }
 }
@@ -90,7 +127,7 @@ void ImageSaver::CreatePatientDir()
 
 }
 
-void ImageSaver::LoadImage(std::string imageName, const std::filesystem::path& filePath)
+void ImageSaver::LoadImage(std::string imageName, const std::filesystem::path& filePath, const std::time_t timestamp)
 {
   // TODO: load correctly the document metadata from a meta file
   auto findByName = [&](const ImageDocument& image){return image.documentId == imageName;};
@@ -98,8 +135,7 @@ void ImageSaver::LoadImage(std::string imageName, const std::filesystem::path& f
   auto it = std::find_if(m_savedImages.begin(), m_savedImages.end(), findByName);
   if(it == m_savedImages.end())
   { 
-    auto timestamp = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-    m_savedImages.push_back({std::make_unique<Texture2D>(imageName, filePath.string()), filePath.stem().string()});
+    m_savedImages.push_back({std::make_unique<Texture2D>(imageName, filePath.string()), filePath.stem().string(), timestamp});
   }
 }
 
@@ -128,6 +164,27 @@ void ImageSaver::SaveImage(ImageDocument& doc, bool hasFooter)
   cv::resize(ocvImage, ocvImage, cv::Size(640,360) );
   cv::imwrite(thumbImagePath.string(), ocvImage);
   m_fileLogger->LogFileOperation(name, FileLogger::FileOperation::FILE_SAVE);
+
+  // update the json file containing the documents and the timestamp TODO REFACTOR: move this to a function
+  json docEntries = json::array();
+  for(auto& doc : m_savedImages)
+  {
+    auto ts = ss.str();
+    json docEntry = {{"name", doc.documentId}, {"timestamp", ts}};
+    docEntries.push_back(docEntry);
+  }
+  std::fstream descFile(m_descriptorsFileName, std::ios::in | std::ios::out | std::ios::trunc);
+  if (descFile.good())
+  {
+    json outputJson;
+    outputJson["documents"] = docEntries;
+    const std::string jsonString = outputJson.dump();
+    descFile << jsonString;
+  }
+  else
+  {
+    APP_CORE_ERR("Something went wrong with writing to {}", m_descriptorsFileName.string());
+  }
 }
 
 void ImageSaver::DeleteImage(const std::string& imageName)

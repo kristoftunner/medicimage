@@ -19,7 +19,10 @@ class FileLogger
 {
 public:
   enum class FileOperation{FILE_SAVE, FILE_DELETE};
-  FileLogger(const std::filesystem::path& logFileDir) : m_logFileName(logFileDir){m_logFileName /= "file_operations.json";}
+  FileLogger(const std::filesystem::path& logFileDir) : m_logFileName(logFileDir)
+  {
+    m_logFileName /= "file_operations.json";
+  }
   void LogFileOperation(const std::string& filename, FileOperation fileOp);
   std::vector<std::pair<std::string,std::string>> GetSavedImages(); 
 private:
@@ -30,8 +33,9 @@ struct ImageDocument
 {
 public:  
   ImageDocument() = default;
-  ImageDocument(std::unique_ptr<Texture2D> tex) : texture(std::move(tex)){}
+  ImageDocument(std::unique_ptr<Texture2D> tex) : texture(std::move(tex)){} // TODO REFACTOR: these ctors should be refactored in the future
   ImageDocument(std::unique_ptr<Texture2D> tex, const std::string& id) : texture(std::move(tex)), documentId(id){}
+  ImageDocument(std::unique_ptr<Texture2D> tex, const std::string& id, const std::time_t& time) : texture(std::move(tex)), documentId(id), timestamp(time){}
   ImageDocument(const ImageDocument& doc)
   {
     timestamp = doc.timestamp;
@@ -66,7 +70,7 @@ public:
   void ClearSavedImages();
   void LoadPatientsFolder();
   void CreatePatientDir();
-  void LoadImage(std::string imageName, const std::filesystem::path& filePath);
+  void LoadImage(std::string imageName, const std::filesystem::path& filePath, const std::time_t timestamp);
   void DeleteImage(const std::string& imageName);
   std::string GetUuid() const {return m_uuid;}
   const std::filesystem::path& GetPatientFolder() { return m_dirPath; }
@@ -78,6 +82,7 @@ private:
   std::filesystem::path m_dirPath;
   std::vector<ImageDocument> m_savedImages;
   std::unique_ptr<FileLogger> m_fileLogger;
+  std::filesystem::path m_descriptorsFileName;
 };
 
 class ImageSaverContainer
