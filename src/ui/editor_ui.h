@@ -1,16 +1,16 @@
 #pragma once
 
-#include "layer.h"
-#include "imgui.h"
-#include "texture.h"
-#include "image_editor.h"
-#include "opencv_camera.h"
+#include "core/layer.h"
+#include "renderer/texture.h"
+#include "image_handling/image_editor.h"
+#include "camera/opencv_camera.h"
 #include "image_handling/image_saver.h"
 #include "core/log.h"
-#include "utils.h"
-#include "key_event.h"
+#include "core/utils.h"
+#include "input/key_event.h"
 #include "drawing/drawing_sheet.h"
 
+#include "imgui.h"
 #include <array>
 #include <memory>
 #include <vector>

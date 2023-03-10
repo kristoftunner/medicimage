@@ -1,8 +1,8 @@
 #include "drawing/drawing_sheet.h"
 #include "drawing/components.h"
-#include "drawing_sheet.h"
+#include "drawing/drawing_sheet.h"
 #include "core/log.h"
-#include "image_editor.h"
+#include "image_handling/image_editor.h"
 #include <algorithm>
 #include <chrono>
 
@@ -17,6 +17,14 @@ namespace medicimage
 
   void DrawingSheet::SetDocument(std::unique_ptr<ImageDocument> doc, glm::vec2 viewportSize)
   {
+    // clear the registry for clear drawing
+    auto objects = m_registry.view<TransformComponent>();
+    for(auto e : objects)
+    {
+      Entity entity = {e, this};
+      DestroyEntity(entity);
+    }
+
     m_sheetSize = viewportSize;
     m_originalDoc = std::move(doc);
     m_drawing = std::make_unique<Texture2D>(m_originalDoc->texture->GetTexturePtr(), "texture");
@@ -51,8 +59,9 @@ namespace medicimage
     std::stringstream ss;
     ss << std::put_time(std::localtime(&(m_originalDoc->timestamp)), "%d-%b-%Y %X");
     std::string footerText = m_originalDoc->documentId + " - " + ss.str();
-    m_drawing = ImageEditor::AddImageFooter(footerText, m_originalDoc->texture.get());
+    m_drawing = ImageEditor::ReplaceImageFooter(footerText, m_originalDoc->texture.get());
 
+    ImageEditor::Begin(m_drawing.get());
     auto circles = m_registry.view<CircleComponent>();
     for(auto e : circles)
     {
@@ -62,7 +71,7 @@ namespace medicimage
       auto& circle = entity.GetComponent<CircleComponent>();
       auto& color = entity.GetComponent<ColorComponent>().color;
       auto& center = transform.translation;
-      ImageEditor::DrawCircle(m_drawing.get(), center, circle.radius, color, circle.thickness, commonAttributes.filled);
+      ImageEditor::DrawCircle(center, circle.radius, color, circle.thickness, commonAttributes.filled);
 
       if(commonAttributes.selected)
       {
@@ -71,7 +80,7 @@ namespace medicimage
         for(auto& point : pickPoints)
         {
           
-          ImageEditor::DrawCircle(m_drawing.get(), point + translation, s_pickPointBoxSize / 2, s_pickPointColor, 2, true);
+          ImageEditor::DrawCircle(point + translation, s_pickPointBoxSize / 2, s_pickPointColor, 2, true);
         }
       } 
     }
@@ -86,14 +95,14 @@ namespace medicimage
       auto& color = entity.GetComponent<ColorComponent>().color;
       auto& topleft = transform.translation;
       auto bottomright = topleft + glm::vec2{rectangle.width, rectangle.height}; 
-      ImageEditor::DrawRectangle(m_drawing.get(), topleft, bottomright, color, rectangle.thickness, commonAttributes.filled);
+      ImageEditor::DrawRectangle(topleft, bottomright, color, rectangle.thickness, commonAttributes.filled);
     
       if(commonAttributes.selected)
       {
         auto& pickPoints = entity.GetComponent<PickPointsComponent>().pickPoints;
         for(auto& point : pickPoints)
         {
-          ImageEditor::DrawCircle(m_drawing.get(), point + transform.translation, s_pickPointBoxSize / 2, s_pickPointColor, 2, true);
+          ImageEditor::DrawCircle(point + transform.translation, s_pickPointBoxSize / 2, s_pickPointColor, 2, true);
         }
       }
     }
@@ -108,18 +117,20 @@ namespace medicimage
       auto& color = entity.GetComponent<ColorComponent>().color;
       auto begin = arrow.begin + transform.translation; 
       auto end = arrow.end + transform.translation; 
-      ImageEditor::DrawArrow(m_drawing.get(), begin, end, color, arrow.thickness, 0.1);
+      ImageEditor::DrawArrow(begin, end, color, arrow.thickness, 0.1);
     
       if(commonAttributes.selected)
       {
         auto& pickPoints = entity.GetComponent<PickPointsComponent>().pickPoints;
         for(auto& point : pickPoints)
         {
-          ImageEditor::DrawCircle(m_drawing.get(), point + transform.translation, s_pickPointBoxSize / 2, s_pickPointColor, 2, true);
+          ImageEditor::DrawCircle(point + transform.translation, s_pickPointBoxSize / 2, s_pickPointColor, 2, true);
         }
       }
     }
-    
+
+    ImageEditor::End(m_drawing.get());
+
     std::for_each(circles.begin(), circles.end(), m_drawState->DeleteTemporaries());
     std::for_each(rectangles.begin(), rectangles.end(), m_drawState->DeleteTemporaries());
     std::for_each(arrows.begin(), arrows.end(), m_drawState->DeleteTemporaries());

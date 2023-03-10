@@ -1,5 +1,6 @@
-#include "window.h"
-#include "renderer.h"
+#include "renderer/renderer.h"
+#include "renderer/window.h"
+
 #include <iostream>
 #include <SDL_syswm.h>
 

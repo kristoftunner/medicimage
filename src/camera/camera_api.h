@@ -1,7 +1,7 @@
 #pragma once
+#include "renderer/texture.h"
 
 #include <memory>
-#include "texture.h"
 #include "optional"
 
 namespace medicimage

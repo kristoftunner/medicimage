@@ -1,13 +1,14 @@
 #include <iostream>
 
-#include "event/event.h"
-#include "key_event.h"
-#include "event/application_event.h"
-#include "window.h"
+#include "input/event.h"
+#include "input/key_event.h"
+#include "input/application_event.h"
 #include "backends/imgui_impl_sdl.h"
 #include "backends/imgui_impl_dx11.h"
 #include "core/log.h"
-#include "renderer.h"
+#include "renderer/renderer.h"
+
+#include "renderer/window.h"
 
 namespace medicimage
 {

@@ -1,7 +1,8 @@
 #pragma once
 
-#include "event/event.h"
-#include "key_codes.h"
+#include "input/event.h"
+#include "input/key_codes.h"
+
 #include <sstream>
 
 namespace medicimage

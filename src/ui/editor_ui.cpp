@@ -1,7 +1,7 @@
-#include "editor_ui.h"
+#include "ui/editor_ui.h"
 #include "core/log.h"
-#include "widgets/ImFileDialog.h"
 
+#include "widgets/ImFileDialog.h"
 #include <assert.h>
 
 namespace medicimage
@@ -294,8 +294,8 @@ void EditorUI::ShowToolbox()
     {
       if (m_imageSavers->HasSelectedSaver()) 
       { 
-        auto image = ImageEditor::RemoveFooter(m_frame.get()); // need to remove the footer, because ImageDocument should store it, not the actual image
-        m_imageSavers->GetSelectedSaver().AddImage(*image.get(), true);
+        //auto image = ImageEditor::RemoveFooter(m_frame.get()); // need to remove the footer, because ImageDocument should store it, not the actual image
+        m_imageSavers->GetSelectedSaver().AddImage(*m_frame.get(), true);
       }
       else
         APP_CORE_ERR("Please input valid UUID for saving the current image!");

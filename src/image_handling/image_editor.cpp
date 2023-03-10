@@ -1,4 +1,4 @@
-#include "image_editor.h"
+#include "image_handling/image_editor.h"
 #include "core/log.h"
 #include <fstream>
 #include <opencv2/imgcodecs.hpp>
@@ -6,6 +6,8 @@
 
 namespace medicimage
 {
+
+cv::UMat ImageEditor::s_image;
 
 static void DumpTexture(ID3D11Texture2D* texture)
 {
@@ -84,37 +86,44 @@ void ImageEditor::Init(ID3D11Device* device)
     APP_CORE_ERR("Do not have OpenCL device!!");
 }
 
-void ImageEditor::DrawCircle(Texture2D* texture, glm::vec2 center, float radius, glm::vec4 color, float thickness, bool filled)
+void ImageEditor::Begin(Texture2D *texture)
 {
-  cv::UMat image, overlay;
-  cv::directx::convertFromD3D11Texture2D(texture->GetTexturePtr(), image);
-  cv::cvtColor(image, image, cv::COLOR_RGBA2BGR);
+  cv::directx::convertFromD3D11Texture2D(texture->GetTexturePtr(), s_image);
+  cv::cvtColor(s_image, s_image, cv::COLOR_RGBA2BGR);
+}
 
-  glm::vec2 imageSize = {texture->GetWidth(), texture->GetHeight()};
+void ImageEditor::End(Texture2D* texture)
+{
+  cv::cvtColor(s_image, s_image, cv::COLOR_BGR2RGBA);
+  cv::directx::convertToD3D11Texture2D(s_image, texture->GetTexturePtr());
+}
+
+
+void ImageEditor::DrawCircle(glm::vec2 center, float radius, glm::vec4 color, float thickness, bool filled)
+{
+  cv::UMat overlay;
+
+  glm::vec2 imageSize = {s_image.cols, s_image.rows};
   center *= imageSize;
   radius = radius * glm::length(imageSize);
   auto alpha = color.a;
   color *= 255.0;
   if(filled)
   {
-    image.copyTo(overlay);
-    cv::circle(image, cv::Point{static_cast<int>(center.x), static_cast<int>(center.y)}, static_cast<int>(radius), cv::Scalar(color.b, color.g,  color.r), -1); 
-    cv::addWeighted(overlay, alpha, image, 1 - alpha, 0, image);
+    s_image.copyTo(overlay);
+    cv::circle(s_image, cv::Point{static_cast<int>(center.x), static_cast<int>(center.y)}, static_cast<int>(radius), cv::Scalar(color.b, color.g,  color.r), -1); 
+    cv::addWeighted(overlay, alpha, s_image, 1 - alpha, 0, s_image);
   }
   else
-    cv::circle(image, cv::Point{static_cast<int>(center.x), static_cast<int>(center.y)}, static_cast<int>(radius), cv::Scalar(color.b, color.g,  color.r), thickness); 
+    cv::circle(s_image, cv::Point{static_cast<int>(center.x), static_cast<int>(center.y)}, static_cast<int>(radius), cv::Scalar(color.b, color.g,  color.r), thickness); 
 
   //TODO: add rotation 
-  cv::cvtColor(image, image, cv::COLOR_BGR2RGBA);
-  cv::directx::convertToD3D11Texture2D(image, texture->GetTexturePtr());
 }
 
-void ImageEditor::DrawRectangle(Texture2D* texture, glm::vec2 topleft, glm::vec2 bottomright, glm::vec4 color, float thickness, bool filled)
+void ImageEditor::DrawRectangle(glm::vec2 topleft, glm::vec2 bottomright, glm::vec4 color, float thickness, bool filled)
 {
-  cv::UMat image, overlay;
-  cv::directx::convertFromD3D11Texture2D(texture->GetTexturePtr(), image);
-  cv::cvtColor(image, image, cv::COLOR_RGBA2BGR);
-  glm::vec2 imageSize = {texture->GetWidth(), texture->GetHeight()};
+  cv::UMat overlay;
+  glm::vec2 imageSize = {s_image.cols, s_image.rows};
   topleft *= imageSize;
   bottomright *= imageSize; 
   
@@ -124,38 +133,30 @@ void ImageEditor::DrawRectangle(Texture2D* texture, glm::vec2 topleft, glm::vec2
     color *= 255.0;
     if(filled)
     {
-      image.copyTo(overlay);
+      s_image.copyTo(overlay);
       cv::rectangle(overlay, cv::Point{ static_cast<int>(topleft.x), static_cast<int>(topleft.y) }, cv::Point{ static_cast<int>(bottomright.x), static_cast<int>(bottomright.y) },
         cv::Scalar(color.b, color.g, color.r), -1);
-      cv::addWeighted(overlay, alpha, image, 1 - alpha, 0, image);
+      cv::addWeighted(overlay, alpha, s_image, 1 - alpha, 0, s_image);
     }
     else
-      cv::rectangle(image, cv::Point{ static_cast<int>(topleft.x), static_cast<int>(topleft.y) }, cv::Point{ static_cast<int>(bottomright.x), static_cast<int>(bottomright.y) },
+      cv::rectangle(s_image, cv::Point{ static_cast<int>(topleft.x), static_cast<int>(topleft.y) }, cv::Point{ static_cast<int>(bottomright.x), static_cast<int>(bottomright.y) },
         cv::Scalar(color.b, color.g, color.r), static_cast<int>(thickness), cv::LineTypes::FILLED);
   }
 
   //TODO: add rotation 
-  cv::cvtColor(image, image, cv::COLOR_BGR2RGBA);
-  cv::directx::convertToD3D11Texture2D(image, texture->GetTexturePtr()); 
 }
 
-void ImageEditor::DrawArrow(Texture2D* texture, glm::vec2 begin, glm::vec2 end, glm::vec4 color, float thickness, double tipLength)
+void ImageEditor::DrawArrow(glm::vec2 begin, glm::vec2 end, glm::vec4 color, float thickness, double tipLength)
 {
-  cv::UMat image;
-  cv::directx::convertFromD3D11Texture2D(texture->GetTexturePtr(), image);
-  cv::cvtColor(image, image, cv::COLOR_RGBA2BGR);
-
-  glm::vec2 imageSize = {texture->GetWidth(), texture->GetHeight()};
+  glm::vec2 imageSize = {s_image.cols, s_image.rows};
   begin *= imageSize; 
   end *= imageSize; 
   color *= 255.0;
 
-  cv::arrowedLine(image, cv::Point(static_cast<int>(begin.x), static_cast<int>(begin.y)), cv::Point(static_cast<int>(end.x), static_cast<int>(end.y)), 
+  cv::arrowedLine(s_image, cv::Point(static_cast<int>(begin.x), static_cast<int>(begin.y)), cv::Point(static_cast<int>(end.x), static_cast<int>(end.y)), 
     cv::Scalar(color.b, color.g, color.r), static_cast<int>(thickness));
 
   //TODO: add rotation 
-  cv::cvtColor(image, image, cv::COLOR_BGR2RGBA);
-  cv::directx::convertToD3D11Texture2D(image, texture->GetTexturePtr());
 }
 cv::UMat ImageEditor::AddFooter(cv::UMat image, const std::string& footerText)
 {
@@ -171,7 +172,7 @@ std::unique_ptr<Texture2D> ImageEditor::ReplaceImageFooter(const std::string& fo
 {
   cv::UMat image;
   cv::directx::convertFromD3D11Texture2D(texture->GetTexturePtr(), image);
-  image = image(cv::Range(s_topBorder, image.rows - s_topBorder - s_bottomBorder), cv::Range(s_sideBorder, image.cols - 2*s_sideBorder));
+  image = image(cv::Range(s_topBorder, image.rows - s_bottomBorder), cv::Range(s_sideBorder, image.cols - s_sideBorder));
   cv::cvtColor(image, image, cv::COLOR_RGBA2BGR);
   
   cv::UMat borderedImage = AddFooter(image, footerText);

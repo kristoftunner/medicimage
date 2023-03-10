@@ -1,6 +1,7 @@
 #pragma once
 
-#include "renderer.h"
+#include "renderer/renderer.h"
+
 #include <string>
 
 namespace medicimage

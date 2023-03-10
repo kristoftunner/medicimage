@@ -1,7 +1,7 @@
 #pragma once
 
-#include "renderer.h"
-#include "window.h"
-#include "imgui_layer.h"
-#include "event/event.h"
+#include "renderer/renderer.h"
+#include "renderer/window.h"
+#include "ui/imgui_layer.h"
+#include "input//event.h"
 #include "application.h"

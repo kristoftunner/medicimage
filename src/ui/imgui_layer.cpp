@@ -1,8 +1,8 @@
-#include "imgui_layer.h"
+#include "ui/imgui_layer.h"
+#include "renderer/texture.h"
 
 #include "backends/imgui_impl_sdl.h"
 #include "backends/imgui_impl_dx11.h"
-#include "texture.h"
 #include <iostream>
 #include "core/log.h"
 

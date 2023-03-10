@@ -1,13 +1,11 @@
 #include "application.h"
-#include "texture.h"
+#include "renderer/texture.h"
 #include "core/log.h"
+
 #include <ctime>
 
 namespace medicimage
 {
-
-
-
 Application::Application()
 {
   Logger::Init(); // TODO: add this to some entrypoint

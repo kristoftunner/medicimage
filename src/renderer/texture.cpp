@@ -1,5 +1,6 @@
-#include "texture.h"
+#include "renderer/texture.h"
 #include "image_handling/image_loader.h"
+
 #include <iostream>
 #include <assert.h>
 #include "core/log.h"

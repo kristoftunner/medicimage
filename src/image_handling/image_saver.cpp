@@ -1,6 +1,6 @@
 #include "image_handling/image_saver.h"
 #include "core/log.h"
-#include "image_editor.h"
+#include "image_handling/image_editor.h"
 
 #include "opencv2/core/directx.hpp"
 #include "opencv2/core/ocl.hpp"

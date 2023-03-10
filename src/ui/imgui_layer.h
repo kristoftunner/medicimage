@@ -1,11 +1,10 @@
 #pragma once
 
-#include "layer.h"
+#include "core/layer.h"
+
 #include "imgui.h"
 #include <d3d11.h>
 #include <SDL.h>
-
-#include "layer.h"
 
 namespace medicimage
 {

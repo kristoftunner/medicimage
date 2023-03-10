@@ -6,12 +6,6 @@ For the icons I use this lib: https://www.flaticon.com/search?style_id=1219&auth
 ## Dear ImGui related:
 Input text using the enter key for completion: https://github.com/ocornut/imgui/issues/589
 
-## Priorities, next tasks:
-1. Licensing
-2. Updateing
-3. Industrial camera
-4. Entity component system
-
 ## Notes on the ECS integration and objects on the sheet
 - Drawing object has to have the following components
   - Transform component:
@@ -60,3 +54,18 @@ During editing the default state is object selection. If a draw command is selec
 **Discussion with samer**
 For line: draw multiple separate line continuously
 For shape: after drawing an object -> select that object and go back to selection mode
+
+## TODOs/questions
+Store the document in an image - this way the objects that are drawn previously cannot be edited, because for that we need metadata
+
+Store the document with all the metadata (drawn objects and it's attributes) - this is heavy, but could be a very useful feature
+
+## Important features
+### customizable things
+- color of the instances should be changeable
+- text 
+- thickness of lines
+- templates: 
+  - skin template:
+    - number of slices
+    - number of 

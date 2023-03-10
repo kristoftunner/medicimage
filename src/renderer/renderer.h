@@ -1,11 +1,12 @@
 #pragma once
 
+#include "core/layer.h"
+
 #include <d3d11.h>
 #include <d3dcompiler.h>
 #include <Windows.h>
-#include "layer.h"
 #include <stdexcept>
-#include "window.h"
+#include "renderer/window.h"
 
 namespace medicimage
 {
