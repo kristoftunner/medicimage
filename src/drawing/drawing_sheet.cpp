@@ -47,7 +47,11 @@ namespace medicimage
 
   std::unique_ptr<Texture2D> DrawingSheet::Draw()
   {
-    m_drawing = std::make_unique<Texture2D>(*(m_originalDoc->texture.get())); // start to draw to a clean document
+    //m_drawing = std::make_unique<Texture2D>(*(m_originalDoc->texture.get())); // start to draw to a clean document
+    std::stringstream ss;
+    ss << std::put_time(std::localtime(&(m_originalDoc->timestamp)), "%d-%b-%Y %X");
+    std::string footerText = m_originalDoc->documentId + " - " + ss.str();
+    m_drawing = ImageEditor::AddImageFooter(footerText, m_originalDoc->texture.get());
 
     auto circles = m_registry.view<CircleComponent>();
     for(auto e : circles)
@@ -120,10 +124,7 @@ namespace medicimage
     std::for_each(rectangles.begin(), rectangles.end(), m_drawState->DeleteTemporaries());
     std::for_each(arrows.begin(), arrows.end(), m_drawState->DeleteTemporaries());
 
-    std::stringstream ss;
-    ss << std::put_time(std::localtime(&(m_originalDoc->timestamp)), "%d-%b-%Y %X");
-    std::string footerText = m_originalDoc->documentId + " - " + ss.str();
-    return ImageEditor::AddImageFooter(footerText, m_drawing.get());
+    return std::move(std::make_unique<Texture2D>(*m_drawing.get()));
   }
 
   void DrawingSheet::ChangeDrawState(std::unique_ptr<BaseDrawState> newState)
@@ -354,7 +355,26 @@ namespace medicimage
     boundingBox.cornerPoints = {offset, arrow.end + offset, arrow.end - offset, -offset, offset};
     pickPoints.pickPoints = {arrow.begin, arrow.end};
   }
-  
+
+  void DrawingSheet::ClearSelectionShapes()
+  {
+    // clear the selection and selected pickpoint
+    auto attributes = m_registry.view<CommonAttributesComponent>();
+    for(auto e : attributes)
+    {
+      Entity entity = {e, this};
+      if(entity.GetComponent<CommonAttributesComponent>().selected)
+        entity.GetComponent<CommonAttributesComponent>().selected = false;
+    }
+
+    auto pickpoints = m_registry.view<PickPointsComponent>();
+    for(auto e : pickpoints)
+    {
+      Entity entity = {e, this};
+      entity.GetComponent<PickPointsComponent>().selectedPoint = -1;
+    }
+  }
+
   Entity DrawingSheet::CreateEntity(int id, const std::string &name)
   {
 		Entity entity = { m_registry.create(), this };
@@ -521,13 +541,7 @@ namespace medicimage
     }
    
     // clicking outside of the pickpoints and drage area, clear selection and go back to initial state
-    auto attributes = m_sheet->m_registry.view<CommonAttributesComponent>();
-    for(auto e : attributes)
-    {
-      Entity entity = {e, m_sheet};
-      if(entity.GetComponent<CommonAttributesComponent>().selected)
-        entity.GetComponent<CommonAttributesComponent>().selected = false;
-    }
+    m_sheet->ClearSelectionShapes();
     m_sheet->ChangeDrawState(std::make_unique<ObjectSelectInitialState>(m_sheet));
   }
 

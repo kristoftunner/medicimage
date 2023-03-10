@@ -131,6 +131,8 @@ public:
   void   UpdateCircleShapeAttributes(Entity entity);
   Entity CreateArrow(glm::vec2 topLeft, glm::vec2 bottomRight, DrawObjectType objectType);
   void   UpdateArrowShapeAttributes(Entity entity);
+  void ClearSelectionShapes();
+
   Entity CreateEntity(int id, const std::string& name);
   void DestroyEntity(Entity entity);
 private:
@@ -194,7 +196,7 @@ protected:
 class InitialObjectDrawState : public BaseDrawState
 {
 public:
-  InitialObjectDrawState(DrawingSheet* sheet) : BaseDrawState(sheet, "InitialObjectDrawState") {}
+  InitialObjectDrawState(DrawingSheet* sheet) : BaseDrawState(sheet, "InitialObjectDrawState") {m_sheet->ClearSelectionShapes();}
   void OnMouseHovered(const glm::vec2 pos) override;
   void OnMouseButtonPressed(const glm::vec2 pos) override;
 };
