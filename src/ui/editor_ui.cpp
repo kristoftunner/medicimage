@@ -55,6 +55,8 @@ void EditorUI::OnAttach()
     std::copy(uuid.begin(), uuid.end(), m_inputText.begin());
   }
 
+  m_attributeEditor = AttributeEditor(&m_drawingSheet);
+
   // loading in the icons
   m_circleIcon  = std::move(std::make_unique<Texture2D>("circle","assets/icons/circle.png"));
   m_screenshotIcon  = std::move(std::make_unique<Texture2D>("screenshot","assets/icons/screenshot.png"));
@@ -594,7 +596,8 @@ void EditorUI::OnImguiRender()
 
   ShowImageWindow();
   ShowToolbox();
-  ShowThumbnails(); 
+  ShowThumbnails();
+  m_attributeEditor.OnImguiRender(); 
 
   // some profiling and debug info 
   ImGui::Begin("Profiling");

@@ -7,6 +7,7 @@
 #include <chrono>
 
 #include <glm/gtx/perpendicular.hpp>
+#include "drawing_sheet.h"
 
 namespace medicimage
 {
@@ -205,11 +206,18 @@ namespace medicimage
     return std::optional<Entity>();
   }
 
-  void DrawingSheet::SetHoveredEntity(Entity entity)
+  std::vector<Entity> DrawingSheet::GetSelectedEntities()
   {
-    m_hoveredEntity = entity;
+    std::vector<Entity> selectedEntities;
+    auto view = m_registry.view<CommonAttributesComponent>();
+    for(auto e : view)
+    {
+      Entity entity = {e, this};
+      if(entity.GetComponent<CommonAttributesComponent>().selected)
+        selectedEntities.push_back(entity);
+    }
+    return selectedEntities;
   }
-
   bool DrawingSheet::IsUnderSelectArea(Entity entity, glm::vec2 pos)
   {
     auto boundingContour = entity.GetComponent<BoundingContourComponent>().cornerPoints;
@@ -384,6 +392,8 @@ namespace medicimage
       Entity entity = {e, this};
       entity.GetComponent<PickPointsComponent>().selectedPoint = -1;
     }
+    
+    m_draggedEntity.reset();
   }
 
   Entity DrawingSheet::CreateEntity(int id, const std::string &name)
@@ -405,9 +415,7 @@ namespace medicimage
 
   void InitialObjectDrawState::OnMouseHovered(const glm::vec2 pos)
   {
-    auto hoveredEntity = m_sheet->GetHoveredEntity(pos);
-    if(hoveredEntity)
-      m_sheet->SetHoveredEntity(hoveredEntity.value()); 
+    m_sheet->m_hoveredEntity = m_sheet->GetHoveredEntity(pos);
   }
 
   void InitialObjectDrawState::OnMouseButtonPressed(const glm::vec2 pos)
@@ -482,9 +490,7 @@ namespace medicimage
 
   void ObjectSelectInitialState::OnMouseHovered(const glm::vec2 pos)
   {
-    auto hoveredEntity = m_sheet->GetHoveredEntity(pos);
-    if(hoveredEntity)
-      m_sheet->SetHoveredEntity(hoveredEntity.value()); 
+    m_sheet->m_hoveredEntity = m_sheet->GetHoveredEntity(pos);
   }
 
   void ObjectSelectInitialState::OnMouseButtonPressed(const glm::vec2 pos)
@@ -658,11 +664,16 @@ namespace medicimage
 
   void ObjectDraggingState::OnMouseButtonDown(const glm::vec2 pos)
   {
-    auto currentPoint = pos / m_sheet->m_sheetSize; 
-    auto diff = (currentPoint - m_sheet->m_firstPoint) * glm::vec2(1.0);
-    m_sheet->m_firstPoint = pos / m_sheet->m_sheetSize;
-    auto& transform = m_sheet->m_draggedEntity.GetComponent<TransformComponent>();
-    transform.translation += diff;
+    if(m_sheet->m_draggedEntity.has_value())
+    {
+      auto currentPoint = pos / m_sheet->m_sheetSize; 
+      auto diff = (currentPoint - m_sheet->m_firstPoint) * glm::vec2(1.0);
+      m_sheet->m_firstPoint = pos / m_sheet->m_sheetSize;
+      auto& transform = m_sheet->m_draggedEntity.value().GetComponent<TransformComponent>();
+      transform.translation += diff;
+    }
+    else
+      APP_CORE_ERR("Something went wrong with dragging");
   }
 
   void ObjectDraggingState::OnMouseButtonReleased(const glm::vec2 pos)

@@ -9,6 +9,7 @@
 #include "core/utils.h"
 #include "input/key_event.h"
 #include "drawing/drawing_sheet.h"
+#include "ui/attribute_editor.h"
 
 #include "imgui.h"
 #include <array>
@@ -65,7 +66,8 @@ private:
    
   // UI editor state specific members
   ImageEditor m_imageEditor; 
-  DrawingSheet m_drawingSheet; 
+  DrawingSheet m_drawingSheet;
+  AttributeEditor m_attributeEditor;   
 
   EditorState m_editorState = EditorState::SHOW_CAMERA;
   Timer m_timer;

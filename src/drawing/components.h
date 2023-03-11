@@ -112,4 +112,9 @@ namespace medicimage
     ArrowComponent(glm::vec2 end, glm::vec2 begin, float thickness)
       : end(end), begin(begin), thickness(thickness) {}
   };
+
+  struct SkinTemplateComponent
+  {
+
+  };
 } // namespace medicimage

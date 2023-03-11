@@ -119,12 +119,12 @@ public:
   // Hovering could be done in OnMouseHovered function, instead this functionality is covered by the draw states
   // because there can be a case when hovering is disabled by the draw command and the specific draw state
   std::optional<Entity> GetHoveredEntity(const glm::vec2 pos);
-  void SetHoveredEntity(Entity entity);
-
+  std::vector<Entity> GetSelectedEntities();
   bool IsUnderSelectArea(Entity entity, glm::vec2 pos);
   bool IsPickpointSelected(Entity entity, glm::vec2 pos);
   bool IsDragAreaSelected(Entity entity, glm::vec2 pos);
-
+  Entity CreateEntity(int id, const std::string& name);
+  void DestroyEntity(Entity entity);
   Entity CreateRectangle(glm::vec2 firstPoint, glm::vec2 secondPoint, DrawObjectType objectType);
   void   UpdateRectangleShapeAttributes(Entity entity);
   Entity CreateCircle(glm::vec2 topLeft, glm::vec2 bottomRight, DrawObjectType objectType);
@@ -133,15 +133,14 @@ public:
   void   UpdateArrowShapeAttributes(Entity entity);
   void ClearSelectionShapes();
 
-  Entity CreateEntity(int id, const std::string& name);
-  void DestroyEntity(Entity entity);
 private:
   entt::registry m_registry;
   std::unique_ptr<ImageDocument> m_originalDoc;
   std::unique_ptr<Texture2D> m_drawing;
 
-  Entity m_hoveredEntity;
-  Entity m_draggedEntity;
+  std::optional<Entity> m_hoveredEntity;
+  std::optional<Entity> m_draggedEntity;
+  std::optional<Entity> m_toBeDrawnEntity;
 
   DrawCommand m_currentDrawCommand;
   std::unique_ptr<BaseDrawState> m_drawState; 
