@@ -68,6 +68,7 @@ void EditorUI::OnAttach()
   m_arrowIcon  = std::move(std::make_unique<Texture2D>("arrow","assets/icons/arrow.png"));
   m_addTextIcon  = std::move(std::make_unique<Texture2D>("add-text","assets/icons/add-text.png"));
   m_undoIcon  = std::move(std::make_unique<Texture2D>("add-text","assets/icons/left-arrow.png"));
+  m_skinTemplateIcon  = std::move(std::make_unique<Texture2D>("add-text","assets/icons/skin-template.png"));
 
   // initieliaze the frames 
   m_frame = std::make_unique<Texture2D>("initial checkerboard", "assets/textures/Checkerboard.png"); // initialize the edited frame with the current frame and later update only the current frame in OnUpdate
@@ -431,6 +432,13 @@ void EditorUI::ShowToolbox()
   {
     if(m_editorState == EditorState::EDITING)
       m_drawingSheet.SetDrawCommand(DrawCommand::DRAW_ARROW);
+  }
+  
+  style.Colors[ImGuiCol_Button] = m_defaultFrameBgColor; 
+  if (ImGui::ImageButton("skin-template", m_skinTemplateIcon->GetShaderResourceView(), smallIconSize, uvMin, uvMax, iconBg, tintColor))
+  {
+    if(m_editorState == EditorState::EDITING)
+      m_drawingSheet.SetDrawCommand(DrawCommand::DRAW_SKIN_TEMPLATE);
   }
 
   if(m_editorState != EditorState::EDITING)

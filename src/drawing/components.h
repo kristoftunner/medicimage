@@ -2,6 +2,7 @@
 
 
 #include <string>
+#include <vector>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/glm.hpp>
 
@@ -115,6 +116,9 @@ namespace medicimage
 
   struct SkinTemplateComponent
   {
-
+    glm::vec2 boundingRectSize{0.0, 0.0};
+    glm::vec2 verticalSliceSize{0.0, 0.0};
+    glm::vec2 horizontalSliceSize{0.0, 0.0};
+    SkinTemplateComponent() = default;
   };
 } // namespace medicimage

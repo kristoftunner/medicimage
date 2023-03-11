@@ -23,7 +23,7 @@ class ObjectSelectedState;
 class PickPointSelectedState;
 class ObjectDraggingState; 
 
-enum class DrawCommand{DO_NOTHING, OBJECT_SELECT, DRAW_LINE, DRAW_CIRCLE, DRAW_RECTANGLE, DRAW_ARROW, DRAW_ELLIPSE, DRAW_TEXT}; // Possible commands: DRAG(MOVE), 
+enum class DrawCommand{DO_NOTHING, OBJECT_SELECT, DRAW_LINE, DRAW_CIRCLE, DRAW_RECTANGLE, DRAW_ARROW, DRAW_ELLIPSE, DRAW_TEXT, DRAW_SKIN_TEMPLATE}; // Possible commands: DRAG(MOVE), 
 enum class DrawObjectType{TEMPORARY, PERMANENT};
 
 // TODO: 1) color handling
@@ -125,14 +125,20 @@ public:
   bool IsDragAreaSelected(Entity entity, glm::vec2 pos);
   Entity CreateEntity(int id, const std::string& name);
   void DestroyEntity(Entity entity);
+  
   Entity CreateRectangle(glm::vec2 firstPoint, glm::vec2 secondPoint, DrawObjectType objectType);
   void   UpdateRectangleShapeAttributes(Entity entity);
+  
   Entity CreateCircle(glm::vec2 topLeft, glm::vec2 bottomRight, DrawObjectType objectType);
   void   UpdateCircleShapeAttributes(Entity entity);
+  
   Entity CreateArrow(glm::vec2 topLeft, glm::vec2 bottomRight, DrawObjectType objectType);
   void   UpdateArrowShapeAttributes(Entity entity);
-  void ClearSelectionShapes();
+  
+  Entity CreateSkinTemplate(glm::vec2 topLeft, glm::vec2 bottomRight, DrawObjectType objectType); 
+  void   UpdateSkinTemplateShapeAttributes(Entity entity);
 
+  void ClearSelectionShapes();
 private:
   entt::registry m_registry;
   std::unique_ptr<ImageDocument> m_originalDoc;
