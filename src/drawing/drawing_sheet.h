@@ -38,14 +38,14 @@ public:
   {
   public:
   	Entity() = default;
-  	Entity(entt::entity handle, DrawingSheet* sheet);
+  	Entity(entt::entity handle);
   	Entity(const Entity& other) = default;
 
   	template<typename T, typename... Args>
   	T& AddComponent(Args&&... args)
   	{
   		MI_CORE_ASSERT(!HasComponent<T>(), "Entity already has component!");  
-  		T& component = m_sheet->m_registry.emplace<T>(m_entityHandle, std::forward<Args>(args)...);
+  		T& component = DrawingSheet::s_registry.emplace<T>(m_entityHandle, std::forward<Args>(args)...);
   		//m_sheet->OnComponentAdded<T>(*this, component);
   		return component;
   	}
@@ -53,7 +53,7 @@ public:
   	template<typename T, typename... Args>
   	T& AddOrReplaceComponent(Args&&... args)
   	{
-  		T& component = m_sheet->m_registry.emplace_or_replace<T>(m_entityHandle, std::forward<Args>(args)...);
+  		T& component = DrawingSheet::s_registry.emplace_or_replace<T>(m_entityHandle, std::forward<Args>(args)...);
   		//m_sheet->OnComponentAdded<T>(*this, component);
   		return component;
   	}
@@ -62,20 +62,20 @@ public:
   	T& GetComponent()
   	{
   		MI_CORE_ASSERT(HasComponent<T>(), "Entity does not have component!");
-  		return m_sheet->m_registry.get<T>(m_entityHandle);
+  		return DrawingSheet::s_registry.get<T>(m_entityHandle);
   	}
 
   	template<typename T>
   	bool HasComponent()
   	{
-      return m_sheet->m_registry.any_of<T>(m_entityHandle);
+      return DrawingSheet::s_registry.any_of<T>(m_entityHandle);
   	}
 
   	template<typename T>
   	void RemoveComponent()
   	{
   		MI_CORE_ASSERT(HasComponent<T>(), "Entity does not have component!");
-  		m_sheet->m_registry.remove<T>(m_entityHandle);
+  		DrawingSheet::s_registry.remove<T>(m_entityHandle);
   	}
 
   	operator bool() const { return m_entityHandle != entt::null; }
@@ -87,7 +87,7 @@ public:
 
   	bool operator==(const Entity& other) const
   	{
-  		return m_entityHandle == other.m_entityHandle && m_sheet == other.m_sheet;
+  		return m_entityHandle == other.m_entityHandle;
   	}
 
   	bool operator!=(const Entity& other) const
@@ -96,7 +96,7 @@ public:
   	}
   private:
   	entt::entity m_entityHandle{ entt::null };
-  	DrawingSheet* m_sheet = nullptr;
+  	//DrawingSheet* m_sheet = nullptr;
   };
 
 public:
@@ -123,15 +123,12 @@ public:
   bool IsUnderSelectArea(Entity entity, glm::vec2 pos);
   bool IsPickpointSelected(Entity entity, glm::vec2 pos);
   bool IsDragAreaSelected(Entity entity, glm::vec2 pos);
-  Entity CreateEntity(int id, const std::string& name);
-  void DestroyEntity(Entity entity);
-  
-  Entity CreateSkinTemplate(glm::vec2 topLeft, glm::vec2 bottomRight, DrawObjectType objectType); 
-  void   UpdateSkinTemplateShapeAttributes(Entity entity);
+  static Entity CreateEntity(int id, const std::string& name);
+  static void DestroyEntity(Entity entity);
 
   void ClearSelectionShapes();
 private:
-  entt::registry m_registry;
+  static entt::registry s_registry;
   std::unique_ptr<ImageDocument> m_originalDoc;
   std::unique_ptr<Texture2D> m_drawing;
 
@@ -179,9 +176,9 @@ public:
   std::function<void(entt::entity)> DeleteTemporaries()
   {
     return [&](entt::entity e) {
-      Entity entity = {e, m_sheet};
+      Entity entity(e);
       if (entity.GetComponent<CommonAttributesComponent>().temporary)
-        m_sheet->DestroyEntity(entity);
+        DrawingSheet::DestroyEntity(entity);
     };
   }
 protected:

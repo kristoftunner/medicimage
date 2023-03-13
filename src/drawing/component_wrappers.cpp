@@ -258,6 +258,39 @@ namespace medicimage
 
   Entity SkinTemplateComponentWrapper::CreateSkinTemplate(Entity baseEntity, glm::vec2 firstPoint, glm::vec2 secondPoint, DrawObjectType objectType)
   {
+    baseEntity.GetComponent<CommonAttributesComponent>().temporary = objectType == DrawObjectType::TEMPORARY ? true : false;
+    
+    auto& transform = baseEntity.GetComponent<TransformComponent>();
+    auto& skinTemplate = baseEntity.AddComponent<SkinTemplateComponent>();
+
+    static constexpr float minBoundingWidth = 0.1;
+    static constexpr float minBoundingHeight = 0.1;
+    static constexpr int verticalSliceCount = 3;
+    static constexpr int horizontalSliceCount = 1;
+    auto diff = secondPoint - firstPoint;
+    if(abs(diff.x) >= minBoundingWidth && abs(diff.y) >= minBoundingHeight)
+    {
+      auto boundingRectSize = glm::abs(diff);
+      skinTemplate.verticalSliceSize = glm::vec2{ diff.x / 10.0, diff.y };
+      skinTemplate.horizontalSliceSize = glm::vec2{ diff.x * (7.0 / 20.0), diff.y / 5.0 };
+      skinTemplate.boundingRectSize = glm::abs(diff);
+      auto center = firstPoint + diff / glm::vec2(2.0);
+      for (auto i = 0; i < verticalSliceCount; i++)
+      {
+        glm::vec2 vertTopLeft = glm::vec2{ - skinTemplate.verticalSliceSize.x * 1.5, -skinTemplate.verticalSliceSize.y / 2.0 } + center + glm::vec2{ i * skinTemplate.verticalSliceSize.x, 0.0 };
+        glm::vec2 vertBottomRight = glm::vec2{ -skinTemplate.verticalSliceSize.x * 0.5, skinTemplate.verticalSliceSize.y / 2.0 } + center + glm::vec2{ i * skinTemplate.verticalSliceSize.x, 0.0 };
+        auto rect = DrawingSheet::CreateEntity(0, "rectangle");
+        RectangleComponentWrapper::CreateRectangle(rect, vertTopLeft, vertBottomRight, objectType);
+      }
+      for (auto i = 0; i < horizontalSliceCount; i++)
+      {
+        glm::vec2 horTopLeft = glm::vec2{ -skinTemplate.horizontalSliceSize.x * 1.5, -skinTemplate.horizontalSliceSize.y / 2.0 } + center + glm::vec2{ i * skinTemplate.horizontalSliceSize.x, 0.0 };
+        glm::vec2 horBottomRight = glm::vec2{ -skinTemplate.horizontalSliceSize.x * 0.5, skinTemplate.horizontalSliceSize.y / 2.0 } + center + glm::vec2{ i * skinTemplate.horizontalSliceSize.x, 0.0 };
+        auto rect = DrawingSheet::CreateEntity(0, "rectangle");
+        RectangleComponentWrapper::CreateRectangle(rect, horTopLeft, horBottomRight, objectType);
+      }
+    }
+
     return baseEntity;
   }
 

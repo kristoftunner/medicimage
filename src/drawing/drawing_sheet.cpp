@@ -12,18 +12,20 @@
 
 namespace medicimage
 {
-  DrawingSheet::Entity::Entity(entt::entity handle, DrawingSheet* sheet)
-  	: m_entityHandle(handle), m_sheet(sheet)
+  entt::registry DrawingSheet::s_registry;
+
+  DrawingSheet::Entity::Entity(entt::entity handle)
+  	: m_entityHandle(handle)
   {
   }
 
   void DrawingSheet::SetDocument(std::unique_ptr<ImageDocument> doc, glm::vec2 viewportSize)
   {
     // clear the registry for clear drawing
-    auto objects = m_registry.view<TransformComponent>();
+    auto objects = s_registry.view<TransformComponent>();
     for(auto e : objects)
     {
-      Entity entity = {e, this};
+      Entity entity(e);
       DestroyEntity(entity);
     }
 
@@ -64,26 +66,26 @@ namespace medicimage
     m_drawing = ImageEditor::ReplaceImageFooter(footerText, m_originalDoc->texture.get());
 
     ImageEditor::Begin(m_drawing.get());
-    auto circles = m_registry.view<CircleComponent>();
+    auto circles = s_registry.view<CircleComponent>();
     for(auto e : circles)
     {
-      Entity entity = {e, this};
+      Entity entity(e);
       CircleComponentWrapper cw(entity);
       cw.Draw();
     }
 
-    auto rectangles = m_registry.view<RectangleComponent>();
+    auto rectangles = s_registry.view<RectangleComponent>();
     for(auto e : rectangles)
     {
-      Entity entity = {e, this};
+      Entity entity(e);
       RectangleComponentWrapper rw(entity);
       rw.Draw(); 
     }
     
-    auto arrows = m_registry.view<ArrowComponent>();
+    auto arrows = s_registry.view<ArrowComponent>();
     for(auto e : arrows)
     {
-      Entity entity = {e, this};
+      Entity entity(e);
       ArrowComponentWrapper aw(entity);
       aw.Draw();
     }
@@ -142,10 +144,10 @@ namespace medicimage
   {
     // TODO: may want to move this into editor ui, so here only relative coordinates are handled
     const glm::vec2 relPos = pos / m_sheetSize;
-    auto view = m_registry.view<BoundingContourComponent>();
+    auto view = s_registry.view<BoundingContourComponent>();
     for(auto e : view)
     {
-      Entity entity = {e, this};
+      Entity entity(e);
       auto boundingContour = entity.GetComponent<BoundingContourComponent>().cornerPoints;
       if(boundingContour.size() == 0)
         continue;
@@ -167,10 +169,10 @@ namespace medicimage
   std::vector<Entity> DrawingSheet::GetSelectedEntities()
   {
     std::vector<Entity> selectedEntities;
-    auto view = m_registry.view<CommonAttributesComponent>();
+    auto view = s_registry.view<CommonAttributesComponent>();
     for(auto e : view)
     {
-      Entity entity = {e, this};
+      Entity entity(e);
       if(entity.GetComponent<CommonAttributesComponent>().selected)
         selectedEntities.push_back(entity);
     }
@@ -239,66 +241,21 @@ namespace medicimage
       return false;
   }
   
-  Entity DrawingSheet::CreateSkinTemplate(glm::vec2 topLeft, glm::vec2 bottomRight, DrawObjectType objectType)
-  {
-    auto entity = CreateEntity(0, "SkinTemplate");
-    entity.GetComponent<CommonAttributesComponent>().temporary = objectType == DrawObjectType::TEMPORARY ? true : false;
-    
-    auto& transform = entity.GetComponent<TransformComponent>();
-    auto& skinTemplate = entity.GetComponent<SkinTemplateComponent>();
-
-    static constexpr float minBoundingWidth = 0.1;
-    static constexpr float minBoundingHeight = 0.1;
-    static constexpr int verticalSliceCount = 3;
-    static constexpr int horizontalSliceCount = 1;
-    auto diff = bottomRight - topLeft;
-    if(abs(diff.x) >= minBoundingWidth && abs(diff.y) >= minBoundingHeight)
-    {
-      auto boundingRectSize = glm::abs(diff);
-      skinTemplate.verticalSliceSize = glm::vec2{ diff.x / 10.0, diff.y };
-      skinTemplate.horizontalSliceSize = glm::vec2{ diff.x * (7.0 / 20.0), diff.y / 5.0 };
-      skinTemplate.boundingRectSize = glm::abs(diff);
-      auto center = topLeft + diff / glm::vec2(2.0);
-      for (auto i = 0; i < verticalSliceCount; i++)
-      {
-        glm::vec2 vertTopLeft = glm::vec2{ - skinTemplate.verticalSliceSize.x * 1.5, -skinTemplate.verticalSliceSize.y / 2.0 } + center + glm::vec2{ i * skinTemplate.verticalSliceSize.x, 0.0 };
-        glm::vec2 vertBottomRight = glm::vec2{ -skinTemplate.verticalSliceSize.x * 0.5, skinTemplate.verticalSliceSize.y / 2.0 } + center + glm::vec2{ i * skinTemplate.verticalSliceSize.x, 0.0 };
-        auto rect = CreateEntity(0, "rectangle");
-        RectangleComponentWrapper::CreateRectangle(rect, vertTopLeft, vertBottomRight, objectType);
-      }
-      for (auto i = 0; i < horizontalSliceCount; i++)
-      {
-        glm::vec2 horTopLeft = glm::vec2{ -skinTemplate.horizontalSliceSize.x * 1.5, -skinTemplate.horizontalSliceSize.y / 2.0 } + center + glm::vec2{ i * skinTemplate.horizontalSliceSize.x, 0.0 };
-        glm::vec2 horBottomRight = glm::vec2{ -skinTemplate.horizontalSliceSize.x * 0.5, skinTemplate.horizontalSliceSize.y / 2.0 } + center + glm::vec2{ i * skinTemplate.horizontalSliceSize.x, 0.0 };
-        auto rect = CreateEntity(0, "rectangle");
-        RectangleComponentWrapper::CreateRectangle(rect, horTopLeft, horBottomRight, objectType);
-      }
-    }
-
-    UpdateSkinTemplateShapeAttributes(entity);
-    return entity;
-  }
-
-  void DrawingSheet::UpdateSkinTemplateShapeAttributes(Entity entity)
-  {
-
-  }
-
   void DrawingSheet::ClearSelectionShapes()
   {
     // clear the selection and selected pickpoint
-    auto attributes = m_registry.view<CommonAttributesComponent>();
+    auto attributes = s_registry.view<CommonAttributesComponent>();
     for(auto e : attributes)
     {
-      Entity entity = {e, this};
+      Entity entity(e);
       if(entity.GetComponent<CommonAttributesComponent>().selected)
         entity.GetComponent<CommonAttributesComponent>().selected = false;
     }
 
-    auto pickpoints = m_registry.view<PickPointsComponent>();
+    auto pickpoints = s_registry.view<PickPointsComponent>();
     for(auto e : pickpoints)
     {
-      Entity entity = {e, this};
+      Entity entity(e);
       entity.GetComponent<PickPointsComponent>().selectedPoint = -1;
     }
     
@@ -307,7 +264,7 @@ namespace medicimage
 
   Entity DrawingSheet::CreateEntity(int id, const std::string &name)
   {
-		Entity entity = { m_registry.create(), this };
+		Entity entity = { s_registry.create()};
 		entity.AddComponent<IDComponent>();
 		entity.AddComponent<TransformComponent>();
     entity.AddComponent<CommonAttributesComponent>();
@@ -319,7 +276,7 @@ namespace medicimage
 
   void DrawingSheet::DestroyEntity(Entity entity)
   {
-    m_registry.destroy(entity);
+    s_registry.destroy(entity);
   }
 
   void InitialObjectDrawState::OnMouseHovered(const glm::vec2 pos)
@@ -354,29 +311,31 @@ namespace medicimage
     {
       case DrawCommand::DRAW_CIRCLE:
       {
-        entity = m_sheet->CreateEntity(0, "circle");
+        entity = DrawingSheet::CreateEntity(0, "circle");
         CircleComponentWrapper cw(CircleComponentWrapper::CreateCircle(entity, m_sheet->m_firstPoint, m_sheet->m_secondPoint, DrawObjectType::TEMPORARY));
         cw.UpdateShapeAttributes();
         break;
       }
       case DrawCommand::DRAW_RECTANGLE:
       {
-        entity = m_sheet->CreateEntity(0, "rectangle");
+        entity = DrawingSheet::CreateEntity(0, "rectangle");
         RectangleComponentWrapper rw(RectangleComponentWrapper::CreateRectangle(entity, m_sheet->m_firstPoint, m_sheet->m_secondPoint, DrawObjectType::TEMPORARY));
         rw.UpdateShapeAttributes();
         break;
       }
       case DrawCommand::DRAW_ARROW:
       {
-        entity = m_sheet->CreateEntity(0, "arrow");
+        entity = DrawingSheet::CreateEntity(0, "arrow");
         ArrowComponentWrapper aw(ArrowComponentWrapper::CreateArrow(entity, m_sheet->m_firstPoint, m_sheet->m_secondPoint, DrawObjectType::TEMPORARY));
         aw.UpdateShapeAttributes();
         break;
       }
       case DrawCommand::DRAW_SKIN_TEMPLATE:
       {
-        entity = m_sheet->CreateSkinTemplate(m_sheet->m_firstPoint, m_sheet->m_secondPoint, DrawObjectType::TEMPORARY);
-        m_sheet->UpdateSkinTemplateShapeAttributes(entity);
+        entity = DrawingSheet::CreateEntity(0, "skin template");
+        SkinTemplateComponentWrapper sw(SkinTemplateComponentWrapper::CreateSkinTemplate(entity, m_sheet->m_firstPoint, m_sheet->m_secondPoint, DrawObjectType::TEMPORARY));
+        sw.UpdateShapeAttributes();
+        //m_sheet->UpdateSkinTemplateShapeAttributes(entity);
         break;
       }
     }
@@ -390,29 +349,30 @@ namespace medicimage
     {
       case DrawCommand::DRAW_CIRCLE:
       {
-        entity = m_sheet->CreateEntity(0, "circle");
+        entity = DrawingSheet::CreateEntity(0, "circle");
         CircleComponentWrapper cw(CircleComponentWrapper::CreateCircle(entity, m_sheet->m_firstPoint, m_sheet->m_secondPoint, DrawObjectType::PERMANENT));
         cw.UpdateShapeAttributes();
         break;
       }
       case DrawCommand::DRAW_RECTANGLE:
       {
-        entity = m_sheet->CreateEntity(0, "rectangle");
+        entity = DrawingSheet::CreateEntity(0, "rectangle");
         RectangleComponentWrapper rw(RectangleComponentWrapper::CreateRectangle(entity, m_sheet->m_firstPoint, m_sheet->m_secondPoint, DrawObjectType::PERMANENT));
         rw.UpdateShapeAttributes();
         break;
       }
       case DrawCommand::DRAW_ARROW:
       {
-        entity = m_sheet->CreateEntity(0, "arrow");
+        entity = DrawingSheet::CreateEntity(0, "arrow");
         ArrowComponentWrapper aw(ArrowComponentWrapper::CreateArrow(entity, m_sheet->m_firstPoint, m_sheet->m_secondPoint, DrawObjectType::PERMANENT));
         aw.UpdateShapeAttributes();
         break;
       }
       case DrawCommand::DRAW_SKIN_TEMPLATE:
       {
-        entity = m_sheet->CreateSkinTemplate(m_sheet->m_firstPoint, m_sheet->m_secondPoint, DrawObjectType::PERMANENT);
-        m_sheet->UpdateSkinTemplateShapeAttributes(entity);
+        entity = DrawingSheet::CreateEntity(0, "skin template");
+        SkinTemplateComponentWrapper sw(SkinTemplateComponentWrapper::CreateSkinTemplate(entity, m_sheet->m_firstPoint, m_sheet->m_secondPoint, DrawObjectType::PERMANENT));
+        sw.UpdateShapeAttributes();
         break;
       }
     }
@@ -442,7 +402,7 @@ namespace medicimage
     auto& secondPoint = m_sheet->m_secondPoint;
     if ((firstPoint.x != secondPoint.x) && (firstPoint.y != secondPoint.y)) // TODO: may not need this
     { // baby blue select rectangle
-      auto entity = m_sheet->CreateEntity(0, "rectangle");
+      auto entity = DrawingSheet::CreateEntity(0, "rectangle");
       RectangleComponentWrapper rw(RectangleComponentWrapper::CreateRectangle(entity, m_sheet->m_firstPoint, m_sheet->m_secondPoint, DrawObjectType::TEMPORARY));
       entity.GetComponent<ColorComponent>().color = m_sheet->s_selectBoxColor;
       entity.GetComponent<RectangleComponent>().thickness = 2;
@@ -453,10 +413,10 @@ namespace medicimage
   void ObjectSelectionState::OnMouseButtonReleased(const glm::vec2 pos)
   { // If we have selected entities, then go back to initial select state, else go forward
     bool hasSelectedObject = false;
-    auto view = m_sheet->m_registry.view<BoundingContourComponent>();
+    auto view = m_sheet->s_registry.view<BoundingContourComponent>();
     for(auto e : view)
     {
-      Entity entity = {e, m_sheet};
+      Entity entity = {e};
       if (m_sheet->IsUnderSelectArea(entity, pos))
       {
         entity.GetComponent<CommonAttributesComponent>().selected = true;
@@ -473,10 +433,10 @@ namespace medicimage
   void ObjectSelectedState::OnMouseButtonPressed(const glm::vec2 pos)
   {
     m_sheet->m_firstPoint = pos / m_sheet->m_sheetSize;
-    auto view = m_sheet->m_registry.view<PickPointsComponent>();
+    auto view = m_sheet->s_registry.view<PickPointsComponent>();
     for(auto e : view)
     {
-      Entity entity = {e, m_sheet};
+      Entity entity(e);
       if(m_sheet->IsPickpointSelected(entity, m_sheet->m_firstPoint))
       {
         m_sheet->ChangeDrawState(std::make_unique<PickPointSelectedState>(m_sheet));
@@ -500,10 +460,10 @@ namespace medicimage
     auto currentPoint = pos / m_sheet->m_sheetSize; 
     auto diff = (currentPoint - m_sheet->m_firstPoint) * glm::vec2(1.0);
     m_sheet->m_firstPoint = pos / m_sheet->m_sheetSize;
-    auto view = m_sheet->m_registry.view<PickPointsComponent>();
+    auto view = m_sheet->s_registry.view<PickPointsComponent>();
     for(auto e : view)
     {
-      Entity entity = {e, m_sheet};
+      Entity entity(e);
       auto selectedPointIndex = entity.GetComponent<PickPointsComponent>().selectedPoint;
       if(selectedPointIndex != -1)
       {
@@ -531,10 +491,10 @@ namespace medicimage
   void PickPointSelectedState::OnMouseButtonReleased(const glm::vec2 pos)
   {
     // clear pickpoint selection
-    auto view = m_sheet->m_registry.view<PickPointsComponent>();
+    auto view = m_sheet->s_registry.view<PickPointsComponent>();
     for(auto e : view)
     {
-      Entity entity = {e, m_sheet};
+      Entity entity(e);
       entity.GetComponent<PickPointsComponent>().selectedPoint = -1;
     }
     m_sheet->ChangeDrawState(std::make_unique<ObjectSelectedState>(m_sheet));
