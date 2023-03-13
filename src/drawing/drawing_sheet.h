@@ -126,15 +126,6 @@ public:
   Entity CreateEntity(int id, const std::string& name);
   void DestroyEntity(Entity entity);
   
-  Entity CreateRectangle(glm::vec2 firstPoint, glm::vec2 secondPoint, DrawObjectType objectType);
-  void   UpdateRectangleShapeAttributes(Entity entity);
-  
-  Entity CreateCircle(glm::vec2 topLeft, glm::vec2 bottomRight, DrawObjectType objectType);
-  void   UpdateCircleShapeAttributes(Entity entity);
-  
-  Entity CreateArrow(glm::vec2 topLeft, glm::vec2 bottomRight, DrawObjectType objectType);
-  void   UpdateArrowShapeAttributes(Entity entity);
-  
   Entity CreateSkinTemplate(glm::vec2 topLeft, glm::vec2 bottomRight, DrawObjectType objectType); 
   void   UpdateSkinTemplateShapeAttributes(Entity entity);
 
