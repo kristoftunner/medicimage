@@ -311,29 +311,25 @@ namespace medicimage
     {
       case DrawCommand::DRAW_CIRCLE:
       {
-        entity = DrawingSheet::CreateEntity(0, "circle");
-        CircleComponentWrapper cw(CircleComponentWrapper::CreateCircle(entity, m_sheet->m_firstPoint, m_sheet->m_secondPoint, DrawObjectType::TEMPORARY));
+        CircleComponentWrapper cw(CircleComponentWrapper::CreateCircle(m_sheet->m_firstPoint, m_sheet->m_secondPoint, DrawObjectType::TEMPORARY));
         cw.UpdateShapeAttributes();
         break;
       }
       case DrawCommand::DRAW_RECTANGLE:
       {
-        entity = DrawingSheet::CreateEntity(0, "rectangle");
-        RectangleComponentWrapper rw(RectangleComponentWrapper::CreateRectangle(entity, m_sheet->m_firstPoint, m_sheet->m_secondPoint, DrawObjectType::TEMPORARY));
+        RectangleComponentWrapper rw(RectangleComponentWrapper::CreateRectangle(m_sheet->m_firstPoint, m_sheet->m_secondPoint, DrawObjectType::TEMPORARY));
         rw.UpdateShapeAttributes();
         break;
       }
       case DrawCommand::DRAW_ARROW:
       {
-        entity = DrawingSheet::CreateEntity(0, "arrow");
-        ArrowComponentWrapper aw(ArrowComponentWrapper::CreateArrow(entity, m_sheet->m_firstPoint, m_sheet->m_secondPoint, DrawObjectType::TEMPORARY));
+        ArrowComponentWrapper aw(ArrowComponentWrapper::CreateArrow(m_sheet->m_firstPoint, m_sheet->m_secondPoint, DrawObjectType::TEMPORARY));
         aw.UpdateShapeAttributes();
         break;
       }
       case DrawCommand::DRAW_SKIN_TEMPLATE:
       {
-        entity = DrawingSheet::CreateEntity(0, "skin template");
-        SkinTemplateComponentWrapper sw(SkinTemplateComponentWrapper::CreateSkinTemplate(entity, m_sheet->m_firstPoint, m_sheet->m_secondPoint, DrawObjectType::TEMPORARY));
+        SkinTemplateComponentWrapper sw(SkinTemplateComponentWrapper::CreateSkinTemplate(m_sheet->m_firstPoint, m_sheet->m_secondPoint, DrawObjectType::TEMPORARY));
         sw.UpdateShapeAttributes();
         //m_sheet->UpdateSkinTemplateShapeAttributes(entity);
         break;
@@ -349,29 +345,25 @@ namespace medicimage
     {
       case DrawCommand::DRAW_CIRCLE:
       {
-        entity = DrawingSheet::CreateEntity(0, "circle");
-        CircleComponentWrapper cw(CircleComponentWrapper::CreateCircle(entity, m_sheet->m_firstPoint, m_sheet->m_secondPoint, DrawObjectType::PERMANENT));
+        CircleComponentWrapper cw(CircleComponentWrapper::CreateCircle(m_sheet->m_firstPoint, m_sheet->m_secondPoint, DrawObjectType::PERMANENT));
         cw.UpdateShapeAttributes();
         break;
       }
       case DrawCommand::DRAW_RECTANGLE:
       {
-        entity = DrawingSheet::CreateEntity(0, "rectangle");
-        RectangleComponentWrapper rw(RectangleComponentWrapper::CreateRectangle(entity, m_sheet->m_firstPoint, m_sheet->m_secondPoint, DrawObjectType::PERMANENT));
+        RectangleComponentWrapper rw(RectangleComponentWrapper::CreateRectangle(m_sheet->m_firstPoint, m_sheet->m_secondPoint, DrawObjectType::PERMANENT));
         rw.UpdateShapeAttributes();
         break;
       }
       case DrawCommand::DRAW_ARROW:
       {
-        entity = DrawingSheet::CreateEntity(0, "arrow");
-        ArrowComponentWrapper aw(ArrowComponentWrapper::CreateArrow(entity, m_sheet->m_firstPoint, m_sheet->m_secondPoint, DrawObjectType::PERMANENT));
+        ArrowComponentWrapper aw(ArrowComponentWrapper::CreateArrow(m_sheet->m_firstPoint, m_sheet->m_secondPoint, DrawObjectType::PERMANENT));
         aw.UpdateShapeAttributes();
         break;
       }
       case DrawCommand::DRAW_SKIN_TEMPLATE:
       {
-        entity = DrawingSheet::CreateEntity(0, "skin template");
-        SkinTemplateComponentWrapper sw(SkinTemplateComponentWrapper::CreateSkinTemplate(entity, m_sheet->m_firstPoint, m_sheet->m_secondPoint, DrawObjectType::PERMANENT));
+        SkinTemplateComponentWrapper sw(SkinTemplateComponentWrapper::CreateSkinTemplate(m_sheet->m_firstPoint, m_sheet->m_secondPoint, DrawObjectType::PERMANENT));
         sw.UpdateShapeAttributes();
         break;
       }
@@ -402,8 +394,8 @@ namespace medicimage
     auto& secondPoint = m_sheet->m_secondPoint;
     if ((firstPoint.x != secondPoint.x) && (firstPoint.y != secondPoint.y)) // TODO: may not need this
     { // baby blue select rectangle
-      auto entity = DrawingSheet::CreateEntity(0, "rectangle");
-      RectangleComponentWrapper rw(RectangleComponentWrapper::CreateRectangle(entity, m_sheet->m_firstPoint, m_sheet->m_secondPoint, DrawObjectType::TEMPORARY));
+      RectangleComponentWrapper rw(RectangleComponentWrapper::CreateRectangle(m_sheet->m_firstPoint, m_sheet->m_secondPoint, DrawObjectType::TEMPORARY));
+      auto entity = rw.GetEntity();
       entity.GetComponent<ColorComponent>().color = m_sheet->s_selectBoxColor;
       entity.GetComponent<RectangleComponent>().thickness = 2;
       entity.GetComponent<CommonAttributesComponent>().filled = true;

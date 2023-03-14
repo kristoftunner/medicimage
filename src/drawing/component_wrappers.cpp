@@ -5,13 +5,14 @@
 
 namespace medicimage
 {
-  Entity RectangleComponentWrapper::CreateRectangle(Entity baseEntity, glm::vec2 firstPoint, glm::vec2 secondPoint, DrawObjectType objectType)
+  Entity RectangleComponentWrapper::CreateRectangle(glm::vec2 firstPoint, glm::vec2 secondPoint, DrawObjectType objectType)
   {
-    baseEntity.GetComponent<CommonAttributesComponent>().temporary = objectType == DrawObjectType::TEMPORARY ? true : false;
+    auto entity = DrawingSheet::CreateEntity(0, "rectangle");
+    entity.GetComponent<CommonAttributesComponent>().temporary = objectType == DrawObjectType::TEMPORARY ? true : false;
     
-    auto& transform = baseEntity.GetComponent<TransformComponent>();
-    auto& color = baseEntity.AddComponent<ColorComponent>();  
-    auto& rectangle = baseEntity.AddComponent<RectangleComponent>();
+    auto& transform = entity.GetComponent<TransformComponent>();
+    auto& color = entity.AddComponent<ColorComponent>();  
+    auto& rectangle = entity.AddComponent<RectangleComponent>();
 
     auto tmpRect = cv::Rect2f(cv::Point2f{ firstPoint.x, firstPoint.y }, cv::Point2f{ secondPoint.x, secondPoint.y });
     rectangle.width = tmpRect.width;
@@ -19,7 +20,7 @@ namespace medicimage
 
     glm::vec2 topleft{tmpRect.tl().x, tmpRect.tl().y};
     transform.translation = topleft;
-    return baseEntity;
+    return entity;
   }
 
   void RectangleComponentWrapper::UpdateShapeAttributes()
@@ -98,18 +99,19 @@ namespace medicimage
     }
   }
 
-  Entity medicimage::CircleComponentWrapper::CreateCircle(Entity baseEntity, glm::vec2 firstPoint, glm::vec2 secondPoint, DrawObjectType objectType)
+  Entity medicimage::CircleComponentWrapper::CreateCircle(glm::vec2 firstPoint, glm::vec2 secondPoint, DrawObjectType objectType)
   {
-    baseEntity.GetComponent<CommonAttributesComponent>().temporary = objectType == DrawObjectType::TEMPORARY ? true : false;
+    auto entity = DrawingSheet::CreateEntity(0, "Circle");
+    entity.GetComponent<CommonAttributesComponent>().temporary = objectType == DrawObjectType::TEMPORARY ? true : false;
     
-    auto& transform = baseEntity.GetComponent<TransformComponent>();
+    auto& transform = entity.GetComponent<TransformComponent>();
     transform.translation = firstPoint;
 
-    auto& color = baseEntity.AddComponent<ColorComponent>();  
-    auto& circle = baseEntity.AddComponent<CircleComponent>();
+    auto& color = entity.AddComponent<ColorComponent>();  
+    auto& circle = entity.AddComponent<CircleComponent>();
     circle.radius = glm::length(firstPoint - secondPoint);
 
-    return baseEntity;
+    return entity;
   }
 
   void CircleComponentWrapper::UpdateShapeAttributes()
@@ -180,18 +182,19 @@ namespace medicimage
     } 
   }
 
-  Entity ArrowComponentWrapper::CreateArrow(Entity baseEntity, glm::vec2 firstPoint, glm::vec2 secondPoint, DrawObjectType objectType)
+  Entity ArrowComponentWrapper::CreateArrow(glm::vec2 firstPoint, glm::vec2 secondPoint, DrawObjectType objectType)
   {
-    baseEntity.GetComponent<CommonAttributesComponent>().temporary = objectType == DrawObjectType::TEMPORARY ? true : false;
+    auto entity = DrawingSheet::CreateEntity(0, "Arrow");
+    entity.GetComponent<CommonAttributesComponent>().temporary = objectType == DrawObjectType::TEMPORARY ? true : false;
     
-    auto& transform = baseEntity.GetComponent<TransformComponent>();
+    auto& transform = entity.GetComponent<TransformComponent>();
     transform.translation = firstPoint;
 
-    auto& color = baseEntity.AddComponent<ColorComponent>();  
-    auto& arrow = baseEntity.AddComponent<ArrowComponent>();
+    auto& color = entity.AddComponent<ColorComponent>();  
+    auto& arrow = entity.AddComponent<ArrowComponent>();
     arrow.end = secondPoint - firstPoint;
 
-    return baseEntity;
+    return entity;
   }
 
   void ArrowComponentWrapper::UpdateShapeAttributes()
@@ -256,12 +259,13 @@ namespace medicimage
     }
   }
 
-  Entity SkinTemplateComponentWrapper::CreateSkinTemplate(Entity baseEntity, glm::vec2 firstPoint, glm::vec2 secondPoint, DrawObjectType objectType)
+  Entity SkinTemplateComponentWrapper::CreateSkinTemplate(glm::vec2 firstPoint, glm::vec2 secondPoint, DrawObjectType objectType)
   {
-    baseEntity.GetComponent<CommonAttributesComponent>().temporary = objectType == DrawObjectType::TEMPORARY ? true : false;
+    auto entity = DrawingSheet::CreateEntity(0, "Skin template");
+    entity.GetComponent<CommonAttributesComponent>().temporary = objectType == DrawObjectType::TEMPORARY ? true : false;
     
-    auto& transform = baseEntity.GetComponent<TransformComponent>();
-    auto& skinTemplate = baseEntity.AddComponent<SkinTemplateComponent>();
+    auto& transform = entity.GetComponent<TransformComponent>();
+    auto& skinTemplate = entity.AddComponent<SkinTemplateComponent>();
 
     static constexpr float minBoundingWidth = 0.1;
     static constexpr float minBoundingHeight = 0.1;
@@ -279,23 +283,34 @@ namespace medicimage
       {
         glm::vec2 vertTopLeft = glm::vec2{ - skinTemplate.verticalSliceSize.x * 1.5, -skinTemplate.verticalSliceSize.y / 2.0 } + center + glm::vec2{ i * skinTemplate.verticalSliceSize.x, 0.0 };
         glm::vec2 vertBottomRight = glm::vec2{ -skinTemplate.verticalSliceSize.x * 0.5, skinTemplate.verticalSliceSize.y / 2.0 } + center + glm::vec2{ i * skinTemplate.verticalSliceSize.x, 0.0 };
-        auto rect = DrawingSheet::CreateEntity(0, "rectangle");
-        RectangleComponentWrapper::CreateRectangle(rect, vertTopLeft, vertBottomRight, objectType);
+        auto rect = RectangleComponentWrapper::CreateRectangle(vertTopLeft, vertBottomRight, objectType);
       }
       for (auto i = 0; i < horizontalSliceCount; i++)
       {
         glm::vec2 horTopLeft = glm::vec2{ -skinTemplate.horizontalSliceSize.x * 1.5, -skinTemplate.horizontalSliceSize.y / 2.0 } + center + glm::vec2{ i * skinTemplate.horizontalSliceSize.x, 0.0 };
         glm::vec2 horBottomRight = glm::vec2{ -skinTemplate.horizontalSliceSize.x * 0.5, skinTemplate.horizontalSliceSize.y / 2.0 } + center + glm::vec2{ i * skinTemplate.horizontalSliceSize.x, 0.0 };
-        auto rect = DrawingSheet::CreateEntity(0, "rectangle");
-        RectangleComponentWrapper::CreateRectangle(rect, horTopLeft, horBottomRight, objectType);
+        RectangleComponentWrapper::CreateRectangle(horTopLeft, horBottomRight, objectType);
       }
     }
 
-    return baseEntity;
+    return entity;
   }
 
   void SkinTemplateComponentWrapper::UpdateShapeAttributes()
   {
+    auto& skinTemplate = m_entity.GetComponent<SkinTemplateComponent>();
+    if(!m_entity.HasComponent<BoundingContourComponent>())
+      m_entity.AddComponent<BoundingContourComponent>();
+    if(!m_entity.HasComponent<PickPointsComponent>())
+      m_entity.AddComponent<PickPointsComponent>();
+
+    auto& boundingBox = m_entity.GetComponent<BoundingContourComponent>();
+    auto& pickPoints = m_entity.GetComponent<PickPointsComponent>();
+    
+    auto boundingRectSize = skinTemplate.boundingRectSize;
+    boundingBox.cornerPoints = {{0,0}, {boundingRectSize.x, 0}, {boundingRectSize.x, boundingRectSize.y}, {0, boundingRectSize.y}, {0,0}};
+    pickPoints.pickPoints = {glm::vec2{boundingRectSize.x, boundingRectSize.y} + glm::vec2{0, -boundingRectSize.y / 2},
+      glm::vec2{boundingRectSize.x, boundingRectSize.y} + glm::vec2{-boundingRectSize.x / 2, 0}, {0, boundingRectSize.y / 2}, glm::vec2{boundingRectSize.x / 2, 0}};
   }
 
   void SkinTemplateComponentWrapper::OnPickPointDrag(glm::vec2 diff, int selectedPoint)

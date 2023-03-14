@@ -14,10 +14,8 @@ void medicimage::AttributeEditor::OnImguiRender()
   auto selectedEntities = m_sheet->GetSelectedEntities();
   if(selectedEntities.size() != 0)
   {
-    for(auto& entity : selectedEntities)
-    {
-      DrawAttributeEdit(entity);
-    }
+    auto& entity = selectedEntities[0];
+    DrawAttributeEdit(entity);
   } 
 
   ImGui::End();

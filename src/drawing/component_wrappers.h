@@ -15,6 +15,7 @@ public:
   virtual void OnPickPointDrag(glm::vec2 diff, int selectedPoint) = 0;
   virtual void OnObjectDrag(glm::vec2 diff) = 0;
   virtual void Draw() = 0;
+  Entity GetEntity(){return m_entity;}
 protected:
   Entity m_entity;
   static constexpr glm::vec4 s_selectBoxColor{0.23, 0.55, 0.70, 0.5};
@@ -29,7 +30,7 @@ public:
   /// @brief Factory function for creating an entity describing a rectangle 
   /// @param baseEntity base entity to which we add all the other components 
   /// @return Entity containing the components needed for describing a rectangle, TODO: should we return with RectangleComponentWrapper 
-  static Entity CreateRectangle(Entity baseEntity, glm::vec2 firstPoint, glm::vec2 secondPoint, DrawObjectType objectType);
+  static Entity CreateRectangle(glm::vec2 firstPoint, glm::vec2 secondPoint, DrawObjectType objectType);
   void UpdateShapeAttributes() override;
   void OnPickPointDrag(glm::vec2 diff, int selectedPoint) override;
   void OnObjectDrag(glm::vec2 diff) override;
@@ -43,7 +44,7 @@ public:
   /// @brief Factory function for creating an entity describing a circle 
   /// @param baseEntity base entity to which we add all the other components 
   /// @return Entity containing the components needed for describing a circle, TODO: should we return with CircleComponentWrapper 
-  static Entity CreateCircle(Entity baseEntity, glm::vec2 firstPoint, glm::vec2 secondPoint, DrawObjectType objectType);
+  static Entity CreateCircle(glm::vec2 firstPoint, glm::vec2 secondPoint, DrawObjectType objectType);
   void UpdateShapeAttributes() override;
   void OnPickPointDrag(glm::vec2 diff, int selectedPoint) override;
   void OnObjectDrag(glm::vec2 diff) override;
@@ -57,7 +58,7 @@ public:
   /// @brief Factory function for creating an entity describing an arrow 
   /// @param baseEntity base entity to which we add all the other components 
   /// @return Entity containing the components needed for describing an arrow, TODO: should we return with ArrowComponentWrapper 
-  static Entity CreateArrow(Entity baseEntity, glm::vec2 firstPoint, glm::vec2 secondPoint, DrawObjectType objectType);
+  static Entity CreateArrow(glm::vec2 firstPoint, glm::vec2 secondPoint, DrawObjectType objectType);
   void UpdateShapeAttributes() override;
   void OnPickPointDrag(glm::vec2 diff, int selectedPoint) override;
   void OnObjectDrag(glm::vec2 diff) override;
@@ -71,7 +72,7 @@ public:
   /// @brief Factory function for creating an entity describing an skin template 
   /// @param baseEntity base entity to which we add all the other components 
   /// @return Entity containing the components needed for describing an skin temaplte, TODO: should we return with SkinTemplateComponentWrapper 
-  static Entity CreateSkinTemplate(Entity baseEntity, glm::vec2 firstPoint, glm::vec2 secondPoint, DrawObjectType objectType);
+  static Entity CreateSkinTemplate(glm::vec2 firstPoint, glm::vec2 secondPoint, DrawObjectType objectType);
   void UpdateShapeAttributes() override;
   void OnPickPointDrag(glm::vec2 diff, int selectedPoint) override;
   void OnObjectDrag(glm::vec2 diff) override;
