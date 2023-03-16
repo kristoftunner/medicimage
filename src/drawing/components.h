@@ -120,10 +120,12 @@ namespace medicimage
   struct SkinTemplateComponent
   {
     glm::vec2 boundingRectSize{0.0, 0.0};
-    glm::vec2 verticalSliceSize{0.0, 0.0};
     int horizontalSliceCount = 0;
     int verticalSliceCount = 0;
-    glm::vec2 horizontalSliceSize{0.0, 0.0};
+    float verticalSliceWidthSpan = 0.0;
+    float horizontalSliceHeightSpan = 0.0;
+    //glm::vec2 verticalSliceSize{0.0, 0.0};
+    //glm::vec2 horizontalSliceSize{0.0, 0.0};
     std::vector<entt::entity> horizontalSlices; // TODO: here we should store the UUID of the rectangle
     std::vector<entt::entity> verticalSlices;
     SkinTemplateComponent() = default;

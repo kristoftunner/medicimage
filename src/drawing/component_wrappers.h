@@ -77,11 +77,21 @@ public:
   void OnPickPointDrag(glm::vec2 diff, int selectedPoint) override;
   void OnObjectDrag(glm::vec2 diff) override;
   void Draw() override;
-  glm::vec2 GetVerticalSliceWidthBounds();
-  glm::vec2 GetVerticalSliceHeightBounds();
-  glm::vec2 GetHorizontalSliceWidthBounds();
-  glm::vec2 GetHorizontalSliceHeightBounds();
+  glm::vec2 GetVerticalSliceWidthSpanBounds();
+  glm::vec2 GetHorizontalSliceHeightSpanBounds();
 private:
-  static void GenerateSlices(Entity entity, DrawObjectType objectType);
+  static void GenerateSlices(Entity entity);
+
+  static constexpr float s_minimumSliceSize = 0.015;
+
+  static constexpr int s_defaultVerticalCount = 3;
+  static constexpr float s_maxVerticalSpan = 0.7;
+  static constexpr float s_minVerticalSpan = 0.3;
+  static constexpr float s_defaultVerticalSpan = 0.5;
+
+  static constexpr int s_defaultHorizontalCount = 2;
+  static constexpr float s_maxHorizontalSpan = 0.7;
+  static constexpr float s_minHorizontalSpan = 0.3;
+  static constexpr float s_defaultHorizontalSpan = 0.5;
 };
 } // namespace medicimage

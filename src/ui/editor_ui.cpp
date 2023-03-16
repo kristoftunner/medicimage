@@ -256,8 +256,7 @@ void EditorUI::ShowImageWindow()
 
 void EditorUI::ShowToolbox()
 {
-  bool openTools = true;
-  ImGui::Begin("Tools", &openTools , ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoTitleBar);
+  ImGui::Begin("Tools", nullptr , ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoTitleBar);
   constexpr ImVec2 bigIconSize = ImVec2(100.0f, 100.0f);                         
   constexpr ImVec2 smallIconSize = ImVec2(40.0f, 40.0f);                         
   ImVec4 iconBg = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
@@ -447,8 +446,9 @@ void EditorUI::ShowToolbox()
   }
   // restore the default color
   style.Colors[ImGuiCol_Button] = m_defaultFrameBgColor; 
-  
+
   //listbox for selecting saved uuids
+  ImGui::Separator();
   if (ImGui::BeginListBox("##listbox", ImVec2{ -FLT_MIN, 120 }))
   {
     for(const auto& saverMap : m_imageSavers->GetImageSavers())
@@ -466,9 +466,9 @@ void EditorUI::ShowToolbox()
       }
     }
     ImGui::EndListBox();
-  }
-  ImGui::End();
+  } 
 
+  ImGui::End();
 }
 
 void EditorUI::ShowThumbnails()
