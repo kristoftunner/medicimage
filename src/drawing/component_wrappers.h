@@ -1,7 +1,6 @@
 #pragma once
 
 #include "drawing/drawing_sheet.h"
-
 namespace medicimage
 {
 
@@ -15,6 +14,7 @@ public:
   virtual void OnPickPointDrag(glm::vec2 diff, int selectedPoint) = 0;
   virtual void OnObjectDrag(glm::vec2 diff) = 0;
   virtual void Draw() = 0;
+  bool IsComposed(){return m_entity.GetComponent<CommonAttributesComponent>().composed;}
   Entity GetEntity(){return m_entity;}
 protected:
   Entity m_entity;
@@ -81,5 +81,7 @@ public:
   glm::vec2 GetVerticalSliceHeightBounds();
   glm::vec2 GetHorizontalSliceWidthBounds();
   glm::vec2 GetHorizontalSliceHeightBounds();
+private:
+  static void GenerateSlices(Entity entity, DrawObjectType objectType);
 };
 } // namespace medicimage

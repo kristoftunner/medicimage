@@ -7,7 +7,7 @@ namespace medicimage
 {
   Entity RectangleComponentWrapper::CreateRectangle(glm::vec2 firstPoint, glm::vec2 secondPoint, DrawObjectType objectType)
   {
-    auto entity = DrawingSheet::CreateEntity(0, "rectangle");
+    auto entity = Entity::CreateEntity(0, "rectangle");
     entity.GetComponent<CommonAttributesComponent>().temporary = objectType == DrawObjectType::TEMPORARY ? true : false;
     
     auto& transform = entity.GetComponent<TransformComponent>();
@@ -101,7 +101,7 @@ namespace medicimage
 
   Entity medicimage::CircleComponentWrapper::CreateCircle(glm::vec2 firstPoint, glm::vec2 secondPoint, DrawObjectType objectType)
   {
-    auto entity = DrawingSheet::CreateEntity(0, "Circle");
+    auto entity = Entity::CreateEntity(0, "Circle");
     entity.GetComponent<CommonAttributesComponent>().temporary = objectType == DrawObjectType::TEMPORARY ? true : false;
     
     auto& transform = entity.GetComponent<TransformComponent>();
@@ -184,7 +184,7 @@ namespace medicimage
 
   Entity ArrowComponentWrapper::CreateArrow(glm::vec2 firstPoint, glm::vec2 secondPoint, DrawObjectType objectType)
   {
-    auto entity = DrawingSheet::CreateEntity(0, "Arrow");
+    auto entity = Entity::CreateEntity(0, "Arrow");
     entity.GetComponent<CommonAttributesComponent>().temporary = objectType == DrawObjectType::TEMPORARY ? true : false;
     
     auto& transform = entity.GetComponent<TransformComponent>();
@@ -261,16 +261,16 @@ namespace medicimage
 
   Entity SkinTemplateComponentWrapper::CreateSkinTemplate(glm::vec2 firstPoint, glm::vec2 secondPoint, DrawObjectType objectType)
   {
-    auto entity = DrawingSheet::CreateEntity(0, "Skin template");
+    auto entity = Entity::CreateEntity(0, "Skin template");
+
     entity.GetComponent<CommonAttributesComponent>().temporary = objectType == DrawObjectType::TEMPORARY ? true : false;
     
     auto& transform = entity.GetComponent<TransformComponent>();
+    transform.translation = firstPoint;
     auto& skinTemplate = entity.AddComponent<SkinTemplateComponent>();
 
     static constexpr float minBoundingWidth = 0.1;
     static constexpr float minBoundingHeight = 0.1;
-    static constexpr int verticalSliceCount = 3;
-    static constexpr int horizontalSliceCount = 1;
     auto diff = secondPoint - firstPoint;
     if(abs(diff.x) >= minBoundingWidth && abs(diff.y) >= minBoundingHeight)
     {
@@ -278,22 +278,46 @@ namespace medicimage
       skinTemplate.verticalSliceSize = glm::vec2{ diff.x / 10.0, diff.y };
       skinTemplate.horizontalSliceSize = glm::vec2{ diff.x * (7.0 / 20.0), diff.y / 5.0 };
       skinTemplate.boundingRectSize = glm::abs(diff);
-      auto center = firstPoint + diff / glm::vec2(2.0);
-      for (auto i = 0; i < verticalSliceCount; i++)
-      {
-        glm::vec2 vertTopLeft = glm::vec2{ - skinTemplate.verticalSliceSize.x * 1.5, -skinTemplate.verticalSliceSize.y / 2.0 } + center + glm::vec2{ i * skinTemplate.verticalSliceSize.x, 0.0 };
-        glm::vec2 vertBottomRight = glm::vec2{ -skinTemplate.verticalSliceSize.x * 0.5, skinTemplate.verticalSliceSize.y / 2.0 } + center + glm::vec2{ i * skinTemplate.verticalSliceSize.x, 0.0 };
-        auto rect = RectangleComponentWrapper::CreateRectangle(vertTopLeft, vertBottomRight, objectType);
-      }
-      for (auto i = 0; i < horizontalSliceCount; i++)
-      {
-        glm::vec2 horTopLeft = glm::vec2{ -skinTemplate.horizontalSliceSize.x * 1.5, -skinTemplate.horizontalSliceSize.y / 2.0 } + center + glm::vec2{ i * skinTemplate.horizontalSliceSize.x, 0.0 };
-        glm::vec2 horBottomRight = glm::vec2{ -skinTemplate.horizontalSliceSize.x * 0.5, skinTemplate.horizontalSliceSize.y / 2.0 } + center + glm::vec2{ i * skinTemplate.horizontalSliceSize.x, 0.0 };
-        RectangleComponentWrapper::CreateRectangle(horTopLeft, horBottomRight, objectType);
-      }
+      skinTemplate.horizontalSliceCount = 1;
+      skinTemplate.verticalSliceCount = 3;
+      GenerateSlices(entity, objectType);
     }
 
     return entity;
+  }
+
+  void SkinTemplateComponentWrapper::GenerateSlices(Entity entity, DrawObjectType objectType)
+  {
+    auto& transform = entity.GetComponent<TransformComponent>();
+    auto& skinTemplate = entity.GetComponent<SkinTemplateComponent>();
+    auto center = transform.translation + skinTemplate.boundingRectSize / glm::vec2(2.0);
+    for(auto e : skinTemplate.horizontalSlices)
+    {
+      Entity::DestroyEntity(Entity(e));
+    }
+    skinTemplate.horizontalSlices.clear();
+    for(auto e : skinTemplate.verticalSlices)
+    {
+      Entity::DestroyEntity(Entity(e));
+    }
+    skinTemplate.verticalSlices.clear();
+
+    for (auto i = 0; i < skinTemplate.verticalSliceCount; i++)
+    {
+      glm::vec2 vertTopLeft = glm::vec2{ - skinTemplate.verticalSliceSize.x * 1.5, -skinTemplate.verticalSliceSize.y / 2.0 } + center + glm::vec2{ i * skinTemplate.verticalSliceSize.x, 0.0 };
+      glm::vec2 vertBottomRight = glm::vec2{ -skinTemplate.verticalSliceSize.x * 0.5, skinTemplate.verticalSliceSize.y / 2.0 } + center + glm::vec2{ i * skinTemplate.verticalSliceSize.x, 0.0 };
+      auto rect = RectangleComponentWrapper::CreateRectangle(vertTopLeft, vertBottomRight, objectType);
+      rect.GetComponent<CommonAttributesComponent>().composed = true;
+      skinTemplate.verticalSlices.push_back(rect.GetHandle());
+    }
+    for (auto i = 0; i < skinTemplate.horizontalSliceCount; i++)
+    {
+      glm::vec2 horTopLeft = glm::vec2{ -skinTemplate.horizontalSliceSize.x * 1.5, -skinTemplate.horizontalSliceSize.y / 2.0 } + center + glm::vec2{ i * skinTemplate.horizontalSliceSize.x, 0.0 };
+      glm::vec2 horBottomRight = glm::vec2{ -skinTemplate.horizontalSliceSize.x * 0.5, skinTemplate.horizontalSliceSize.y / 2.0 } + center + glm::vec2{ i * skinTemplate.horizontalSliceSize.x, 0.0 };
+      auto rect = RectangleComponentWrapper::CreateRectangle(horTopLeft, horBottomRight, objectType);
+      rect.GetComponent<CommonAttributesComponent>().composed = true;
+      skinTemplate.horizontalSlices.push_back(rect.GetHandle());
+    }
   }
 
   void SkinTemplateComponentWrapper::UpdateShapeAttributes()
@@ -315,14 +339,102 @@ namespace medicimage
 
   void SkinTemplateComponentWrapper::OnPickPointDrag(glm::vec2 diff, int selectedPoint)
   {
+    switch(selectedPoint)  // [TODO REFACTOR]: extract these out into functions
+    {
+      case static_cast<int>(SkinTemplatePickPoints::RIGHT):
+      {
+        auto& skinTemplate = m_entity.GetComponent<SkinTemplateComponent>();
+        float xScale = diff.x / skinTemplate.boundingRectSize.x;
+        skinTemplate.boundingRectSize.x += diff.x;
+        skinTemplate.horizontalSliceSize.x *= (1 + xScale);
+        skinTemplate.verticalSliceSize.x *= (1 + xScale);
+        GenerateSlices(m_entity, DrawObjectType::PERMANENT);
+        break;
+      }
+      case static_cast<int>(SkinTemplatePickPoints::BOTTOM):
+      {
+        auto& skinTemplate = m_entity.GetComponent<SkinTemplateComponent>();
+        float yScale = diff.y / skinTemplate.boundingRectSize.y;
+        skinTemplate.boundingRectSize.y += diff.y;
+        skinTemplate.horizontalSliceSize.y *= (1 + yScale);
+        skinTemplate.verticalSliceSize.y *= (1 + yScale);
+        GenerateSlices(m_entity, DrawObjectType::PERMANENT);
+        break;
+      }
+      case static_cast<int>(SkinTemplatePickPoints::LEFT):
+      {
+        auto& skinTemplate = m_entity.GetComponent<SkinTemplateComponent>();
+        float xScale = (-diff.x) / skinTemplate.boundingRectSize.x;
+        skinTemplate.boundingRectSize.x += -diff.x;
+        skinTemplate.horizontalSliceSize.x *= (1 + xScale);
+        skinTemplate.verticalSliceSize.x *= (1 + xScale);
+        m_entity.GetComponent<TransformComponent>().translation += glm::vec2{diff.x, 0};
+        GenerateSlices(m_entity, DrawObjectType::PERMANENT);
+        break;
+      }
+      case static_cast<int>(SkinTemplatePickPoints::TOP):
+      {
+        auto& skinTemplate = m_entity.GetComponent<SkinTemplateComponent>();
+        float yScale = (-diff.y) / skinTemplate.boundingRectSize.y;
+        skinTemplate.boundingRectSize.y += -diff.y;
+        skinTemplate.horizontalSliceSize.y *= (1 + yScale);
+        skinTemplate.verticalSliceSize.y *= (1 + yScale);
+        m_entity.GetComponent<TransformComponent>().translation += glm::vec2{0, diff.y};
+        GenerateSlices(m_entity, DrawObjectType::PERMANENT);
+        break;
+      }
+      default:
+        APP_CORE_ERR("Wrong pickpoint index({}) at component:{}", selectedPoint, m_entity.GetComponent<IDComponent>().ID);
+        break;
+    } 
+    UpdateShapeAttributes(); 
   }
 
   void SkinTemplateComponentWrapper::OnObjectDrag(glm::vec2 diff)
   {
+    // TODO: some checks wether we drag the component outside or not etc..
+    auto& transform = m_entity.GetComponent<TransformComponent>();
+    transform.translation += diff;
+    auto& skinTemplate = m_entity.GetComponent<SkinTemplateComponent>();
+    for(auto e : skinTemplate.horizontalSlices)
+    {
+      Entity rect(e);
+      rect.GetComponent<TransformComponent>().translation += diff;
+    }
+    for(auto e : skinTemplate.verticalSlices)
+    {
+      Entity rect(e);
+      rect.GetComponent<TransformComponent>().translation += diff;
+    }
   }
 
   void SkinTemplateComponentWrapper::Draw()
   {
+    auto& skinTemplate = m_entity.GetComponent<SkinTemplateComponent>();
+    for(auto e : skinTemplate.verticalSlices)
+    {
+      Entity rect(e);
+      RectangleComponentWrapper rw(rect);
+      rw.Draw();
+    }
+    for(auto e : skinTemplate.horizontalSlices)
+    {
+      Entity rect(e);
+      RectangleComponentWrapper rw(rect);
+      rw.Draw();
+    }
+
+    auto commonAttributes = m_entity.GetComponent<CommonAttributesComponent>();
+    if(commonAttributes.selected)
+    {
+      auto& pickPoints = m_entity.GetComponent<PickPointsComponent>().pickPoints;
+      auto& translation = m_entity.GetComponent<TransformComponent>().translation;
+      for(auto& point : pickPoints)
+      {
+        
+        ImageEditor::DrawCircle(point + translation, s_pickPointBoxSize / 2, s_pickPointColor, 2, true);
+      }
+    } 
   }
 
   glm::vec2 SkinTemplateComponentWrapper::GetVerticalSliceWidthBounds()

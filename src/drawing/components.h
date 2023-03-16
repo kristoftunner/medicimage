@@ -5,6 +5,7 @@
 #include <vector>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/glm.hpp>
+#include <entt/entt.hpp>
 
 namespace medicimage
 {
@@ -61,6 +62,7 @@ namespace medicimage
 
   enum class RectanglePicPoints {RIGHT=0, BOTTOM=1, LEFT=2, TOP=3};
   enum class CirclePickPoints {RIGHT=0, BOTTOM=1, LEFT=2, TOP=3};
+  enum class SkinTemplatePickPoints {RIGHT=0, BOTTOM=1, LEFT=2, TOP=3};
   enum class ArrowPickPoints {BEGIN=0, END=1};
 
   struct ColorComponent
@@ -76,6 +78,7 @@ namespace medicimage
     bool selected = false;
     bool temporary = true;
     bool filled = false;
+    bool composed = false;
     CommonAttributesComponent() = default;
     CommonAttributesComponent(bool selected, bool temporary) : selected(selected), temporary(temporary){} 
   };
@@ -118,7 +121,11 @@ namespace medicimage
   {
     glm::vec2 boundingRectSize{0.0, 0.0};
     glm::vec2 verticalSliceSize{0.0, 0.0};
+    int horizontalSliceCount = 0;
+    int verticalSliceCount = 0;
     glm::vec2 horizontalSliceSize{0.0, 0.0};
+    std::vector<entt::entity> horizontalSlices; // TODO: here we should store the UUID of the rectangle
+    std::vector<entt::entity> verticalSlices;
     SkinTemplateComponent() = default;
   };
 } // namespace medicimage

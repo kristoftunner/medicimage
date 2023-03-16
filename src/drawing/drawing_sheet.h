@@ -2,12 +2,11 @@
 
 #include "image_handling/image_saver.h"
 #include "drawing/components.h"
+#include "drawing/entity.h"
 #include "core/assert.h"
-
 #include <glm/glm.hpp>
 #include <string>
 #include <optional>
-#include <entt/entt.hpp>
 
 namespace medicimage
 {
@@ -34,70 +33,6 @@ enum class DrawObjectType{TEMPORARY, PERMANENT};
 class DrawingSheet
 {
 public:
-  class Entity
-  {
-  public:
-  	Entity() = default;
-  	Entity(entt::entity handle);
-  	Entity(const Entity& other) = default;
-
-  	template<typename T, typename... Args>
-  	T& AddComponent(Args&&... args)
-  	{
-  		MI_CORE_ASSERT(!HasComponent<T>(), "Entity already has component!");  
-  		T& component = DrawingSheet::s_registry.emplace<T>(m_entityHandle, std::forward<Args>(args)...);
-  		//m_sheet->OnComponentAdded<T>(*this, component);
-  		return component;
-  	}
-
-  	template<typename T, typename... Args>
-  	T& AddOrReplaceComponent(Args&&... args)
-  	{
-  		T& component = DrawingSheet::s_registry.emplace_or_replace<T>(m_entityHandle, std::forward<Args>(args)...);
-  		//m_sheet->OnComponentAdded<T>(*this, component);
-  		return component;
-  	}
-
-  	template<typename T>
-  	T& GetComponent()
-  	{
-  		MI_CORE_ASSERT(HasComponent<T>(), "Entity does not have component!");
-  		return DrawingSheet::s_registry.get<T>(m_entityHandle);
-  	}
-
-  	template<typename T>
-  	bool HasComponent()
-  	{
-      return DrawingSheet::s_registry.any_of<T>(m_entityHandle);
-  	}
-
-  	template<typename T>
-  	void RemoveComponent()
-  	{
-  		MI_CORE_ASSERT(HasComponent<T>(), "Entity does not have component!");
-  		DrawingSheet::s_registry.remove<T>(m_entityHandle);
-  	}
-
-  	operator bool() const { return m_entityHandle != entt::null; }
-  	operator entt::entity() const { return m_entityHandle; }
-  	operator uint32_t() const { return (uint32_t)m_entityHandle; }
-
-  	int GetUUID() { return GetComponent<IDComponent>().ID; }
-  	const std::string& GetName() { return GetComponent<TagComponent>().tag; }
-
-  	bool operator==(const Entity& other) const
-  	{
-  		return m_entityHandle == other.m_entityHandle;
-  	}
-
-  	bool operator!=(const Entity& other) const
-  	{
-  		return !(*this == other);
-  	}
-  private:
-  	entt::entity m_entityHandle{ entt::null };
-  	//DrawingSheet* m_sheet = nullptr;
-  };
 
 public:
   DrawingSheet() : m_drawState(std::make_unique<BaseDrawState>(this)) {}
@@ -123,12 +58,9 @@ public:
   bool IsUnderSelectArea(Entity entity, glm::vec2 pos);
   bool IsPickpointSelected(Entity entity, glm::vec2 pos);
   bool IsDragAreaSelected(Entity entity, glm::vec2 pos);
-  static Entity CreateEntity(int id, const std::string& name);
-  static void DestroyEntity(Entity entity);
 
   void ClearSelectionShapes();
 private:
-  static entt::registry s_registry;
   std::unique_ptr<ImageDocument> m_originalDoc;
   std::unique_ptr<Texture2D> m_drawing;
 
@@ -159,8 +91,6 @@ private:
   friend class ObjectDraggingState; 
 };
 
-using Entity = DrawingSheet::Entity;
-
 // Draw states
 class BaseDrawState
 {
@@ -178,7 +108,7 @@ public:
     return [&](entt::entity e) {
       Entity entity(e);
       if (entity.GetComponent<CommonAttributesComponent>().temporary)
-        DrawingSheet::DestroyEntity(entity);
+        Entity::DestroyEntity(entity);
     };
   }
 protected:
