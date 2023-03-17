@@ -62,7 +62,8 @@ namespace medicimage
 
   enum class RectanglePicPoints {RIGHT=0, BOTTOM=1, LEFT=2, TOP=3};
   enum class CirclePickPoints {RIGHT=0, BOTTOM=1, LEFT=2, TOP=3};
-  enum class SkinTemplatePickPoints {RIGHT=0, BOTTOM=1, LEFT=2, TOP=3};
+  enum class SkinTemplatePickPoints {RIGHT=0, BOTTOM=1, LEFT=2, TOP=3, 
+    LEFT_SLICES_TOP, LEFT_SLICES_BOTTOM, MIDDLE_SLICES_LEFT, MIDDLE_SLICES_RIGHT, RIGHT_SLICES_TOP, RIGHT_SLICES_BOTTOM};
   enum class ArrowPickPoints {BEGIN=0, END=1};
 
   struct ColorComponent
@@ -120,13 +121,16 @@ namespace medicimage
   struct SkinTemplateComponent
   {
     glm::vec2 boundingRectSize{0.0, 0.0};
-    int horizontalSliceCount = 0;
-    int verticalSliceCount = 0;
-    float verticalSliceWidthSpan = 0.0;
-    float horizontalSliceHeightSpan = 0.0;
-    //glm::vec2 verticalSliceSize{0.0, 0.0};
-    //glm::vec2 horizontalSliceSize{0.0, 0.0};
-    std::vector<entt::entity> horizontalSlices; // TODO: here we should store the UUID of the rectangle
+    int leftHorSliceCount = 0;
+    int rightHorSliceCount = 0;
+    int vertSliceCount = 0;
+    float vertSliceWidthSpan = 0.0;
+    float leftHorSliceWidthSpan = 0.0;
+    float leftHorSliceHeightSpan = 0.0;
+    float rightHorSliceWidthSpan = 0.0;
+    float rightHorSliceHeightSpan = 0.0;
+    std::vector<entt::entity> leftHorizontalSlices; // TODO: here we should store the UUID of the rectangle
+    std::vector<entt::entity> rightHorizontalSlices; // TODO: here we should store the UUID of the rectangle
     std::vector<entt::entity> verticalSlices;
     SkinTemplateComponent() = default;
   };

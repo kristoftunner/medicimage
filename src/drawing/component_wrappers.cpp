@@ -277,19 +277,21 @@ namespace medicimage
     {
       auto boundingRectSize = glm::abs(diff);
       skinTemplate.boundingRectSize = glm::abs(diff);
-      skinTemplate.horizontalSliceCount = s_defaultHorizontalCount;
-      skinTemplate.verticalSliceCount = s_defaultVerticalCount;
-      skinTemplate.verticalSliceWidthSpan = s_defaultVerticalSpan;
-      skinTemplate.horizontalSliceHeightSpan = s_defaultHorizontalSpan;
+      skinTemplate.leftHorSliceCount = s_defaultHorizontalCount;
+      skinTemplate.rightHorSliceCount = s_defaultHorizontalCount;
+      skinTemplate.vertSliceCount = s_defaultVerticalCount;
 
+      skinTemplate.vertSliceWidthSpan = s_defaultVerticalWidthSpan;
+      skinTemplate.leftHorSliceWidthSpan = (1 - s_defaultVerticalWidthSpan) / 2.0; 
+      skinTemplate.rightHorSliceWidthSpan = (1 - s_defaultVerticalWidthSpan) / 2.0; 
+      skinTemplate.leftHorSliceHeightSpan = s_defaultHorizontalHeightSpan;
+      skinTemplate.rightHorSliceHeightSpan = s_defaultHorizontalHeightSpan;
       // check the vertical slice width and horizontal height
-      auto verticalSliceWidth = skinTemplate.verticalSliceWidthSpan  * skinTemplate.boundingRectSize.x / s_defaultVerticalCount;
-      auto horizontalSliceHeight =  skinTemplate.horizontalSliceHeightSpan * skinTemplate.boundingRectSize.y / s_defaultHorizontalCount; 
-      auto horizontalSliceWidth = (1 - skinTemplate.verticalSliceWidthSpan) / 2 * skinTemplate.boundingRectSize.x;
+      auto verticalSliceWidth = skinTemplate.vertSliceWidthSpan  * skinTemplate.boundingRectSize.x / s_defaultVerticalCount;
+      auto horizontalSliceHeight =  skinTemplate.leftHorSliceHeightSpan * skinTemplate.boundingRectSize.y / s_defaultHorizontalCount; 
+      auto horizontalSliceWidth = (1 - skinTemplate.vertSliceWidthSpan) / 2 * skinTemplate.boundingRectSize.x;
       assert(verticalSliceWidth > s_minimumSliceSize);
       assert(horizontalSliceHeight > s_minimumSliceSize);
-      //skinTemplate.verticalSliceSize = glm::vec2{verticalSliceWidth, skinTemplate.boundingRectSize.y};
-      //skinTemplate.horizontalSliceSize = glm::vec2{horizontalSliceWidth, horizontalSliceHeight};
       GenerateSlices(entity);
     }
     return entity;
@@ -299,15 +301,19 @@ namespace medicimage
   {
     auto& transform = entity.GetComponent<TransformComponent>();
     auto& skinTemplate = entity.GetComponent<SkinTemplateComponent>();
-    auto center = transform.translation + skinTemplate.boundingRectSize / glm::vec2(2.0);
-    auto leftMidPoint = transform.translation + glm::vec2{0.0, skinTemplate.boundingRectSize.y / 2.0};
 
+    //assert(skinTemplate.leftHorSliceWidthSpan + skinTemplate.rightHorSliceWidthSpan + skinTemplate.vertSliceWidthSpan == 1.0);
     // clear the current rectangles, because we will generate the new ones according to the number of slices and the vertical/horizontal sizes
-    for(auto e : skinTemplate.horizontalSlices)
+    for(auto e : skinTemplate.leftHorizontalSlices)
     {
       Entity::DestroyEntity(Entity(e));
     }
-    skinTemplate.horizontalSlices.clear();
+    skinTemplate.leftHorizontalSlices.clear();
+    for(auto e : skinTemplate.rightHorizontalSlices)
+    {
+      Entity::DestroyEntity(Entity(e));
+    }
+    skinTemplate.rightHorizontalSlices.clear();
     for(auto e : skinTemplate.verticalSlices)
     {
       Entity::DestroyEntity(Entity(e));
@@ -317,57 +323,108 @@ namespace medicimage
     // check the sizes
     auto& color = entity.GetComponent<ColorComponent>();
     auto objectType = entity.GetComponent<CommonAttributesComponent>().temporary ? DrawObjectType::TEMPORARY : DrawObjectType::PERMANENT;
-    for (auto i = 0; i < skinTemplate.verticalSliceCount; i++)
+    auto verticalStartPoint = transform.translation + glm::vec2{skinTemplate.boundingRectSize.x * skinTemplate.leftHorSliceWidthSpan, 0.0};
+    auto leftHorStartPoint = transform.translation + glm::vec2{0.0, (1 - skinTemplate.leftHorSliceHeightSpan) / 2 * skinTemplate.boundingRectSize.y};
+    auto rightHorStartPoint = transform.translation + 
+      glm::vec2{skinTemplate.boundingRectSize.x * (skinTemplate.leftHorSliceWidthSpan + skinTemplate.vertSliceWidthSpan), (1 - skinTemplate.rightHorSliceHeightSpan) / 2 * skinTemplate.boundingRectSize.y};
+    for (auto i = 0; i < skinTemplate.vertSliceCount; i++)
     {
-      glm::vec2 sliceSize{skinTemplate.verticalSliceWidthSpan / skinTemplate.verticalSliceCount * skinTemplate.boundingRectSize.x, skinTemplate.boundingRectSize.y};
+      glm::vec2 sliceSize{skinTemplate.vertSliceWidthSpan / skinTemplate.vertSliceCount * skinTemplate.boundingRectSize.x, skinTemplate.boundingRectSize.y};
       
-      auto leftShift = glm::vec2{ -(skinTemplate.verticalSliceCount * 0.5) * sliceSize.x, 0.0 };
-      glm::vec2 vertTopLeft =  center + glm::vec2{ i * sliceSize.x, -sliceSize.y / 2.0} + leftShift;
-      glm::vec2 vertBottomRight = center + glm::vec2{ (i + 1) * sliceSize.x, sliceSize.y / 2.0 } + leftShift;
+      glm::vec2 vertTopLeft =  verticalStartPoint + glm::vec2{ i * sliceSize.x, 0.0};
+      glm::vec2 vertBottomRight = verticalStartPoint + glm::vec2{ (i + 1) * sliceSize.x, sliceSize.y};
       auto rect = RectangleComponentWrapper::CreateRectangle(vertTopLeft, vertBottomRight, objectType);
       rect.GetComponent<ColorComponent>() = color; 
       rect.GetComponent<CommonAttributesComponent>().composed = true;
       skinTemplate.verticalSlices.push_back(rect.GetHandle());
     }
-    for (auto i = 0; i < skinTemplate.horizontalSliceCount; i++)
+    for (auto i = 0; i < skinTemplate.leftHorSliceCount; i++)
     {
-      glm::vec2 sliceSize{(1 - skinTemplate.verticalSliceWidthSpan) / 2 * skinTemplate.boundingRectSize.x, 
-        skinTemplate.horizontalSliceHeightSpan / skinTemplate.horizontalSliceCount * skinTemplate.boundingRectSize.y};
+      float sliceWidth = skinTemplate.leftHorSliceWidthSpan * skinTemplate.boundingRectSize.x;
+      float sliceHeight = skinTemplate.leftHorSliceHeightSpan / skinTemplate.leftHorSliceCount * skinTemplate.boundingRectSize.y;
       
-      auto upShift = glm::vec2{0.0, -(skinTemplate.horizontalSliceCount * 0.5) * sliceSize.y};
-      glm::vec2 horTopLeft = leftMidPoint + glm::vec2{0.0, i * sliceSize.y} + upShift;
-      glm::vec2 horBottomRight = leftMidPoint + glm::vec2{sliceSize.x, (i + 1) * sliceSize.y} + upShift;
+      glm::vec2 horTopLeft = leftHorStartPoint + glm::vec2{0.0, i * sliceHeight};
+      glm::vec2 horBottomRight = leftHorStartPoint + glm::vec2{sliceWidth, (i + 1) * sliceHeight};
       auto rect = RectangleComponentWrapper::CreateRectangle(horTopLeft, horBottomRight, objectType);
       rect.GetComponent<ColorComponent>() = color; 
       rect.GetComponent<CommonAttributesComponent>().composed = true;
-      skinTemplate.horizontalSlices.push_back(rect.GetHandle());
+      skinTemplate.leftHorizontalSlices.push_back(rect.GetHandle());
+    }
+
+    for (auto i = 0; i < skinTemplate.rightHorSliceCount; i++)
+    {
+      float sliceWidth = skinTemplate.rightHorSliceWidthSpan * skinTemplate.boundingRectSize.x;
+      float sliceHeight = skinTemplate.rightHorSliceHeightSpan / skinTemplate.rightHorSliceCount * skinTemplate.boundingRectSize.y;
+      
+      glm::vec2 horTopLeft = rightHorStartPoint + glm::vec2{0.0, i * sliceHeight};
+      glm::vec2 horBottomRight = rightHorStartPoint + glm::vec2{sliceWidth, (i + 1) * sliceHeight};
+      auto rect = RectangleComponentWrapper::CreateRectangle(horTopLeft, horBottomRight, objectType);
+      rect.GetComponent<ColorComponent>() = color; 
+      rect.GetComponent<CommonAttributesComponent>().composed = true;
+      skinTemplate.rightHorizontalSlices.push_back(rect.GetHandle());
     }
   }
-  
-  glm::vec2 SkinTemplateComponentWrapper::GetVerticalSliceWidthSpanBounds()
+
+  void SkinTemplateComponentWrapper::SetLeftHorizontalWidthSpan(float span)
   {
-    return glm::vec2{s_minVerticalSpan, s_maxVerticalSpan};
+    auto& skinTemplate = m_entity.GetComponent<SkinTemplateComponent>();
+    auto diff = span - skinTemplate.leftHorSliceWidthSpan;
+    assert(diff + skinTemplate.leftHorSliceWidthSpan < s_maxHorizontalWidthSpan);
+    assert(diff + skinTemplate.leftHorSliceWidthSpan > s_minHorizontalWidthSpan);
+    assert(diff - skinTemplate.vertSliceWidthSpan < s_maxVerticalWidthSpan);
+    assert(diff - skinTemplate.vertSliceWidthSpan > s_minVerticalWidthSpan);
+    skinTemplate.leftHorSliceWidthSpan += diff;
+    skinTemplate.vertSliceWidthSpan -= diff;
   }
 
-  glm::vec2 SkinTemplateComponentWrapper::GetHorizontalSliceHeightSpanBounds()
+  void SkinTemplateComponentWrapper::SetRightHorizontalWidthSpan(float span)
   {
-    return glm::vec2{s_minHorizontalSpan, s_maxHorizontalSpan};
+    auto& skinTemplate = m_entity.GetComponent<SkinTemplateComponent>();
+    auto diff = span - skinTemplate.rightHorSliceWidthSpan;
+    assert(diff + skinTemplate.rightHorSliceWidthSpan < s_maxHorizontalWidthSpan);
+    assert(diff + skinTemplate.rightHorSliceWidthSpan > s_minHorizontalWidthSpan);
+    assert(diff - skinTemplate.vertSliceWidthSpan < s_maxVerticalWidthSpan);
+    assert(diff - skinTemplate.vertSliceWidthSpan > s_minVerticalWidthSpan);
+    skinTemplate.rightHorSliceWidthSpan += diff;
+    skinTemplate.vertSliceWidthSpan -= diff;
+  }
+
+  void SkinTemplateComponentWrapper::SetVertcialWidthSpan(float span)
+  {
+    auto& skinTemplate = m_entity.GetComponent<SkinTemplateComponent>();
+    auto diff = span - skinTemplate.vertSliceWidthSpan;
+    assert(diff / 2.0 - skinTemplate.rightHorSliceWidthSpan < s_maxHorizontalWidthSpan);
+    assert(diff / 2.0 - skinTemplate.rightHorSliceWidthSpan > s_minHorizontalWidthSpan);
+    assert(diff / 2.0 - skinTemplate.leftHorSliceWidthSpan < s_maxHorizontalWidthSpan);
+    assert(diff / 2.0 - skinTemplate.leftHorSliceWidthSpan > s_minHorizontalWidthSpan);
+    assert(diff + skinTemplate.vertSliceWidthSpan < s_maxVerticalWidthSpan);
+    assert(diff + skinTemplate.vertSliceWidthSpan > s_minVerticalWidthSpan);
+    skinTemplate.rightHorSliceWidthSpan -= diff / 2.0;
+    skinTemplate.leftHorSliceWidthSpan -= diff / 2.0;
+    skinTemplate.vertSliceWidthSpan += diff;
   }
 
   glm::ivec2 SkinTemplateComponentWrapper::GetVerticalSliceCountBounds()
   {
     auto& skinTemplate = m_entity.GetComponent<SkinTemplateComponent>();
-    auto maxBound = (skinTemplate.verticalSliceWidthSpan * skinTemplate.boundingRectSize.x) / s_minimumSliceSize;
+    auto maxBound = (skinTemplate.vertSliceWidthSpan * skinTemplate.boundingRectSize.x) / s_minimumSliceSize;
     return glm::ivec2{1, static_cast<int>(maxBound)};
   }
 
-  glm::ivec2 SkinTemplateComponentWrapper::GetHorizontalSliceCountBounds()
+  glm::ivec2 SkinTemplateComponentWrapper::GetLeftHorizontalSliceCountBounds()
   {
     auto& skinTemplate = m_entity.GetComponent<SkinTemplateComponent>();
-    auto maxBound = (skinTemplate.horizontalSliceHeightSpan * skinTemplate.boundingRectSize.y) / s_minimumSliceSize; 
+    auto maxBound = (skinTemplate.leftHorSliceHeightSpan * skinTemplate.boundingRectSize.y) / s_minimumSliceSize; 
     return glm::ivec2{1, static_cast<int>(maxBound)};
   }
 
+  glm::ivec2 SkinTemplateComponentWrapper::GetRightHorizontalSliceCountBounds()
+  {
+    auto& skinTemplate = m_entity.GetComponent<SkinTemplateComponent>();
+    auto maxBound = (skinTemplate.rightHorSliceHeightSpan * skinTemplate.boundingRectSize.y) / s_minimumSliceSize; 
+    return glm::ivec2{1, static_cast<int>(maxBound)};
+  }
+  
   void SkinTemplateComponentWrapper::UpdateShapeAttributes()
   {
     auto& skinTemplate = m_entity.GetComponent<SkinTemplateComponent>();
@@ -381,8 +438,24 @@ namespace medicimage
     
     auto boundingRectSize = skinTemplate.boundingRectSize;
     boundingBox.cornerPoints = {{0,0}, {boundingRectSize.x, 0}, {boundingRectSize.x, boundingRectSize.y}, {0, boundingRectSize.y}, {0,0}};
-    pickPoints.pickPoints = {glm::vec2{boundingRectSize.x, boundingRectSize.y} + glm::vec2{0, -boundingRectSize.y / 2},
-      glm::vec2{boundingRectSize.x, boundingRectSize.y} + glm::vec2{-boundingRectSize.x / 2, 0}, {0, boundingRectSize.y / 2}, glm::vec2{boundingRectSize.x / 2, 0}};
+    auto  leftHorizontalTop = glm::vec2{skinTemplate.leftHorSliceWidthSpan * skinTemplate.boundingRectSize.x / 2, 
+      (1 - skinTemplate.leftHorSliceHeightSpan) / 2 * skinTemplate.boundingRectSize.y};
+    auto verticalLeft = glm::vec2{ skinTemplate.leftHorSliceWidthSpan * skinTemplate.boundingRectSize.x, skinTemplate.boundingRectSize.y / 2.0 };
+    auto rightHorizontalTop = 
+      glm::vec2{(skinTemplate.leftHorSliceWidthSpan + skinTemplate.vertSliceWidthSpan + skinTemplate.rightHorSliceWidthSpan / 2.0) * skinTemplate.boundingRectSize.x, 
+      (1 - skinTemplate.rightHorSliceHeightSpan) / 2 * skinTemplate.boundingRectSize.y};  
+    pickPoints.pickPoints = {
+      glm::vec2{boundingRectSize.x, boundingRectSize.y} + glm::vec2{0, -boundingRectSize.y / 2},  // RIGHT
+      glm::vec2{boundingRectSize.x, boundingRectSize.y} + glm::vec2{-boundingRectSize.x / 2, 0},  // BOTTOM 
+      {0, boundingRectSize.y / 2},                                                                // LEFT
+      glm::vec2{boundingRectSize.x / 2, 0},                                                       // TOP
+      leftHorizontalTop,                                                                          // LEFT_SLICES_TOP
+      leftHorizontalTop + glm::vec2{0.0, skinTemplate.leftHorSliceHeightSpan * skinTemplate.boundingRectSize.y},  // LEFT_SLICES_BOTTOM
+      verticalLeft,                                                                              //  MIDDLE_SLICES_LEFT
+      verticalLeft + glm::vec2{skinTemplate.vertSliceWidthSpan * skinTemplate.boundingRectSize.x, 0.0},           // MIDDLE_SLICES_RIGHT 
+      rightHorizontalTop,                                                                                         // RIGHT_SLICES_TOP 
+      rightHorizontalTop + glm::vec2{0.0, skinTemplate.rightHorSliceHeightSpan * skinTemplate.boundingRectSize.y} // RIGHT_SLICES_BOTTOM  
+      };
 
     GenerateSlices(m_entity);
   }
@@ -396,8 +469,6 @@ namespace medicimage
         auto& skinTemplate = m_entity.GetComponent<SkinTemplateComponent>();
         float xScale = diff.x / skinTemplate.boundingRectSize.x;
         skinTemplate.boundingRectSize.x += diff.x;
-        //skinTemplate.horizontalSliceSize.x *= (1 + xScale);
-        //skinTemplate.verticalSliceSize.x *= (1 + xScale);
         GenerateSlices(m_entity);
         break;
       }
@@ -406,8 +477,6 @@ namespace medicimage
         auto& skinTemplate = m_entity.GetComponent<SkinTemplateComponent>();
         float yScale = diff.y / skinTemplate.boundingRectSize.y;
         skinTemplate.boundingRectSize.y += diff.y;
-        //skinTemplate.horizontalSliceSize.y *= (1 + yScale);
-        //skinTemplate.verticalSliceSize.y *= (1 + yScale);
         GenerateSlices(m_entity);
         break;
       }
@@ -416,8 +485,6 @@ namespace medicimage
         auto& skinTemplate = m_entity.GetComponent<SkinTemplateComponent>();
         float xScale = (-diff.x) / skinTemplate.boundingRectSize.x;
         skinTemplate.boundingRectSize.x += -diff.x;
-        //skinTemplate.horizontalSliceSize.x *= (1 + xScale);
-        //skinTemplate.verticalSliceSize.x *= (1 + xScale);
         m_entity.GetComponent<TransformComponent>().translation += glm::vec2{diff.x, 0};
         GenerateSlices(m_entity);
         break;
@@ -427,10 +494,88 @@ namespace medicimage
         auto& skinTemplate = m_entity.GetComponent<SkinTemplateComponent>();
         float yScale = (-diff.y) / skinTemplate.boundingRectSize.y;
         skinTemplate.boundingRectSize.y += -diff.y;
-        //skinTemplate.horizontalSliceSize.y *= (1 + yScale);
-        //skinTemplate.verticalSliceSize.y *= (1 + yScale);
         m_entity.GetComponent<TransformComponent>().translation += glm::vec2{0, diff.y};
         GenerateSlices(m_entity);
+        break;
+      }
+      case static_cast<int>(SkinTemplatePickPoints::LEFT_SLICES_TOP):
+      { // TODO REFACTOR: use here lambdas
+        auto& skinTemplate = m_entity.GetComponent<SkinTemplateComponent>();
+        auto relDiff = -diff.y / skinTemplate.boundingRectSize.y;
+        auto newSpan = relDiff + skinTemplate.leftHorSliceHeightSpan;
+        auto newSliceSize = (relDiff + skinTemplate.leftHorSliceHeightSpan) / skinTemplate.leftHorSliceCount * skinTemplate.boundingRectSize.y;
+        if(newSpan < s_maxHorizontalHeightSpan && newSpan > s_minHorizontalHeightSpan && newSliceSize > s_minimumSliceSize)
+        {
+          skinTemplate.leftHorSliceHeightSpan += relDiff;
+        }
+        break;
+      }
+      case static_cast<int>(SkinTemplatePickPoints::LEFT_SLICES_BOTTOM):
+      {
+        auto& skinTemplate = m_entity.GetComponent<SkinTemplateComponent>();
+        auto relDiff = diff.y / skinTemplate.boundingRectSize.y;
+        auto newSpan = relDiff + skinTemplate.leftHorSliceHeightSpan;
+        auto newSliceSize = (relDiff + skinTemplate.leftHorSliceHeightSpan) / skinTemplate.leftHorSliceCount * skinTemplate.boundingRectSize.y;
+        if(newSpan < s_maxHorizontalHeightSpan && newSpan > s_minHorizontalHeightSpan && newSliceSize > s_minimumSliceSize)
+        {
+          skinTemplate.leftHorSliceHeightSpan += relDiff;
+        }
+        break;
+      }
+      case static_cast<int>(SkinTemplatePickPoints::MIDDLE_SLICES_LEFT):
+      {
+        auto& skinTemplate = m_entity.GetComponent<SkinTemplateComponent>();
+        auto relDiff = -diff.x / skinTemplate.boundingRectSize.x;
+        auto newVerticalSpan = relDiff + skinTemplate.vertSliceWidthSpan;
+        auto newLeftHorSpan = skinTemplate.leftHorSliceWidthSpan - relDiff;
+        auto newLeftHorSliceSize = (skinTemplate.leftHorSliceWidthSpan - relDiff) / skinTemplate.leftHorSliceCount * skinTemplate.boundingRectSize.x;
+        auto newVerticalSliceSize = (relDiff + skinTemplate.vertSliceWidthSpan) / skinTemplate.vertSliceCount * skinTemplate.boundingRectSize.x;
+        if(newVerticalSpan < s_maxVerticalWidthSpan && newVerticalSpan > s_minVerticalWidthSpan && newVerticalSliceSize > s_minimumSliceSize &&
+          newLeftHorSpan < s_maxHorizontalWidthSpan && newLeftHorSpan > s_minHorizontalWidthSpan && newLeftHorSliceSize > s_minimumSliceSize)
+        {
+          skinTemplate.vertSliceWidthSpan += relDiff;
+          skinTemplate.leftHorSliceWidthSpan -= relDiff;
+        }
+        break;
+      }
+      case static_cast<int>(SkinTemplatePickPoints::MIDDLE_SLICES_RIGHT):
+      {
+        auto& skinTemplate = m_entity.GetComponent<SkinTemplateComponent>();
+        auto relDiff = diff.x / skinTemplate.boundingRectSize.x;
+        auto newVerticalSpan = relDiff + skinTemplate.vertSliceWidthSpan;
+        auto newRightHorSpan = skinTemplate.rightHorSliceWidthSpan - relDiff;
+        auto newRightHorSliceSize = (skinTemplate.rightHorSliceWidthSpan - relDiff) / skinTemplate.rightHorSliceCount * skinTemplate.boundingRectSize.x;
+        auto newVerticalSliceSize = (relDiff + skinTemplate.vertSliceWidthSpan) / skinTemplate.vertSliceCount * skinTemplate.boundingRectSize.x;
+        if(newVerticalSpan < s_maxVerticalWidthSpan && newVerticalSpan > s_minVerticalWidthSpan && newVerticalSliceSize > s_minimumSliceSize &&
+          newRightHorSpan < s_maxHorizontalWidthSpan && newRightHorSpan > s_minHorizontalWidthSpan && newRightHorSliceSize > s_minimumSliceSize)
+        {
+          skinTemplate.vertSliceWidthSpan += relDiff;
+          skinTemplate.rightHorSliceWidthSpan -= relDiff;
+        }
+        break;
+      }
+      case static_cast<int>(SkinTemplatePickPoints::RIGHT_SLICES_TOP):
+      {
+        auto& skinTemplate = m_entity.GetComponent<SkinTemplateComponent>();
+        auto relDiff = -diff.y / skinTemplate.boundingRectSize.y;
+        auto newSpan = relDiff + skinTemplate.rightHorSliceHeightSpan;
+        auto newSliceSize = (relDiff + skinTemplate.rightHorSliceHeightSpan) / skinTemplate.rightHorSliceCount * skinTemplate.boundingRectSize.y;
+        if(newSpan < s_maxHorizontalHeightSpan && newSpan > s_minHorizontalHeightSpan && newSliceSize > s_minimumSliceSize)
+        {
+          skinTemplate.rightHorSliceHeightSpan += relDiff;
+        }
+        break;
+      }
+      case static_cast<int>(SkinTemplatePickPoints::RIGHT_SLICES_BOTTOM):
+      {
+        auto& skinTemplate = m_entity.GetComponent<SkinTemplateComponent>();
+        auto relDiff = diff.y / skinTemplate.boundingRectSize.y;
+        auto newSpan = relDiff + skinTemplate.rightHorSliceHeightSpan;
+        auto newSliceSize = (relDiff + skinTemplate.rightHorSliceHeightSpan) / skinTemplate.rightHorSliceCount * skinTemplate.boundingRectSize.y;
+        if(newSpan < s_maxHorizontalHeightSpan && newSpan > s_minHorizontalHeightSpan && newSliceSize > s_minimumSliceSize)
+        {
+          skinTemplate.rightHorSliceHeightSpan += relDiff;
+        }
         break;
       }
       default:
@@ -446,7 +591,7 @@ namespace medicimage
     auto& transform = m_entity.GetComponent<TransformComponent>();
     transform.translation += diff;
     auto& skinTemplate = m_entity.GetComponent<SkinTemplateComponent>();
-    for(auto e : skinTemplate.horizontalSlices)
+    for(auto e : skinTemplate.leftHorizontalSlices)
     {
       Entity rect(e);
       rect.GetComponent<TransformComponent>().translation += diff;
@@ -462,12 +607,18 @@ namespace medicimage
   {
     auto& skinTemplate = m_entity.GetComponent<SkinTemplateComponent>();
     for(auto e : skinTemplate.verticalSlices)
+    { // TODO REFACTOR: make it a lambda
+      Entity rect(e);
+      RectangleComponentWrapper rw(rect);
+      rw.Draw();
+    }
+    for(auto e : skinTemplate.leftHorizontalSlices)
     {
       Entity rect(e);
       RectangleComponentWrapper rw(rect);
       rw.Draw();
     }
-    for(auto e : skinTemplate.horizontalSlices)
+    for(auto e : skinTemplate.rightHorizontalSlices)
     {
       Entity rect(e);
       RectangleComponentWrapper rw(rect);

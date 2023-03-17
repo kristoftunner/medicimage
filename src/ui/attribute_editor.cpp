@@ -60,22 +60,16 @@ void AttributeEditor::DrawAttributeEdit(Entity entity)
   DrawComponent<SkinTemplateComponent>("Skin template params", entity, [&](auto& component)
   {
     SkinTemplateComponentWrapper st(entity);
-    auto verticalSliceWidthBounds = st.GetVerticalSliceWidthSpanBounds();
-    auto horizontalSliceHeightBounds = st.GetHorizontalSliceHeightSpanBounds();
-    auto verticalSpeed = abs(verticalSliceWidthBounds.x - verticalSliceWidthBounds.y) / 10;
-    auto horizontalSpeed = abs(horizontalSliceHeightBounds.x - horizontalSliceHeightBounds.y) / 10;
-    ImGui::Unindent(ImGui::GetTreeNodeToLabelSpacing());
-    ImGui::Text("Vertical slice width");
-		ImGui::SliderFloat("##W", &(component.verticalSliceWidthSpan), verticalSliceWidthBounds.x, verticalSliceWidthBounds.y, "%.2f");
-    ImGui::Text("Horizontal slice height");
-		ImGui::SliderFloat("##H", &(component.horizontalSliceHeightSpan),horizontalSliceHeightBounds.x, horizontalSliceHeightBounds.y, "%.2f");
-
+    //ImGui::Unindent(ImGui::GetTreeNodeToLabelSpacing());
 		auto verticalSliceCountBounds = st.GetVerticalSliceCountBounds();
-    auto horizontalSliceCountBounds = st.GetHorizontalSliceCountBounds();
+    auto leftHorSliceCountBounds = st.GetLeftHorizontalSliceCountBounds();
+    auto rightHorSliceCountBounds = st.GetRightHorizontalSliceCountBounds();
     ImGui::Text("Verticel slice count");
-    ImGui::SliderInt("##VC", &(component.verticalSliceCount), verticalSliceCountBounds.x, verticalSliceCountBounds.y, "%d");
-    ImGui::Text("Horizontal slice count");
-    ImGui::SliderInt("##HC", &(component.horizontalSliceCount), horizontalSliceCountBounds.x, horizontalSliceCountBounds.y, "%d");
+    ImGui::SliderInt("##VC", &(component.vertSliceCount), verticalSliceCountBounds.x, verticalSliceCountBounds.y, "%d");
+    ImGui::Text("Left horizontal slice count");
+    ImGui::SliderInt("##LHC", &(component.leftHorSliceCount), leftHorSliceCountBounds.x, leftHorSliceCountBounds.y, "%d");
+    ImGui::Text("Right horizontal slice count");
+    ImGui::SliderInt("##RHC", &(component.rightHorSliceCount), rightHorSliceCountBounds.x, rightHorSliceCountBounds.y, "%d");
     st.UpdateShapeAttributes();
   });
 }

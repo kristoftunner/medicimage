@@ -77,23 +77,29 @@ public:
   void OnPickPointDrag(glm::vec2 diff, int selectedPoint) override;
   void OnObjectDrag(glm::vec2 diff) override;
   void Draw() override;
-  glm::vec2 GetVerticalSliceWidthSpanBounds();
-  glm::vec2 GetHorizontalSliceHeightSpanBounds();
+  
+  void SetLeftHorizontalWidthSpan(float span);
+  void SetRightHorizontalWidthSpan(float span);
+  void SetVertcialWidthSpan(float span);
+
   glm::ivec2 GetVerticalSliceCountBounds();
-  glm::ivec2 GetHorizontalSliceCountBounds();
+  glm::ivec2 GetLeftHorizontalSliceCountBounds();
+  glm::ivec2 GetRightHorizontalSliceCountBounds();
 private:
   static void GenerateSlices(Entity entity);
 
   static constexpr float s_minimumSliceSize = 0.015;
 
   static constexpr int s_defaultVerticalCount = 3;
-  static constexpr float s_maxVerticalSpan = 0.7;
-  static constexpr float s_minVerticalSpan = 0.3;
-  static constexpr float s_defaultVerticalSpan = 0.5;
+  static constexpr float s_maxVerticalWidthSpan = 0.7;
+  static constexpr float s_minVerticalWidthSpan = 0.3;
+  static constexpr float s_defaultVerticalWidthSpan = 0.5;
 
   static constexpr int s_defaultHorizontalCount = 2;
-  static constexpr float s_maxHorizontalSpan = 0.7;
-  static constexpr float s_minHorizontalSpan = 0.3;
-  static constexpr float s_defaultHorizontalSpan = 0.5;
+  static constexpr float s_maxHorizontalHeightSpan = 0.8;
+  static constexpr float s_minHorizontalHeightSpan = 0.2;
+  static constexpr float s_defaultHorizontalHeightSpan = 0.5;
+  static constexpr float s_maxHorizontalWidthSpan = 0.8;
+  static constexpr float s_minHorizontalWidthSpan = 0.2;
 };
 } // namespace medicimage
