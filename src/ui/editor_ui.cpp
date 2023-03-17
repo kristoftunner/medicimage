@@ -95,7 +95,7 @@ void EditorUI::OnAttach()
   m_largeFont = io.Fonts->AddFontFromFileTTF("assets/fonts/banschrift.ttf", 48.0);
   
   ImGuiStyle& style = ImGui::GetStyle();
-  m_defaultFrameBgColor = style.Colors[ImGuiCol_Button];
+  s_defaultFrameBgColor = style.Colors[ImGuiCol_Button];
 } 
 
 void EditorUI::OnDetach(){} 
@@ -257,13 +257,17 @@ void EditorUI::ShowImageWindow()
 void EditorUI::ShowToolbox()
 {
   ImGui::Begin("Tools", nullptr , ImGuiWindowFlags_HorizontalScrollbar | ImGuiWindowFlags_NoTitleBar);
-  constexpr ImVec2 bigIconSize = ImVec2(100.0f, 100.0f);                         
-  constexpr ImVec2 smallIconSize = ImVec2(40.0f, 40.0f);                         
   ImVec4 iconBg = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);
 
   constexpr ImVec2 uvMin = ImVec2(0.0f, 0.0f);                 // Top-left
   constexpr ImVec2 uvMax = ImVec2(1.0f, 1.0f);                 // Lower-right
   ImVec4 tintColor = ImVec4(1.0f, 1.0f, 1.0f, 1.0f);   // No tint
+  m_toolsRegionSize = ImGui::GetContentRegionAvail();
+  auto padding = ImGui::GetStyle().FramePadding;
+  float bigIconWidth = m_toolsRegionSize.x - padding.x;
+  float smallIconWidth = m_toolsRegionSize.x / 2.0f - padding.x * 3;                       
+  ImVec2 bigIconSize = ImVec2(bigIconWidth, bigIconWidth); 
+  ImVec2 smallIconSize = ImVec2(smallIconWidth, smallIconWidth);                         
   if (ImGui::ImageButton("screenshot", m_screenshotIcon->GetShaderResourceView(), bigIconSize, uvMin, uvMax, iconBg, tintColor))
   {
     if(m_editorState == EditorState::SHOW_CAMERA)
@@ -391,16 +395,14 @@ void EditorUI::ShowToolbox()
   // setting green border for the selected button
   ImGuiStyle& style = ImGui::GetStyle();
   
-  //style.Colors[ImGuiCol_Button] = m_activeCommand.commandType == DrawCommand::ADD_TEXT ? m_toolUsedBgColor : m_defaultFrameBgColor; 
-  style.Colors[ImGuiCol_Button] =  m_defaultFrameBgColor; 
+  style.Colors[ImGuiCol_Button] = m_drawingSheet.GetDrawCommand() == DrawCommand::DRAW_TEXT ? s_toolUsedBgColor : s_defaultFrameBgColor; 
   if (ImGui::ImageButton("addText", m_addTextIcon->GetShaderResourceView(), smallIconSize, uvMin, uvMax, iconBg, tintColor))
   {
     if(m_editorState == EditorState::EDITING)
       m_drawingSheet.SetDrawCommand(DrawCommand::DRAW_TEXT);
   }
   
-  //style.Colors[ImGuiCol_Button] = m_activeCommand.commandType == DrawCommand::DRAW_CIRCLE ? m_toolUsedBgColor : m_defaultFrameBgColor; 
-  style.Colors[ImGuiCol_Button] = m_defaultFrameBgColor; 
+  style.Colors[ImGuiCol_Button] = m_drawingSheet.GetDrawCommand() == DrawCommand::DRAW_CIRCLE ? s_toolUsedBgColor : s_defaultFrameBgColor; 
   if (ImGui::ImageButton("circle", m_circleIcon->GetShaderResourceView(), smallIconSize, uvMin, uvMax, iconBg, tintColor))
   {
     if(m_editorState == EditorState::EDITING)
@@ -408,16 +410,14 @@ void EditorUI::ShowToolbox()
   }
   ImGui::SameLine();
   
-  //style.Colors[ImGuiCol_Button] = m_activeCommand.commandType == DrawCommand::DRAW_LINE ? m_toolUsedBgColor : m_defaultFrameBgColor; 
-  style.Colors[ImGuiCol_Button] = m_defaultFrameBgColor; 
+  style.Colors[ImGuiCol_Button] = m_drawingSheet.GetDrawCommand() == DrawCommand::DRAW_LINE ? s_toolUsedBgColor : s_defaultFrameBgColor; 
   if (ImGui::ImageButton("line", m_lineIcon->GetShaderResourceView(), smallIconSize, uvMin, uvMax, iconBg, tintColor))
   {
     if(m_editorState == EditorState::EDITING)
       m_drawingSheet.SetDrawCommand(DrawCommand::DRAW_LINE);
   }
   
-  //style.Colors[ImGuiCol_Button] = m_activeCommand.commandType == DrawCommand::DRAW_RECTANGLE ? m_toolUsedBgColor : m_defaultFrameBgColor; 
-  style.Colors[ImGuiCol_Button] = m_defaultFrameBgColor; 
+  style.Colors[ImGuiCol_Button] = m_drawingSheet.GetDrawCommand() == DrawCommand::DRAW_RECTANGLE ? s_toolUsedBgColor : s_defaultFrameBgColor; 
   if (ImGui::ImageButton("rectangle", m_rectangleIcon->GetShaderResourceView(), smallIconSize, uvMin, uvMax, iconBg, tintColor))
   {
     if(m_editorState == EditorState::EDITING)
@@ -425,15 +425,14 @@ void EditorUI::ShowToolbox()
   }
   ImGui::SameLine();
 
-  //style.Colors[ImGuiCol_Button] = m_activeCommand.commandType == DrawCommand::DRAW_ARROW ? m_toolUsedBgColor : m_defaultFrameBgColor; 
-  style.Colors[ImGuiCol_Button] = m_defaultFrameBgColor; 
+  style.Colors[ImGuiCol_Button] = m_drawingSheet.GetDrawCommand() == DrawCommand::DRAW_ARROW ? s_toolUsedBgColor : s_defaultFrameBgColor; 
   if (ImGui::ImageButton("arrow", m_arrowIcon->GetShaderResourceView(), smallIconSize, uvMin, uvMax, iconBg, tintColor))
   {
     if(m_editorState == EditorState::EDITING)
       m_drawingSheet.SetDrawCommand(DrawCommand::DRAW_ARROW);
   }
   
-  style.Colors[ImGuiCol_Button] = m_defaultFrameBgColor; 
+  style.Colors[ImGuiCol_Button] = m_drawingSheet.GetDrawCommand() == DrawCommand::DRAW_SKIN_TEMPLATE ? s_toolUsedBgColor : s_defaultFrameBgColor; 
   if (ImGui::ImageButton("skin-template", m_skinTemplateIcon->GetShaderResourceView(), smallIconSize, uvMin, uvMax, iconBg, tintColor))
   {
     if(m_editorState == EditorState::EDITING)
@@ -445,10 +444,11 @@ void EditorUI::ShowToolbox()
     ImGui::EndDisabled();
   }
   // restore the default color
-  style.Colors[ImGuiCol_Button] = m_defaultFrameBgColor; 
+  style.Colors[ImGuiCol_Button] = s_defaultFrameBgColor; 
 
   //listbox for selecting saved uuids
   ImGui::Separator();
+  ImGui::Text("Loaded patients:");
   if (ImGui::BeginListBox("##listbox", ImVec2{ -FLT_MIN, 120 }))
   {
     for(const auto& saverMap : m_imageSavers->GetImageSavers())
@@ -618,6 +618,8 @@ void EditorUI::OnImguiRender()
   
   auto editorState = EditorStateName(m_editorState);
   ImGui::Text("Editor state:%s", editorState.c_str());
+  ImGui::SameLine();
+  ImGui::Text("ToolsRegionSize:%f:%f", m_toolsRegionSize.x, m_toolsRegionSize.y);
   ImGui::End();
 } 
 

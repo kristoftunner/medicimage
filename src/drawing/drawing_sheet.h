@@ -38,6 +38,7 @@ public:
   DrawingSheet() : m_drawState(std::make_unique<BaseDrawState>(this)) {}
   void SetDocument(std::unique_ptr<ImageDocument> doc, glm::vec2 viewportSize); 
   void SetDrawCommand(const DrawCommand command); // initialize the state with the command's init state
+  DrawCommand GetDrawCommand(){return m_currentDrawCommand;}
   std::unique_ptr<Texture2D> Draw();
   void ChangeDrawState(std::unique_ptr<BaseDrawState> newState);
   void SetDrawingSheetSize(glm::vec2 size); 

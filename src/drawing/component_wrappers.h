@@ -79,6 +79,8 @@ public:
   void Draw() override;
   glm::vec2 GetVerticalSliceWidthSpanBounds();
   glm::vec2 GetHorizontalSliceHeightSpanBounds();
+  glm::ivec2 GetVerticalSliceCountBounds();
+  glm::ivec2 GetHorizontalSliceCountBounds();
 private:
   static void GenerateSlices(Entity entity);
 

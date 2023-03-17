@@ -64,12 +64,18 @@ void AttributeEditor::DrawAttributeEdit(Entity entity)
     auto horizontalSliceHeightBounds = st.GetHorizontalSliceHeightSpanBounds();
     auto verticalSpeed = abs(verticalSliceWidthBounds.x - verticalSliceWidthBounds.y) / 10;
     auto horizontalSpeed = abs(horizontalSliceHeightBounds.x - horizontalSliceHeightBounds.y) / 10;
-		ImGui::Text("Vertical slice width");
+    ImGui::Unindent(ImGui::GetTreeNodeToLabelSpacing());
+    ImGui::Text("Vertical slice width");
+		ImGui::SliderFloat("##W", &(component.verticalSliceWidthSpan), verticalSliceWidthBounds.x, verticalSliceWidthBounds.y, "%.2f");
+    ImGui::Text("Horizontal slice height");
+		ImGui::SliderFloat("##H", &(component.horizontalSliceHeightSpan),horizontalSliceHeightBounds.x, horizontalSliceHeightBounds.y, "%.2f");
 
-		ImGui::DragFloat("##W", &(component.verticalSliceWidthSpan), verticalSpeed, verticalSliceWidthBounds.x, verticalSliceWidthBounds.y, "%.2f");
-		ImGui::Text("Horizontal slice height");
-		ImGui::DragFloat("##H", &(component.horizontalSliceHeightSpan), horizontalSpeed, horizontalSliceHeightBounds.x, horizontalSliceHeightBounds.y, "%.2f");
-
+		auto verticalSliceCountBounds = st.GetVerticalSliceCountBounds();
+    auto horizontalSliceCountBounds = st.GetHorizontalSliceCountBounds();
+    ImGui::Text("Verticel slice count");
+    ImGui::SliderInt("##VC", &(component.verticalSliceCount), verticalSliceCountBounds.x, verticalSliceCountBounds.y, "%d");
+    ImGui::Text("Horizontal slice count");
+    ImGui::SliderInt("##HC", &(component.horizontalSliceCount), horizontalSliceCountBounds.x, horizontalSliceCountBounds.y, "%d");
     st.UpdateShapeAttributes();
   });
 }

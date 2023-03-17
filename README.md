@@ -69,3 +69,16 @@ Store the document with all the metadata (drawn objects and it's attributes) - t
   - skin template:
     - number of slices
     - number of 
+
+## 2023.03.17. features update
+- color palette for the color edit (black, red, green, blue, white, magenta)
+- skin template: checkbox for adding the ellipse(black)
+- skin template: span should be 90%
+- default color: red
+- skintemplate: vertical slices not centered and should be configured by pickpoints
+- automatatically labeled boxes
+- automaticaly incremented text labeling
+- Implement the textbox
+- fix every bug
+- properties for edit
+- Implement line tool, if polygon easy implement that one as well

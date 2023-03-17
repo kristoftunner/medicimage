@@ -353,7 +353,21 @@ namespace medicimage
   {
     return glm::vec2{s_minHorizontalSpan, s_maxHorizontalSpan};
   }
-  
+
+  glm::ivec2 SkinTemplateComponentWrapper::GetVerticalSliceCountBounds()
+  {
+    auto& skinTemplate = m_entity.GetComponent<SkinTemplateComponent>();
+    auto maxBound = (skinTemplate.verticalSliceWidthSpan * skinTemplate.boundingRectSize.x) / s_minimumSliceSize;
+    return glm::ivec2{1, static_cast<int>(maxBound)};
+  }
+
+  glm::ivec2 SkinTemplateComponentWrapper::GetHorizontalSliceCountBounds()
+  {
+    auto& skinTemplate = m_entity.GetComponent<SkinTemplateComponent>();
+    auto maxBound = (skinTemplate.horizontalSliceHeightSpan * skinTemplate.boundingRectSize.y) / s_minimumSliceSize; 
+    return glm::ivec2{1, static_cast<int>(maxBound)};
+  }
+
   void SkinTemplateComponentWrapper::UpdateShapeAttributes()
   {
     auto& skinTemplate = m_entity.GetComponent<SkinTemplateComponent>();

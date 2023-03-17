@@ -67,7 +67,7 @@ namespace medicimage
 
   struct ColorComponent
   {
-    glm::vec4 color{0.0f, 0.0f, 0.0f, 0.0f};
+    glm::vec4 color{1.0f, 0.0f, 0.0f, 0.0f};
 
     ColorComponent() = default;
     ColorComponent(glm::vec4 color) : color(color){}

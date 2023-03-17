@@ -162,6 +162,7 @@ std::vector<ImageDocument>::iterator ImageDocContainer::AddImage(Texture2D& text
   ImageDocument doc(std::make_unique<Texture2D>(texture.GetTexturePtr(), texture.GetName()));
   doc.documentId = name;
   doc.timestamp = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+  doc.texture = ImageEditor::RemoveFooter(doc.texture.get());
   m_savedImages.push_back(doc);
     
   name += ".jpeg";

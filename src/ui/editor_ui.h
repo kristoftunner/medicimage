@@ -74,8 +74,8 @@ private:
   std::array<char,128> m_inputText; 
   ImFont* m_largeFont;
   ImFont* m_smallFont;
-  ImVec4 m_defaultFrameBgColor;
-  ImVec4 m_toolUsedBgColor = {5.0/255.0,247.0/255.0,3.0/255.0,138.0/255.0};
+  ImVec4 s_defaultFrameBgColor;
+  static constexpr ImVec4 s_toolUsedBgColor{5.0/255.0,247.0/255.0,3.0/255.0,138.0/255.0};
 
   // drawing specific members
   int m_thickness = 3;
@@ -87,6 +87,9 @@ private:
 
   std::unique_ptr<ImageSaverContainer> m_imageSavers;
   AppConfig m_appConfig;
+
+  // debug informations
+  ImVec2 m_toolsRegionSize;
 };
   
 } // namespace medicimage
