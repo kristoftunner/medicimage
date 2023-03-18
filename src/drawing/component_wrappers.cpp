@@ -258,6 +258,83 @@ namespace medicimage
       }
     }
   }
+  
+  Entity LineComponentWrapper::CreateLine(glm::vec2 firstPoint, glm::vec2 secondPoint, DrawObjectType objectType)
+  {
+    auto entity = Entity::CreateEntity(0, "Line");
+    entity.GetComponent<CommonAttributesComponent>().temporary = objectType == DrawObjectType::TEMPORARY ? true : false;
+    
+    auto& transform = entity.GetComponent<TransformComponent>();
+    transform.translation = firstPoint;
+
+    auto& color = entity.AddComponent<ColorComponent>();  
+    auto& line = entity.AddComponent<LineComponent>();
+    line.end = secondPoint - firstPoint;
+
+    return entity;
+  }
+
+  void LineComponentWrapper::UpdateShapeAttributes()
+  {
+    auto& line = m_entity.GetComponent<LineComponent>();
+
+    if(!m_entity.HasComponent<BoundingContourComponent>())
+      m_entity.AddComponent<BoundingContourComponent>();
+    if(!m_entity.HasComponent<PickPointsComponent>())
+      m_entity.AddComponent<PickPointsComponent>();
+    auto& boundingBox = m_entity.GetComponent<BoundingContourComponent>();
+    auto& pickPoints = m_entity.GetComponent<PickPointsComponent>();
+
+    glm::vec2 vec = line.begin - line.end; 
+    glm::vec2 perp = glm::normalize(glm::vec2{-vec.y, vec.x});
+    glm::vec2 offset = perp * glm::length(vec) * glm::vec2(0.2);
+    boundingBox.cornerPoints = {offset, line.end + offset, line.end - offset, -offset, offset};
+    pickPoints.pickPoints = {line.begin, line.end};
+  }
+
+  void LineComponentWrapper::OnPickPointDrag(glm::vec2 diff, int selectedPoint)
+  {
+    switch(selectedPoint)  // [TODO REFACTOR]: extract these out into functions
+    {
+      case static_cast<int>(LinePickPoints::BEGIN):
+        m_entity.GetComponent<LineComponent>().begin += diff;
+        break;
+      case static_cast<int>(LinePickPoints::END):
+        m_entity.GetComponent<LineComponent>().end += diff;
+        break;
+      default:
+        APP_CORE_ERR("Wrong pickpoint index({}) at component:{}", selectedPoint, m_entity.GetComponent<IDComponent>().ID);
+        break;
+    } 
+    UpdateShapeAttributes();
+  }
+
+  void LineComponentWrapper::OnObjectDrag(glm::vec2 diff)
+  {
+    // TODO: some checks wether we drag the component outside or not etc..
+    auto& transform = m_entity.GetComponent<TransformComponent>();
+    transform.translation += diff;
+  }
+
+  void LineComponentWrapper::Draw()
+  {
+    auto& transform  = m_entity.GetComponent<TransformComponent>();
+    auto& commonAttributes = m_entity.GetComponent<CommonAttributesComponent>();
+    auto& line = m_entity.GetComponent<LineComponent>();
+    auto& color = m_entity.GetComponent<ColorComponent>().color;
+    auto begin = line.begin + transform.translation; 
+    auto end = line.end + transform.translation; 
+    ImageEditor::DrawLine(begin, end, color, line.thickness, 0.1);
+    
+    if(commonAttributes.selected)
+    {
+      auto& pickPoints = m_entity.GetComponent<PickPointsComponent>().pickPoints;
+      for(auto& point : pickPoints)
+      {
+        ImageEditor::DrawCircle(point + transform.translation, s_pickPointBoxSize / 2, s_pickPointColor, 2, true);
+      }
+    }
+  }
 
   Entity SkinTemplateComponentWrapper::CreateSkinTemplate(glm::vec2 firstPoint, glm::vec2 secondPoint, DrawObjectType objectType)
   {
@@ -462,6 +539,16 @@ namespace medicimage
 
   void SkinTemplateComponentWrapper::OnPickPointDrag(glm::vec2 diff, int selectedPoint)
   {
+    auto addHorizontalDiff = [](float diff, float& span, float rectSize, int& sliceCount){
+      auto relDiff = diff / rectSize;
+      auto newSpan = relDiff + span;
+      auto newSliceSize = (relDiff + span) / sliceCount * rectSize;
+      if(newSpan < s_maxHorizontalHeightSpan && newSpan > s_minHorizontalHeightSpan && newSliceSize > s_minimumSliceSize)
+      {
+        span += relDiff;
+      }
+    };
+
     switch(selectedPoint)  // [TODO REFACTOR]: extract these out into functions
     {
       case static_cast<int>(SkinTemplatePickPoints::RIGHT):
@@ -501,25 +588,13 @@ namespace medicimage
       case static_cast<int>(SkinTemplatePickPoints::LEFT_SLICES_TOP):
       { // TODO REFACTOR: use here lambdas
         auto& skinTemplate = m_entity.GetComponent<SkinTemplateComponent>();
-        auto relDiff = -diff.y / skinTemplate.boundingRectSize.y;
-        auto newSpan = relDiff + skinTemplate.leftHorSliceHeightSpan;
-        auto newSliceSize = (relDiff + skinTemplate.leftHorSliceHeightSpan) / skinTemplate.leftHorSliceCount * skinTemplate.boundingRectSize.y;
-        if(newSpan < s_maxHorizontalHeightSpan && newSpan > s_minHorizontalHeightSpan && newSliceSize > s_minimumSliceSize)
-        {
-          skinTemplate.leftHorSliceHeightSpan += relDiff;
-        }
+        addHorizontalDiff(-diff.y, skinTemplate.leftHorSliceHeightSpan, skinTemplate.boundingRectSize.y, skinTemplate.leftHorSliceCount);
         break;
       }
       case static_cast<int>(SkinTemplatePickPoints::LEFT_SLICES_BOTTOM):
       {
         auto& skinTemplate = m_entity.GetComponent<SkinTemplateComponent>();
-        auto relDiff = diff.y / skinTemplate.boundingRectSize.y;
-        auto newSpan = relDiff + skinTemplate.leftHorSliceHeightSpan;
-        auto newSliceSize = (relDiff + skinTemplate.leftHorSliceHeightSpan) / skinTemplate.leftHorSliceCount * skinTemplate.boundingRectSize.y;
-        if(newSpan < s_maxHorizontalHeightSpan && newSpan > s_minHorizontalHeightSpan && newSliceSize > s_minimumSliceSize)
-        {
-          skinTemplate.leftHorSliceHeightSpan += relDiff;
-        }
+        addHorizontalDiff(diff.y, skinTemplate.leftHorSliceHeightSpan, skinTemplate.boundingRectSize.y, skinTemplate.leftHorSliceCount);
         break;
       }
       case static_cast<int>(SkinTemplatePickPoints::MIDDLE_SLICES_LEFT):
@@ -557,25 +632,13 @@ namespace medicimage
       case static_cast<int>(SkinTemplatePickPoints::RIGHT_SLICES_TOP):
       {
         auto& skinTemplate = m_entity.GetComponent<SkinTemplateComponent>();
-        auto relDiff = -diff.y / skinTemplate.boundingRectSize.y;
-        auto newSpan = relDiff + skinTemplate.rightHorSliceHeightSpan;
-        auto newSliceSize = (relDiff + skinTemplate.rightHorSliceHeightSpan) / skinTemplate.rightHorSliceCount * skinTemplate.boundingRectSize.y;
-        if(newSpan < s_maxHorizontalHeightSpan && newSpan > s_minHorizontalHeightSpan && newSliceSize > s_minimumSliceSize)
-        {
-          skinTemplate.rightHorSliceHeightSpan += relDiff;
-        }
+        addHorizontalDiff(-diff.y, skinTemplate.rightHorSliceHeightSpan, skinTemplate.boundingRectSize.y, skinTemplate.rightHorSliceCount);
         break;
       }
       case static_cast<int>(SkinTemplatePickPoints::RIGHT_SLICES_BOTTOM):
       {
         auto& skinTemplate = m_entity.GetComponent<SkinTemplateComponent>();
-        auto relDiff = diff.y / skinTemplate.boundingRectSize.y;
-        auto newSpan = relDiff + skinTemplate.rightHorSliceHeightSpan;
-        auto newSliceSize = (relDiff + skinTemplate.rightHorSliceHeightSpan) / skinTemplate.rightHorSliceCount * skinTemplate.boundingRectSize.y;
-        if(newSpan < s_maxHorizontalHeightSpan && newSpan > s_minHorizontalHeightSpan && newSliceSize > s_minimumSliceSize)
-        {
-          skinTemplate.rightHorSliceHeightSpan += relDiff;
-        }
+        addHorizontalDiff(diff.y, skinTemplate.rightHorSliceHeightSpan, skinTemplate.boundingRectSize.y, skinTemplate.rightHorSliceCount);
         break;
       }
       default:

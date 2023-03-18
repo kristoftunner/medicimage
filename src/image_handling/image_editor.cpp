@@ -3,6 +3,7 @@
 #include <fstream>
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/highgui.hpp>
+#include "image_editor.h"
 
 namespace medicimage
 {
@@ -158,6 +159,17 @@ void ImageEditor::DrawArrow(glm::vec2 begin, glm::vec2 end, glm::vec4 color, flo
 
   //TODO: add rotation 
 }
+void ImageEditor::DrawLine(glm::vec2 begin, glm::vec2 end, glm::vec4 color, float thickness, double tipLengith)
+{
+  glm::vec2 imageSize = {s_image.cols, s_image.rows};
+  begin *= imageSize; 
+  end *= imageSize; 
+  color *= 255.0;
+
+  cv::line(s_image, cv::Point(static_cast<int>(begin.x), static_cast<int>(begin.y)), cv::Point(static_cast<int>(end.x), static_cast<int>(end.y)), 
+    cv::Scalar(color.b, color.g, color.r), static_cast<int>(thickness));
+}
+
 cv::UMat ImageEditor::AddFooter(cv::UMat image, const std::string& footerText)
 {
   // add a sticker to the bottom with the image name, date and time

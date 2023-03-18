@@ -65,6 +65,7 @@ namespace medicimage
   enum class SkinTemplatePickPoints {RIGHT=0, BOTTOM=1, LEFT=2, TOP=3, 
     LEFT_SLICES_TOP, LEFT_SLICES_BOTTOM, MIDDLE_SLICES_LEFT, MIDDLE_SLICES_RIGHT, RIGHT_SLICES_TOP, RIGHT_SLICES_BOTTOM};
   enum class ArrowPickPoints {BEGIN=0, END=1};
+  enum class LinePickPoints {BEGIN=0, END=1};
 
   struct ColorComponent
   {
@@ -115,6 +116,17 @@ namespace medicimage
     
     ArrowComponent() = default;
     ArrowComponent(glm::vec2 end, glm::vec2 begin, float thickness)
+      : end(end), begin(begin), thickness(thickness) {}
+  };
+  
+  struct LineComponent 
+  {
+    glm::vec2 begin{0.0f, 0.0f};  // this is 0,0 in most cases, only changes when editing with pickpoints, because it seems logicaly correct to use instead of the transform
+    glm::vec2 end {0.0f, 0.0f}; 
+    float thickness = 5.0f;
+    
+    LineComponent() = default;
+    LineComponent(glm::vec2 end, glm::vec2 begin, float thickness)
       : end(end), begin(begin), thickness(thickness) {}
   };
   

@@ -38,6 +38,7 @@ namespace medicimage
       case DrawCommand::DRAW_RECTANGLE:
       case DrawCommand::DRAW_ELLIPSE:
       case DrawCommand::DRAW_ARROW:
+      case DrawCommand::DRAW_LINE:
       case DrawCommand::DRAW_SKIN_TEMPLATE:
       {
         m_drawState = std::make_unique<InitialObjectDrawState>(this);
@@ -86,6 +87,15 @@ namespace medicimage
         aw.Draw();
     }
     
+    auto lines = Entity::View<LineComponent>();
+    for(auto e : lines)
+    {
+      Entity entity(e);
+      LineComponentWrapper lw(entity);
+      if(!lw.IsComposed())
+        lw.Draw();
+    }
+    
     auto skinTemplates = Entity::View<SkinTemplateComponent>();
     for(auto e : skinTemplates)
     {
@@ -100,6 +110,7 @@ namespace medicimage
     std::for_each(circles.begin(), circles.end(), m_drawState->DeleteTemporaries());
     std::for_each(rectangles.begin(), rectangles.end(), m_drawState->DeleteTemporaries());
     std::for_each(arrows.begin(), arrows.end(), m_drawState->DeleteTemporaries());
+    std::for_each(lines.begin(), lines.end(), m_drawState->DeleteTemporaries());
     std::for_each(skinTemplates.begin(), skinTemplates.end(), m_drawState->DeleteTemporaries());
 
     return std::move(std::make_unique<Texture2D>(*m_drawing.get()));
@@ -317,6 +328,12 @@ namespace medicimage
         aw.UpdateShapeAttributes();
         break;
       }
+      case DrawCommand::DRAW_LINE:
+      {
+        LineComponentWrapper lw(LineComponentWrapper::CreateLine(m_sheet->m_firstPoint, m_sheet->m_secondPoint, DrawObjectType::TEMPORARY));
+        lw.UpdateShapeAttributes();
+        break;
+      }
       case DrawCommand::DRAW_SKIN_TEMPLATE:
       {
         SkinTemplateComponentWrapper sw(SkinTemplateComponentWrapper::CreateSkinTemplate(m_sheet->m_firstPoint, m_sheet->m_secondPoint, DrawObjectType::TEMPORARY));
@@ -348,6 +365,12 @@ namespace medicimage
       {
         ArrowComponentWrapper aw(ArrowComponentWrapper::CreateArrow(m_sheet->m_firstPoint, m_sheet->m_secondPoint, DrawObjectType::PERMANENT));
         aw.UpdateShapeAttributes();
+        break;
+      }
+      case DrawCommand::DRAW_LINE:
+      {
+        LineComponentWrapper lw(LineComponentWrapper::CreateLine(m_sheet->m_firstPoint, m_sheet->m_secondPoint, DrawObjectType::PERMANENT));
+        lw.UpdateShapeAttributes();
         break;
       }
       case DrawCommand::DRAW_SKIN_TEMPLATE:
@@ -463,6 +486,11 @@ namespace medicimage
           ArrowComponentWrapper aw(entity);
           aw.OnPickPointDrag(diff, selectedPointIndex);
         }
+        else if(entity.HasComponent<LineComponent>())
+        {
+          LineComponentWrapper lw(entity);
+          lw.OnPickPointDrag(diff, selectedPointIndex);
+        }
         else if(entity.HasComponent<SkinTemplateComponent>())
         {
           SkinTemplateComponentWrapper sw(entity);
@@ -489,7 +517,7 @@ namespace medicimage
   void ObjectDraggingState::OnMouseButtonDown(const glm::vec2 pos)
   {
     if(m_sheet->m_draggedEntity.has_value())
-    {
+    { // TODO: call here the OnObjectDrag function
       auto currentPoint = pos / m_sheet->m_sheetSize; 
       auto diff = (currentPoint - m_sheet->m_firstPoint) * glm::vec2(1.0);
       m_sheet->m_firstPoint = pos / m_sheet->m_sheetSize;

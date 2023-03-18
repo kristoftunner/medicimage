@@ -31,6 +31,7 @@ public:
   static void DrawCircle(glm::vec2 center, float radius, glm::vec4 color, float thickness, bool filled);
   static void DrawRectangle(glm::vec2 topleft, glm::vec2 bottomright, glm::vec4 color, float thickness, bool filled);
   static void DrawArrow(glm::vec2 begin, glm::vec2 end, glm::vec4 color, float thickness, double tipLengith);
+  static void DrawLine(glm::vec2 begin, glm::vec2 end, glm::vec4 color, float thickness, double tipLengith);
 private:
   static cv::UMat AddFooter(cv::UMat image, const std::string& footerText);
   static constexpr int s_sideBorder = 20;

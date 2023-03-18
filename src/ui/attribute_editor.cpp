@@ -47,10 +47,51 @@ void AttributeEditor::DrawAttributeEdit(Entity entity)
   DrawComponent<ColorComponent>("Color", entity, [&](auto& component)
   {
     ImGui::Unindent(ImGui::GetTreeNodeToLabelSpacing());
-    ImGui::ColorEdit4("Color", glm::value_ptr(component.color), ImGuiColorEditFlags_NoInputs);
+    static ImVec4 backup_color;
+    auto& color = component.color;
+    if (ImGui::Button("palette"))
+    {
+      ImGui::OpenPopup("mypicker");
+    }
+    if (ImGui::BeginPopup("mypicker"))
+    {
+      ImGui::Text("MY CUSTOM COLOR PICKER WITH AN AMAZING PALETTE!");
+      ImGui::Separator();
+      ImGui::ColorPicker3("##picker", glm::value_ptr(component.color), ImGuiColorEditFlags_NoSidePreview);
+      ImGui::SameLine();
+
+      ImGui::BeginGroup(); // Lock X position
+      ImGui::Text("Current");
+      ImGui::ColorButton("##current", ImVec4{ color.r, color.g, color.b, color.a }, ImGuiColorEditFlags_NoPicker, ImVec2(60, 40));
+      ImGui::Separator();
+      ImGui::Text("Palette");
+      static ImVec4 saved_palette[] =
+      {
+        { 0.0, 0.0, 0.0, 1.0 },
+        { 1.0, 0.0, 0.0, 1.0 },
+        {0.0, 1.0, 0.0, 1.0},
+        {0.0, 0.0, 1.0, 1.0},
+        {1.0, 1.0, 1.0, 1.0},
+        {1.0, 0.0, 1.0, 1.0}
+      };
+      for (int n = 0; n < IM_ARRAYSIZE(saved_palette); n++)
+      {
+        ImGui::PushID(n);
+        if ((n % 8) != 0)
+          ImGui::SameLine(0.0f, ImGui::GetStyle().ItemSpacing.y);
+
+        ImGuiColorEditFlags palette_button_flags = ImGuiColorEditFlags_NoAlpha | ImGuiColorEditFlags_NoPicker | ImGuiColorEditFlags_NoTooltip;
+        if (ImGui::ColorButton("##palette", saved_palette[n], palette_button_flags, ImVec2(20, 20)))
+          component.color = glm::vec4(saved_palette[n].x, saved_palette[n].y, saved_palette[n].z, component.color.w); // Preserve alpha!
+
+        ImGui::PopID();
+      }
+      ImGui::EndGroup();
+      ImGui::EndPopup();
+    }
     ImGui::Separator();
 
-    if(entity.HasComponent<SkinTemplateComponent>())
+    if (entity.HasComponent<SkinTemplateComponent>())
     { // TODO REFACTOR: it is right now it seems a bit hacky, need to refactor this
       SkinTemplateComponentWrapper st(entity);
       st.UpdateShapeAttributes();
