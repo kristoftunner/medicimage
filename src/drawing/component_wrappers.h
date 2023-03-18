@@ -79,6 +79,20 @@ public:
   void Draw() override;
 };
 
+class TextComponentWrapper : public BaseDrawComponentWrapper
+{
+public:
+  TextComponentWrapper(Entity entity) : BaseDrawComponentWrapper(entity) {}
+  /// @brief Factory function for creating an entity describing an arrow 
+  /// @param baseEntity base entity to which we add all the other components 
+  /// @return Entity containing the components needed for describing an arrow, TODO: should we return with TextComponentWrapper 
+  static Entity CreateText(glm::vec2 firstPoint, const std::string& inputText,int fontSize, DrawObjectType objectType);
+  void UpdateShapeAttributes() override;
+  void OnPickPointDrag(glm::vec2 diff, int selectedPoint) override {}
+  void OnObjectDrag(glm::vec2 diff) override;
+  void Draw() override;
+};
+
 class SkinTemplateComponentWrapper : public BaseDrawComponentWrapper
 {
 public:

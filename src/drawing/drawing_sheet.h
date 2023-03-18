@@ -4,10 +4,11 @@
 #include "drawing/components.h"
 #include "drawing/entity.h"
 #include "core/assert.h"
+#include "input/key_codes.h"
+
 #include <glm/glm.hpp>
 #include <string>
 #include <optional>
-
 namespace medicimage
 {
 
@@ -21,6 +22,8 @@ class ObjectSelectionState;
 class ObjectSelectedState;
 class PickPointSelectedState;
 class ObjectDraggingState; 
+class DrawTextInitialState;
+class DrawTextState;
 
 enum class DrawCommand{DO_NOTHING, OBJECT_SELECT, DRAW_LINE, DRAW_CIRCLE, DRAW_RECTANGLE, DRAW_ARROW, DRAW_ELLIPSE, DRAW_TEXT, DRAW_SKIN_TEMPLATE}; // Possible commands: DRAG(MOVE), 
 enum class DrawObjectType{TEMPORARY, PERMANENT};
@@ -47,6 +50,7 @@ public:
   void OnMouseButtonDown(const glm::vec2 pos);
   void OnMouseButtonReleased(const glm::vec2 pos);
   void OnTextInput(const std::string& inputText);
+  void OnKeyPressed(KeyCode key);
   
   // These are only for debug purpose
   BaseDrawState* GetDrawState() { return m_drawState.get(); }
@@ -90,6 +94,8 @@ private:
   friend class ObjectSelectedState;
   friend class PickPointSelectedState;
   friend class ObjectDraggingState; 
+  friend class DrawTextInitialState;
+  friend class DrawTextState;
 };
 
 // Draw states
@@ -103,6 +109,7 @@ public:
   virtual void OnMouseButtonDown(const glm::vec2 pos) {}
   virtual void OnMouseButtonReleased(const glm::vec2 pos) {}
   virtual void OnTextInput(const std::string& inputText) {}
+  virtual void OnKeyPressed(KeyCode key) {}
 
   std::function<void(entt::entity)> DeleteTemporaries()
   {
@@ -139,6 +146,25 @@ public:
   DrawingTemporaryState(DrawingSheet* sheet) : BaseDrawState(sheet, "DrawingTemporaryState") {}
   void OnMouseButtonDown(const glm::vec2 pos) override;       
   void OnMouseButtonReleased(const glm::vec2 pos) override;   
+};
+
+class DrawTextInitialState : public BaseDrawState
+{
+public:
+  DrawTextInitialState(DrawingSheet* sheet) : BaseDrawState(sheet, "DrawTextInitialState") {m_sheet->ClearSelectionShapes();}
+  void OnMouseHovered(const glm::vec2 pos) override;
+  void OnMouseButtonPressed(const glm::vec2 pos) override;
+};
+
+class DrawTextState : public BaseDrawState
+{
+public:
+  DrawTextState(DrawingSheet* sheet) : BaseDrawState(sheet, "DrawTextState") {m_sheet->ClearSelectionShapes();}
+  void OnTextInput(const std::string& inputText) override; 
+  void OnKeyPressed(KeyCode key) override;
+  void OnMouseButtonPressed(const glm::vec2 pos) override;
+private:
+  std::string m_text;
 };
 
 // select states

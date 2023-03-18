@@ -335,6 +335,60 @@ namespace medicimage
       }
     }
   }
+  
+  Entity TextComponentWrapper::CreateText(glm::vec2 firstPoint, const std::string& inputText, int fontSize, DrawObjectType objectType)
+  {
+    auto entity = Entity::CreateEntity(0, "Text");
+    entity.GetComponent<CommonAttributesComponent>().temporary = objectType == DrawObjectType::TEMPORARY ? true : false;
+    
+    auto& transform = entity.GetComponent<TransformComponent>();
+    transform.translation = firstPoint;
+
+    auto& text = entity.AddComponent<TextComponent>();
+    text.text = inputText;
+    text.fontSize = fontSize;
+    return entity;
+  }
+
+  void TextComponentWrapper::UpdateShapeAttributes()
+  {
+    auto& text = m_entity.GetComponent<TextComponent>();
+    if(!m_entity.HasComponent<BoundingContourComponent>())
+      m_entity.AddComponent<BoundingContourComponent>();
+    if(!m_entity.HasComponent<PickPointsComponent>())
+      m_entity.AddComponent<PickPointsComponent>();
+
+    auto textSize = ImageEditor::GetTextBoundingBox(text.text, text.fontSize, 5.0);  // TODO: add thickness component
+    auto& boundingBox = m_entity.GetComponent<BoundingContourComponent>();
+    auto& pickPoints = m_entity.GetComponent<PickPointsComponent>();
+    boundingBox.cornerPoints = {{0,0}, {textSize.x, 0}, {textSize.x, -textSize.y}, {0, -textSize.y}, {0,0}};
+    pickPoints.pickPoints = {{0,0}, {textSize.x, 0}, {textSize.x, -textSize.y}, {0, -textSize.y}};  
+  }
+
+  void TextComponentWrapper::OnObjectDrag(glm::vec2 diff)
+  {
+    // TODO: some checks wether we drag the component outside or not etc..
+    auto& transform = m_entity.GetComponent<TransformComponent>();
+    transform.translation += diff;
+  }
+
+  void TextComponentWrapper::Draw()
+  {
+    auto& transform  = m_entity.GetComponent<TransformComponent>();
+    auto& commonAttributes = m_entity.GetComponent<CommonAttributesComponent>();
+    auto& text = m_entity.GetComponent<TextComponent>();
+    ImageEditor::DrawText(transform.translation, text.text, text.fontSize, 5.0); // TODO: add thickness component
+    
+    if(commonAttributes.selected)
+    {
+      auto& pickPoints = m_entity.GetComponent<PickPointsComponent>().pickPoints;
+      for(auto& point : pickPoints)
+      {
+        ImageEditor::DrawCircle(point + transform.translation, s_pickPointBoxSize / 2, s_pickPointColor, 2, true);
+      }
+    }
+  }
+
 
   Entity SkinTemplateComponentWrapper::CreateSkinTemplate(glm::vec2 firstPoint, glm::vec2 secondPoint, DrawObjectType objectType)
   {
@@ -700,6 +754,5 @@ namespace medicimage
       }
     } 
   }
-
 
 } // namespace medicimage

@@ -42,7 +42,7 @@ During editing the default state is object selection. If a draw command is selec
 **Add text**  
 1) Initial -- just hovering on the document
 2) Left click on the document -> 3) 
-3) Adding text -> Left clock on the document -> 1)
+3) Adding text -> Left clock on the document -> ObjectSelectionInitialState 
 
 **Select object**
 1) ObjectSelectionInitialState. Mouse pressed -> 2) 

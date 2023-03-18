@@ -32,12 +32,14 @@ public:
   static void DrawRectangle(glm::vec2 topleft, glm::vec2 bottomright, glm::vec4 color, float thickness, bool filled);
   static void DrawArrow(glm::vec2 begin, glm::vec2 end, glm::vec4 color, float thickness, double tipLengith);
   static void DrawLine(glm::vec2 begin, glm::vec2 end, glm::vec4 color, float thickness, double tipLengith);
+  static void DrawText(glm::vec2 bottomLeft, const std::string& text, int fontSize, float thickness);
+  static glm::vec2 GetTextBoundingBox(const std::string& text, int fontSize, float thickness);
 private:
   static cv::UMat AddFooter(cv::UMat image, const std::string& footerText);
   static constexpr int s_sideBorder = 20;
   static constexpr int s_topBorder = 20;
   static constexpr int s_bottomBorder = 100;
-
+  static constexpr auto s_defaultFont = cv::FONT_HERSHEY_SIMPLEX;
   // TODO: move this into a better place
   static cv::UMat s_image;
   cv::ocl::Context m_context;

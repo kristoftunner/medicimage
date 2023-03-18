@@ -118,20 +118,10 @@ bool EditorUI::OnKeyTextInputEvent(KeyTextInputEvent* e)
 
 bool EditorUI::OnKeyPressedEvent(KeyPressedEvent* e)
 {
-  // TODO: implement this
-  //if ((m_activeCommand.commandState == DrawCommandState::FIRST_CLICK) && m_activeCommand.commandType == DrawCommand::ADD_TEXT)
-  //{
-  //  if(e->GetKeyCode() == Key::MDIK_RETURN)
-  //  {
-  //    m_activeCommand.commandState = DrawCommandState::FINISH;
-  //    return true;
-  //  }
-  //  else
-  //    return false;
-  //}
-  //else
-  //  return false;
-
+  if(m_editorState == EditorState::EDITING)
+  {
+    m_drawingSheet.OnKeyPressed(e->GetKeyCode());
+  }
   return true;
 }
 

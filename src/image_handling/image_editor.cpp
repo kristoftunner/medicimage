@@ -170,6 +170,26 @@ void ImageEditor::DrawLine(glm::vec2 begin, glm::vec2 end, glm::vec4 color, floa
     cv::Scalar(color.b, color.g, color.r), static_cast<int>(thickness));
 }
 
+void ImageEditor::DrawText(glm::vec2 bottomLeft, const std::string &text, int fontSize, float thickness)
+{
+  int baseline = 0;
+  glm::vec2 imageSize = {s_image.cols, s_image.rows};
+  cv::Point scaledBottomLeft{ static_cast<int>(bottomLeft.x * imageSize.x), static_cast<int>(bottomLeft.y * imageSize.y) };
+  constexpr auto backgroundScaler = 1.0;
+  auto textSize = cv::getTextSize(text, s_defaultFont, fontSize * backgroundScaler, thickness, &baseline);
+  auto bgTopRight = scaledBottomLeft + cv::Point{ textSize.width, -textSize.height };
+  auto bgBottomLeft = scaledBottomLeft + cv::Point(0, baseline * backgroundScaler);
+  cv::rectangle(s_image, cv::Rect(bgBottomLeft, bgTopRight), cv::Scalar::all(255), -1); // white rectangle behind the text
+  cv::putText(s_image, text, scaledBottomLeft, s_defaultFont, fontSize, cv::Scalar::all(0), thickness);
+}
+
+glm::vec2 ImageEditor::GetTextBoundingBox(const std::string &text, int fontSize, float thickness)
+{
+  int baseline = 0;
+  auto textSize = cv::getTextSize(text, s_defaultFont, fontSize, thickness, &baseline); 
+  return glm::vec2{static_cast<float>(textSize.width) / static_cast<float>(s_image.cols), static_cast<float>(textSize.height) / static_cast<float>(s_image.rows)};
+}
+
 cv::UMat ImageEditor::AddFooter(cv::UMat image, const std::string& footerText)
 {
   // add a sticker to the bottom with the image name, date and time
