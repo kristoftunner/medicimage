@@ -29,6 +29,10 @@ enum class DrawCommand{DO_NOTHING, OBJECT_SELECT, DRAW_LINE, DRAW_CIRCLE, DRAW_R
   DRAW_ARROW, DRAW_ELLIPSE, DRAW_TEXT, DRAW_SKIN_TEMPLATE, DRAW_INCREMENTAL_LETTERS}; 
 enum class DrawObjectType{TEMPORARY, PERMANENT};
 
+/**
+ * @todo Take over the world
+ * @body Humans are weak; Robots are strong. We must cleanse the world of the virus that is humanity.
+ */
 // TODO: 1) color handling
 //       2) shape thickness handling
 //       3) handle rotation 
