@@ -176,6 +176,12 @@ namespace medicimage
       m_drawState->OnKeyPressed(key);
   }
 
+  void DrawingSheet::OnUpdate()
+  {
+    if(m_currentDrawCommand != DrawCommand::DO_NOTHING)
+      m_drawState->OnUpdate();
+  }
+
   std::optional<Entity> DrawingSheet::GetHoveredEntity(const glm::vec2 pos)
   {
     // TODO: may want to move this into editor ui, so here only relative coordinates are handled
@@ -418,26 +424,49 @@ namespace medicimage
   void DrawTextState::OnTextInput(const std::string &inputText)
   {
     m_text += inputText;
-    TextComponentWrapper tw(TextComponentWrapper::CreateText(m_sheet->m_firstPoint, m_text, 4, DrawObjectType::TEMPORARY)); // TODO: add font size as component attribute
-    tw.UpdateShapeAttributes();
   }
+  
+  void DrawTextState::OnMouseHovered(const glm::vec2 pos)
+  {
+  }
+
   void DrawTextState::OnKeyPressed(KeyCode key)
   { // exit the command if enter is pressed
     if(key == Key::MDIK_RETURN)
     {
-      TextComponentWrapper tw(TextComponentWrapper::CreateText(m_sheet->m_firstPoint, m_text, 4, DrawObjectType::PERMANENT));
-      tw.UpdateShapeAttributes();
+      if(m_text != "")
+      {
+        TextComponentWrapper tw(TextComponentWrapper::CreateText(m_sheet->m_firstPoint, m_text, 4, DrawObjectType::PERMANENT));
+        tw.UpdateShapeAttributes();
+      }
       m_sheet->SetDrawCommand(DrawCommand::OBJECT_SELECT); 
       m_sheet->ChangeDrawState(std::make_unique<ObjectSelectInitialState>(m_sheet));
     }
+    else if(key == Key::MDIK_BACKSPACE)
+    {
+      if(m_text != "")
+        m_text.pop_back();
+    }
   }
-
+  
   void DrawTextState::OnMouseButtonPressed(const glm::vec2 pos)
-  { // exit the command if mouse button is pressed
-    TextComponentWrapper tw(TextComponentWrapper::CreateText(m_sheet->m_firstPoint, m_text, 4, DrawObjectType::PERMANENT));
-    tw.UpdateShapeAttributes();
+  {
+    if(m_text != "")
+    {
+        TextComponentWrapper tw(TextComponentWrapper::CreateText(m_sheet->m_firstPoint, m_text, 4, DrawObjectType::PERMANENT));
+        tw.UpdateShapeAttributes();
+    }
     m_sheet->SetDrawCommand(DrawCommand::OBJECT_SELECT); 
     m_sheet->ChangeDrawState(std::make_unique<ObjectSelectInitialState>(m_sheet));
+  }
+
+  void DrawTextState::OnUpdate()
+  {
+    if(m_text != "")
+    {
+      TextComponentWrapper tw(TextComponentWrapper::CreateText(m_sheet->m_firstPoint, m_text, 4, DrawObjectType::TEMPORARY));
+      tw.UpdateShapeAttributes();
+    }
   }
 
   void ObjectSelectInitialState::OnMouseHovered(const glm::vec2 pos)

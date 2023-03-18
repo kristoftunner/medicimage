@@ -379,14 +379,6 @@ namespace medicimage
     auto& text = m_entity.GetComponent<TextComponent>();
     ImageEditor::DrawText(transform.translation, text.text, text.fontSize, 5.0); // TODO: add thickness component
     
-    if(commonAttributes.selected)
-    {
-      auto& pickPoints = m_entity.GetComponent<PickPointsComponent>().pickPoints;
-      for(auto& point : pickPoints)
-      {
-        ImageEditor::DrawCircle(point + transform.translation, s_pickPointBoxSize / 2, s_pickPointColor, 2, true);
-      }
-    }
   }
 
 

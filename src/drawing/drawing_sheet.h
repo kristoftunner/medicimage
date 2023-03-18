@@ -51,7 +51,7 @@ public:
   void OnMouseButtonReleased(const glm::vec2 pos);
   void OnTextInput(const std::string& inputText);
   void OnKeyPressed(KeyCode key);
-  
+  void OnUpdate(); 
   // These are only for debug purpose
   BaseDrawState* GetDrawState() { return m_drawState.get(); }
   std::vector<glm::vec2> GetDrawingPoints(){ return std::vector<glm::vec2>{m_firstPoint, m_secondPoint};}
@@ -110,6 +110,7 @@ public:
   virtual void OnMouseButtonReleased(const glm::vec2 pos) {}
   virtual void OnTextInput(const std::string& inputText) {}
   virtual void OnKeyPressed(KeyCode key) {}
+  virtual void OnUpdate(){} // this function is called on every frame
 
   std::function<void(entt::entity)> DeleteTemporaries()
   {
@@ -160,9 +161,11 @@ class DrawTextState : public BaseDrawState
 {
 public:
   DrawTextState(DrawingSheet* sheet) : BaseDrawState(sheet, "DrawTextState") {m_sheet->ClearSelectionShapes();}
+  void OnMouseHovered(const glm::vec2 pos) override;
   void OnTextInput(const std::string& inputText) override; 
   void OnKeyPressed(KeyCode key) override;
   void OnMouseButtonPressed(const glm::vec2 pos) override;
+  void OnUpdate() override;
 private:
   std::string m_text;
 };

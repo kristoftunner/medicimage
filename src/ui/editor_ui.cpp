@@ -170,6 +170,8 @@ void EditorUI::ShowImageWindow()
       }
       else
         m_drawingSheet.OnMouseHovered({mousePosOnImage.x, mousePosOnImage.y});
+      
+      m_drawingSheet.OnUpdate();
     }
   }
   else
