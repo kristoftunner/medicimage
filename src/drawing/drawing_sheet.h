@@ -25,7 +25,8 @@ class ObjectDraggingState;
 class DrawTextInitialState;
 class DrawTextState;
 
-enum class DrawCommand{DO_NOTHING, OBJECT_SELECT, DRAW_LINE, DRAW_CIRCLE, DRAW_RECTANGLE, DRAW_ARROW, DRAW_ELLIPSE, DRAW_TEXT, DRAW_SKIN_TEMPLATE}; // Possible commands: DRAG(MOVE), 
+enum class DrawCommand{DO_NOTHING, OBJECT_SELECT, DRAW_LINE, DRAW_CIRCLE, DRAW_RECTANGLE, 
+  DRAW_ARROW, DRAW_ELLIPSE, DRAW_TEXT, DRAW_SKIN_TEMPLATE, DRAW_INCREMENTAL_LETTERS}; 
 enum class DrawObjectType{TEMPORARY, PERMANENT};
 
 // TODO: 1) color handling

@@ -98,6 +98,17 @@ void AttributeEditor::DrawAttributeEdit(Entity entity)
     }
   });
 
+  DrawComponent<ThicknessComponent>("Thickness", entity, [&](auto& component)
+  {
+    ImGui::Text("Thickness");
+    ImGui::SliderInt("##T", &(component.thickness), 2, 10, "%d");
+    if (entity.HasComponent<SkinTemplateComponent>())
+    { // TODO REFACTOR: it is right now it seems a bit hacky, need to refactor this
+      SkinTemplateComponentWrapper st(entity);
+      st.UpdateShapeAttributes();
+    }
+  });
+
   DrawComponent<SkinTemplateComponent>("Skin template params", entity, [&](auto& component)
   {
     SkinTemplateComponentWrapper st(entity);

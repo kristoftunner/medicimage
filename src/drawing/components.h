@@ -75,6 +75,12 @@ namespace medicimage
     ColorComponent(glm::vec4 color) : color(color){}
   };
 
+  struct ThicknessComponent
+  {
+    int thickness = 3;
+    ThicknessComponent() = default;
+  };
+
   struct CommonAttributesComponent
   {
     bool selected = false;
@@ -89,11 +95,10 @@ namespace medicimage
   {
     // center is described by the translation in the transform component
     float radius = 0.0f;  // normalized
-    int thickness = 5.0f; // might extract this attribute also out into a component
   
     CircleComponent() = default;
-    CircleComponent(float radius, int thickness)
-      : radius(radius), thickness(thickness){}
+    CircleComponent(float radius)
+      : radius(radius){}
   };
 
   struct RectangleComponent
@@ -101,33 +106,30 @@ namespace medicimage
     // width and height are also relative, should be scaled by the pixel size of the image 
     float height = 0.0f;
     float width = 0.0f;
-    float thickness = 5.0f;
   
     RectangleComponent() = default;
-    RectangleComponent(float width, float height, float thickness)
-      : width(width), height(height), thickness(thickness) {}
+    RectangleComponent(float width, float height)
+      : width(width), height(height) {}
   };
 
   struct ArrowComponent
   {
     glm::vec2 begin{0.0f, 0.0f};  // this is 0,0 in most cases, only changes when editing with pickpoints, because it seems logicaly correct to use instead of the transform
     glm::vec2 end {0.0f, 0.0f}; 
-    float thickness = 5.0f;
     
     ArrowComponent() = default;
-    ArrowComponent(glm::vec2 end, glm::vec2 begin, float thickness)
-      : end(end), begin(begin), thickness(thickness) {}
+    ArrowComponent(glm::vec2 end, glm::vec2 begin)
+      : end(end), begin(begin) {}
   };
   
   struct LineComponent 
   {
     glm::vec2 begin{0.0f, 0.0f};  // this is 0,0 in most cases, only changes when editing with pickpoints, because it seems logicaly correct to use instead of the transform
     glm::vec2 end {0.0f, 0.0f}; 
-    float thickness = 5.0f;
     
     LineComponent() = default;
-    LineComponent(glm::vec2 end, glm::vec2 begin, float thickness)
-      : end(end), begin(begin), thickness(thickness) {}
+    LineComponent(glm::vec2 end, glm::vec2 begin)
+      : end(end), begin(begin) {}
   };
   
   struct SkinTemplateComponent

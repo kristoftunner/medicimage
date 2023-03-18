@@ -80,5 +80,5 @@ Store the document with all the metadata (drawn objects and it's attributes) - t
 - [ ] automaticaly incremented text labeling
 - [x] Implement the textbox
 - [ ] fix every bug
-- [ ] properties for edit
+- [x] properties for edit
 - [x] Implement line tool, if polygon easy implement that one as well

@@ -13,6 +13,7 @@ namespace medicimage
     auto& transform = entity.GetComponent<TransformComponent>();
     auto& color = entity.AddComponent<ColorComponent>();  
     auto& rectangle = entity.AddComponent<RectangleComponent>();
+    auto& thickness = entity.AddComponent<ThicknessComponent>();
 
     auto tmpRect = cv::Rect2f(cv::Point2f{ firstPoint.x, firstPoint.y }, cv::Point2f{ secondPoint.x, secondPoint.y });
     rectangle.width = tmpRect.width;
@@ -84,10 +85,11 @@ namespace medicimage
     auto& transform  = m_entity.GetComponent<TransformComponent>();
     auto& commonAttributes = m_entity.GetComponent<CommonAttributesComponent>();
     auto& rectangle = m_entity.GetComponent<RectangleComponent>();
+    auto& thickness = m_entity.GetComponent<ThicknessComponent>();
     auto& color = m_entity.GetComponent<ColorComponent>().color;
     auto& topleft = transform.translation;
     auto bottomright = topleft + glm::vec2{rectangle.width, rectangle.height}; 
-    ImageEditor::DrawRectangle(topleft, bottomright, color, rectangle.thickness, commonAttributes.filled);
+    ImageEditor::DrawRectangle(topleft, bottomright, color, thickness.thickness, commonAttributes.filled);
     
     if(commonAttributes.selected)
     {
@@ -109,6 +111,7 @@ namespace medicimage
 
     auto& color = entity.AddComponent<ColorComponent>();  
     auto& circle = entity.AddComponent<CircleComponent>();
+    auto& thickness = entity.AddComponent<ThicknessComponent>();
     circle.radius = glm::length(firstPoint - secondPoint);
 
     return entity;
@@ -167,8 +170,9 @@ namespace medicimage
     auto& commonAttributes = m_entity.GetComponent<CommonAttributesComponent>();
     auto& circle = m_entity.GetComponent<CircleComponent>();
     auto& color = m_entity.GetComponent<ColorComponent>().color;
+    auto& thickness = m_entity.GetComponent<ThicknessComponent>();
     auto& center = transform.translation;
-    ImageEditor::DrawCircle(center, circle.radius, color, circle.thickness, commonAttributes.filled);
+    ImageEditor::DrawCircle(center, circle.radius, color, thickness.thickness, commonAttributes.filled);
 
     if(commonAttributes.selected)
     {
@@ -192,6 +196,7 @@ namespace medicimage
 
     auto& color = entity.AddComponent<ColorComponent>();  
     auto& arrow = entity.AddComponent<ArrowComponent>();
+    auto& thickness = entity.AddComponent<ThicknessComponent>();
     arrow.end = secondPoint - firstPoint;
 
     return entity;
@@ -245,9 +250,10 @@ namespace medicimage
     auto& commonAttributes = m_entity.GetComponent<CommonAttributesComponent>();
     auto& arrow = m_entity.GetComponent<ArrowComponent>();
     auto& color = m_entity.GetComponent<ColorComponent>().color;
+    auto& thickness = m_entity.GetComponent<ThicknessComponent>();
     auto begin = arrow.begin + transform.translation; 
     auto end = arrow.end + transform.translation; 
-    ImageEditor::DrawArrow(begin, end, color, arrow.thickness, 0.1);
+    ImageEditor::DrawArrow(begin, end, color, thickness.thickness, 0.1);
     
     if(commonAttributes.selected)
     {
@@ -269,6 +275,7 @@ namespace medicimage
 
     auto& color = entity.AddComponent<ColorComponent>();  
     auto& line = entity.AddComponent<LineComponent>();
+    auto& thickness = entity.AddComponent<ThicknessComponent>();
     line.end = secondPoint - firstPoint;
 
     return entity;
@@ -322,9 +329,10 @@ namespace medicimage
     auto& commonAttributes = m_entity.GetComponent<CommonAttributesComponent>();
     auto& line = m_entity.GetComponent<LineComponent>();
     auto& color = m_entity.GetComponent<ColorComponent>().color;
+    auto& thickness = m_entity.GetComponent<ThicknessComponent>();
     auto begin = line.begin + transform.translation; 
     auto end = line.end + transform.translation; 
-    ImageEditor::DrawLine(begin, end, color, line.thickness, 0.1);
+    ImageEditor::DrawLine(begin, end, color, thickness.thickness, 0.1);
     
     if(commonAttributes.selected)
     {
@@ -342,6 +350,7 @@ namespace medicimage
     entity.GetComponent<CommonAttributesComponent>().temporary = objectType == DrawObjectType::TEMPORARY ? true : false;
     
     auto& transform = entity.GetComponent<TransformComponent>();
+    auto& thickness = entity.AddComponent<ThicknessComponent>();
     transform.translation = firstPoint;
 
     auto& text = entity.AddComponent<TextComponent>();
@@ -376,9 +385,9 @@ namespace medicimage
   {
     auto& transform  = m_entity.GetComponent<TransformComponent>();
     auto& commonAttributes = m_entity.GetComponent<CommonAttributesComponent>();
+    auto& thickness = m_entity.GetComponent<ThicknessComponent>();
     auto& text = m_entity.GetComponent<TextComponent>();
-    ImageEditor::DrawText(transform.translation, text.text, text.fontSize, 5.0); // TODO: add thickness component
-    
+    ImageEditor::DrawText(transform.translation, text.text, text.fontSize, thickness.thickness); // TODO: add thickness component
   }
 
 
@@ -391,6 +400,7 @@ namespace medicimage
     auto& transform = entity.GetComponent<TransformComponent>();
     transform.translation = firstPoint;
     auto& skinTemplate = entity.AddComponent<SkinTemplateComponent>();
+    auto& thickness = entity.AddComponent<ThicknessComponent>();
     auto& color = entity.AddComponent<ColorComponent>();  
 
     static constexpr float minBoundingWidth = 0.1;
@@ -459,6 +469,7 @@ namespace medicimage
       auto rect = RectangleComponentWrapper::CreateRectangle(vertTopLeft, vertBottomRight, objectType);
       rect.GetComponent<ColorComponent>() = color; 
       rect.GetComponent<CommonAttributesComponent>().composed = true;
+      rect.GetComponent<ThicknessComponent>() = entity.GetComponent<ThicknessComponent>();
       skinTemplate.verticalSlices.push_back(rect.GetHandle());
     }
     for (auto i = 0; i < skinTemplate.leftHorSliceCount; i++)
@@ -471,6 +482,7 @@ namespace medicimage
       auto rect = RectangleComponentWrapper::CreateRectangle(horTopLeft, horBottomRight, objectType);
       rect.GetComponent<ColorComponent>() = color; 
       rect.GetComponent<CommonAttributesComponent>().composed = true;
+      rect.GetComponent<ThicknessComponent>() = entity.GetComponent<ThicknessComponent>();
       skinTemplate.leftHorizontalSlices.push_back(rect.GetHandle());
     }
 
@@ -484,6 +496,7 @@ namespace medicimage
       auto rect = RectangleComponentWrapper::CreateRectangle(horTopLeft, horBottomRight, objectType);
       rect.GetComponent<ColorComponent>() = color; 
       rect.GetComponent<CommonAttributesComponent>().composed = true;
+      rect.GetComponent<ThicknessComponent>() = entity.GetComponent<ThicknessComponent>();
       skinTemplate.rightHorizontalSlices.push_back(rect.GetHandle());
     }
   }

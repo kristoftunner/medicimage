@@ -493,7 +493,7 @@ namespace medicimage
       RectangleComponentWrapper rw(RectangleComponentWrapper::CreateRectangle(m_sheet->m_firstPoint, m_sheet->m_secondPoint, DrawObjectType::TEMPORARY));
       auto entity = rw.GetEntity();
       entity.GetComponent<ColorComponent>().color = m_sheet->s_selectBoxColor;
-      entity.GetComponent<RectangleComponent>().thickness = 2;
+      entity.GetComponent<ThicknessComponent>().thickness = 2;
       entity.GetComponent<CommonAttributesComponent>().filled = true;
     }
   }
