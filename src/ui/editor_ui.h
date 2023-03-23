@@ -58,7 +58,8 @@ private:
   static bool s_enterPressed;
 
   std::unique_ptr<Texture2D> m_circleIcon, m_lineIcon, m_pencilIcon, m_saveIcon, m_deleteIcon,
-    m_rectangleIcon, m_arrowIcon, m_addTextIcon, m_screenshotIcon, m_undoIcon, m_skinTemplateIcon;
+    m_rectangleIcon, m_arrowIcon, m_addTextIcon, m_screenshotIcon, m_undoIcon, m_skinTemplateIcon,
+    m_incrementalLettersIcon;
 
   std::vector<ImageDocument>::const_iterator m_activeDocument;
   std::unique_ptr<Texture2D> m_frame;

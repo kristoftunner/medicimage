@@ -24,7 +24,7 @@ class PickPointSelectedState;
 class ObjectDraggingState; 
 class DrawTextInitialState;
 class DrawTextState;
-
+class DrawIncrementalLetters; 
 enum class DrawCommand{DO_NOTHING, OBJECT_SELECT, DRAW_LINE, DRAW_CIRCLE, DRAW_RECTANGLE, 
   DRAW_ARROW, DRAW_ELLIPSE, DRAW_TEXT, DRAW_SKIN_TEMPLATE, DRAW_INCREMENTAL_LETTERS}; 
 enum class DrawObjectType{TEMPORARY, PERMANENT};
@@ -101,6 +101,7 @@ private:
   friend class ObjectDraggingState; 
   friend class DrawTextInitialState;
   friend class DrawTextState;
+  friend class DrawIncrementalLetters; 
 };
 
 // Draw states
@@ -166,13 +167,23 @@ class DrawTextState : public BaseDrawState
 {
 public:
   DrawTextState(DrawingSheet* sheet) : BaseDrawState(sheet, "DrawTextState") {m_sheet->ClearSelectionShapes();}
-  void OnMouseHovered(const glm::vec2 pos) override;
   void OnTextInput(const std::string& inputText) override; 
   void OnKeyPressed(KeyCode key) override;
   void OnMouseButtonPressed(const glm::vec2 pos) override;
   void OnUpdate() override;
 private:
   std::string m_text;
+};
+
+class DrawIncrementalLetters : public BaseDrawState
+{
+public:
+  DrawIncrementalLetters(DrawingSheet* sheet) : BaseDrawState(sheet, "DrawIncrementalLetters") {m_sheet->ClearSelectionShapes();}
+  void OnKeyPressed(KeyCode key) override;
+  void OnMouseButtonPressed(const glm::vec2 pos) override;
+private:
+  void IncrementLetter();
+  std::string m_text = "a";
 };
 
 // select states

@@ -69,7 +69,8 @@ void EditorUI::OnAttach()
   m_addTextIcon  = std::move(std::make_unique<Texture2D>("add-text","assets/icons/add-text.png"));
   m_undoIcon  = std::move(std::make_unique<Texture2D>("add-text","assets/icons/left-arrow.png"));
   m_skinTemplateIcon  = std::move(std::make_unique<Texture2D>("add-text","assets/icons/skin-template.png"));
-
+  m_incrementalLettersIcon = std::move(std::make_unique<Texture2D>("add-incremental-letters","assets/icons/add-incremental-letters.png"));
+  
   // initieliaze the frames 
   m_frame = std::make_unique<Texture2D>("initial checkerboard", "assets/textures/Checkerboard.png"); // initialize the edited frame with the current frame and later update only the current frame in OnUpdate
   m_camera.Open();
@@ -394,13 +395,20 @@ void EditorUI::ShowToolbox()
       m_drawingSheet.SetDrawCommand(DrawCommand::DRAW_TEXT);
   }
   
+  style.Colors[ImGuiCol_Button] = m_drawingSheet.GetDrawCommand() == DrawCommand::DRAW_INCREMENTAL_LETTERS ? s_toolUsedBgColor : s_defaultFrameBgColor; 
+  if (ImGui::ImageButton("addIncrementalLetters", m_incrementalLettersIcon->GetShaderResourceView(), smallIconSize, uvMin, uvMax, iconBg, tintColor))
+  {
+    if(m_editorState == EditorState::EDITING)
+      m_drawingSheet.SetDrawCommand(DrawCommand::DRAW_INCREMENTAL_LETTERS);
+  }
+  ImGui::SameLine();
+  
   style.Colors[ImGuiCol_Button] = m_drawingSheet.GetDrawCommand() == DrawCommand::DRAW_CIRCLE ? s_toolUsedBgColor : s_defaultFrameBgColor; 
   if (ImGui::ImageButton("circle", m_circleIcon->GetShaderResourceView(), smallIconSize, uvMin, uvMax, iconBg, tintColor))
   {
     if(m_editorState == EditorState::EDITING)
       m_drawingSheet.SetDrawCommand(DrawCommand::DRAW_CIRCLE);
   }
-  ImGui::SameLine();
   
   style.Colors[ImGuiCol_Button] = m_drawingSheet.GetDrawCommand() == DrawCommand::DRAW_LINE ? s_toolUsedBgColor : s_defaultFrameBgColor; 
   if (ImGui::ImageButton("line", m_lineIcon->GetShaderResourceView(), smallIconSize, uvMin, uvMax, iconBg, tintColor))
@@ -408,6 +416,7 @@ void EditorUI::ShowToolbox()
     if(m_editorState == EditorState::EDITING)
       m_drawingSheet.SetDrawCommand(DrawCommand::DRAW_LINE);
   }
+  ImGui::SameLine();
   
   style.Colors[ImGuiCol_Button] = m_drawingSheet.GetDrawCommand() == DrawCommand::DRAW_RECTANGLE ? s_toolUsedBgColor : s_defaultFrameBgColor; 
   if (ImGui::ImageButton("rectangle", m_rectangleIcon->GetShaderResourceView(), smallIconSize, uvMin, uvMax, iconBg, tintColor))
@@ -415,7 +424,6 @@ void EditorUI::ShowToolbox()
     if(m_editorState == EditorState::EDITING)
       m_drawingSheet.SetDrawCommand(DrawCommand::DRAW_RECTANGLE);
   }
-  ImGui::SameLine();
 
   style.Colors[ImGuiCol_Button] = m_drawingSheet.GetDrawCommand() == DrawCommand::DRAW_ARROW ? s_toolUsedBgColor : s_defaultFrameBgColor; 
   if (ImGui::ImageButton("arrow", m_arrowIcon->GetShaderResourceView(), smallIconSize, uvMin, uvMax, iconBg, tintColor))
@@ -423,6 +431,7 @@ void EditorUI::ShowToolbox()
     if(m_editorState == EditorState::EDITING)
       m_drawingSheet.SetDrawCommand(DrawCommand::DRAW_ARROW);
   }
+  ImGui::SameLine();
   
   style.Colors[ImGuiCol_Button] = m_drawingSheet.GetDrawCommand() == DrawCommand::DRAW_SKIN_TEMPLATE ? s_toolUsedBgColor : s_defaultFrameBgColor; 
   if (ImGui::ImageButton("skin-template", m_skinTemplateIcon->GetShaderResourceView(), smallIconSize, uvMin, uvMax, iconBg, tintColor))

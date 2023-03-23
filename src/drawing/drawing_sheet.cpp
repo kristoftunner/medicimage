@@ -49,6 +49,11 @@ namespace medicimage
         m_drawState = std::make_unique<DrawTextInitialState>(this);
         break;
       }
+      case DrawCommand::DRAW_INCREMENTAL_LETTERS:
+      {
+        m_drawState = std::make_unique<DrawIncrementalLetters>(this);
+        break;
+      }
       case DrawCommand::DO_NOTHING:
       {
         m_drawState = std::make_unique<BaseDrawState>(this);
@@ -426,10 +431,6 @@ namespace medicimage
     m_text += inputText;
   }
   
-  void DrawTextState::OnMouseHovered(const glm::vec2 pos)
-  {
-  }
-
   void DrawTextState::OnKeyPressed(KeyCode key)
   { // exit the command if enter is pressed
     if(key == Key::MDIK_RETURN)
@@ -467,6 +468,51 @@ namespace medicimage
       TextComponentWrapper tw(TextComponentWrapper::CreateText(m_sheet->m_firstPoint, m_text, 4, DrawObjectType::TEMPORARY));
       tw.UpdateShapeAttributes();
     }
+  }
+  
+  void DrawIncrementalLetters::OnKeyPressed(KeyCode key)
+  {
+    if(key == Key::MDIK_RETURN)
+    {
+      m_sheet->SetDrawCommand(DrawCommand::OBJECT_SELECT); 
+      m_sheet->ChangeDrawState(std::make_unique<ObjectSelectInitialState>(m_sheet));
+    }
+  }
+  void DrawIncrementalLetters::OnMouseButtonPressed(const glm::vec2 pos)
+  {
+    m_sheet->m_firstPoint = pos / m_sheet->m_sheetSize; 
+    TextComponentWrapper tw(TextComponentWrapper::CreateText(m_sheet->m_firstPoint, m_text, 2, DrawObjectType::PERMANENT));
+    tw.UpdateShapeAttributes();
+    IncrementLetter();
+  }
+
+  void DrawIncrementalLetters::IncrementLetter()
+  {
+    char* currentLetter;
+    if(m_text.size() == 1)
+      currentLetter = &(m_text.at(0));
+    else if(m_text.size() == 2)
+      currentLetter = &(m_text.at(1));
+
+    char& c = *currentLetter;
+    if((c >= 'a') && (c < 'z'))
+      c++;
+    else if(c == 'z')
+      c = 'A';
+    else if((c >= 'A') && (c < 'Z'))
+      c++;
+    else if(c == 'Z')
+    {
+      if(m_text.size() == 1)
+        m_text += 'a';
+      else if(m_text.size() == 2)
+      {
+        m_sheet->SetDrawCommand(DrawCommand::OBJECT_SELECT); 
+        m_sheet->ChangeDrawState(std::make_unique<ObjectSelectInitialState>(m_sheet));
+      }
+    }
+    else
+      APP_CORE_WARN("Some edge case happened during letter incrementing");    
   }
 
   void ObjectSelectInitialState::OnMouseHovered(const glm::vec2 pos)
@@ -580,6 +626,10 @@ namespace medicimage
           SkinTemplateComponentWrapper sw(entity);
           sw.OnPickPointDrag(diff, selectedPointIndex);
         }
+        else if(entity.HasComponent<TextComponent>())
+        { // Do nothing wiht tex component
+          ;
+        }
         else
           APP_CORE_ERR("WTF this component");
       }
@@ -616,4 +666,5 @@ namespace medicimage
   {
     m_sheet->ChangeDrawState(std::make_unique<ObjectSelectedState>(m_sheet));
   }
+
 } // namespace medicimage
