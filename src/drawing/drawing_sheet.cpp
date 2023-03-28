@@ -114,11 +114,21 @@ namespace medicimage
       if(!tw.IsComposed())
         tw.Draw();
     }
+
     auto skinTemplates = Entity::View<SkinTemplateComponent>();
     for(auto e : skinTemplates)
     {
       Entity entity(e);
       SkinTemplateComponentWrapper sw(entity);
+      if(!sw.IsComposed())
+        sw.Draw();
+    }
+    
+    auto splines = Entity::View<SplineComponent>();
+    for(auto e : splines)
+    {
+      Entity entity(e);
+      SplineComponentWrapper sw(entity);
       if(!sw.IsComposed())
         sw.Draw();
     }
@@ -131,6 +141,7 @@ namespace medicimage
     std::for_each(lines.begin(), lines.end(), m_drawState->DeleteTemporaries());
     std::for_each(texts.begin(), texts.end(), m_drawState->DeleteTemporaries());
     std::for_each(skinTemplates.begin(), skinTemplates.end(), m_drawState->DeleteTemporaries());
+    std::for_each(splines.begin(), splines.end(), m_drawState->DeleteTemporaries());
 
     return std::move(std::make_unique<Texture2D>(*m_drawing.get()));
   }

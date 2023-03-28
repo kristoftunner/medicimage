@@ -46,7 +46,6 @@ void AttributeEditor::DrawAttributeEdit(Entity entity)
 {
   DrawComponent<ColorComponent>("Color", entity, [&](auto& component)
   {
-    ImGui::Unindent(ImGui::GetTreeNodeToLabelSpacing());
     static ImVec4 backup_color;
     auto& color = component.color;
     if (ImGui::Button("palette"))
@@ -108,6 +107,12 @@ void AttributeEditor::DrawAttributeEdit(Entity entity)
       st.UpdateShapeAttributes();
     }
   });
+  
+  DrawComponent<TextComponent>("Font size", entity, [&](auto& component)
+  {
+    ImGui::Text("FontSize");
+    ImGui::SliderInt("##F", &(component.fontSize), 2, 10, "%d");
+  });
 
   DrawComponent<SkinTemplateComponent>("Skin template params", entity, [&](auto& component)
   {
@@ -122,6 +127,8 @@ void AttributeEditor::DrawAttributeEdit(Entity entity)
     ImGui::SliderInt("##LHC", &(component.leftHorSliceCount), leftHorSliceCountBounds.x, leftHorSliceCountBounds.y, "%d");
     ImGui::Text("Right horizontal slice count");
     ImGui::SliderInt("##RHC", &(component.rightHorSliceCount), rightHorSliceCountBounds.x, rightHorSliceCountBounds.y, "%d");
+    ImGui::Text("Ellipse");
+    ImGui::Checkbox("Ellipse", &(component.drawSpline));
     st.UpdateShapeAttributes();
   });
 }

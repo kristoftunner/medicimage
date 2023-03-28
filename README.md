@@ -44,6 +44,11 @@ During editing the default state is object selection. If a draw command is selec
 2) Left click on the document -> 3) 
 3) Adding text -> Left clock on the document -> ObjectSelectionInitialState 
 
+**Add letters incrementally**
+1) Initial -- just hovering on the document
+2) Left click on the document -> 3) 
+3) Adding letters in textbox incrementally -> Left click on the document -> 3), enter or right click -> ObjectSelectionInitialState
+
 **Select object**
 1) ObjectSelectionInitialState. Mouse pressed -> 2) 
 2) ObjectSelectionState. Mouse down: updating the selection area. Mouse released: if objects selected -> 3) else -> 1)
@@ -72,13 +77,22 @@ Store the document with all the metadata (drawn objects and it's attributes) - t
 
 ## 2023.03.17. features update
 - [x] color palette for the color edit (black, red, green, blue, white, magenta)
-- [ ] skin template: checkbox for adding the ellipse(black)
+- [x] skin template: checkbox for adding the ellipse(black)
 - [x] skin template: span should be 90%
 - [x] default color: red
 - [x] skintemplate: vertical slices not centered and should be configured by pickpoints
-- [ ] automatatically labeled boxes
-- [ ] automaticaly incremented text labeling
+- [x] automaticaly incremented text labeling
 - [x] Implement the textbox
 - [ ] fix every bug
 - [x] properties for edit
 - [x] Implement line tool, if polygon easy implement that one as well
+
+## 2023.03.23. feature updates
+### Bugs:
+- [ ] fix bug of dragging the object only with one mouse click
+- [ ] Incremental letters should go from A - ZZ
+
+## Features for now
+- [x] property edit for font size
+### Features for the future:
+- [ ] select camera in the settings

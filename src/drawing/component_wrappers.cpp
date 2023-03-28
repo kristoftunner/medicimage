@@ -390,6 +390,38 @@ namespace medicimage
     ImageEditor::DrawText(transform.translation, text.text, text.fontSize, thickness.thickness); // TODO: add thickness component
   }
 
+  Entity SplineComponentWrapper::CreateSpline(glm::vec2 begin, glm::vec2 middle, glm::vec2 end, DrawObjectType objectType)
+  {
+    auto entity = Entity::CreateEntity(0, "Spline");
+    entity.GetComponent<CommonAttributesComponent>().temporary = objectType == DrawObjectType::TEMPORARY ? true : false;
+    
+    auto& transform = entity.GetComponent<TransformComponent>();
+    transform.translation = begin;
+
+    auto& color = entity.AddComponent<ColorComponent>();  
+    auto& spline = entity.AddComponent<SplineComponent>();
+    auto& thickness = entity.AddComponent<ThicknessComponent>();
+    spline.begin = {0.0,0.0};
+    spline.middle = middle - begin;
+    spline.end = end - begin;
+    spline.lineCount = static_cast<int>(glm::length(end - begin) / 0.001);
+    return entity;
+  }
+
+  void SplineComponentWrapper::Draw()
+  {
+    auto& transform  = m_entity.GetComponent<TransformComponent>();
+    auto& commonAttributes = m_entity.GetComponent<CommonAttributesComponent>();
+    auto& spline = m_entity.GetComponent<SplineComponent>();
+    auto& color = m_entity.GetComponent<ColorComponent>().color;
+    auto& thickness = m_entity.GetComponent<ThicknessComponent>();
+
+    auto begin = transform.translation + spline.begin; 
+    auto middle = transform.translation + spline.middle; 
+    auto end = transform.translation + spline.end; 
+    ImageEditor::DrawSpline(begin, middle, end, spline.lineCount, color, thickness.thickness);
+    
+  }
 
   Entity SkinTemplateComponentWrapper::CreateSkinTemplate(glm::vec2 firstPoint, glm::vec2 secondPoint, DrawObjectType objectType)
   {
@@ -425,6 +457,8 @@ namespace medicimage
       auto horizontalSliceWidth = (1 - skinTemplate.vertSliceWidthSpan) / 2 * skinTemplate.boundingRectSize.x;
       assert(verticalSliceWidth > s_minimumSliceSize);
       assert(horizontalSliceHeight > s_minimumSliceSize);
+
+      skinTemplate.drawable = true;
       GenerateSlices(entity);
     }
     return entity;
@@ -435,69 +469,100 @@ namespace medicimage
     auto& transform = entity.GetComponent<TransformComponent>();
     auto& skinTemplate = entity.GetComponent<SkinTemplateComponent>();
 
-    //assert(skinTemplate.leftHorSliceWidthSpan + skinTemplate.rightHorSliceWidthSpan + skinTemplate.vertSliceWidthSpan == 1.0);
-    // clear the current rectangles, because we will generate the new ones according to the number of slices and the vertical/horizontal sizes
-    for(auto e : skinTemplate.leftHorizontalSlices)
+    if(skinTemplate.drawable == true)
     {
-      Entity::DestroyEntity(Entity(e));
-    }
-    skinTemplate.leftHorizontalSlices.clear();
-    for(auto e : skinTemplate.rightHorizontalSlices)
-    {
-      Entity::DestroyEntity(Entity(e));
-    }
-    skinTemplate.rightHorizontalSlices.clear();
-    for(auto e : skinTemplate.verticalSlices)
-    {
-      Entity::DestroyEntity(Entity(e));
-    }
-    skinTemplate.verticalSlices.clear();
+      // clear the current rectangles, because we will generate the new ones according to the number of slices and the vertical/horizontal sizes
+      for(auto e : skinTemplate.leftHorizontalSlices)
+      {
+        Entity::DestroyEntity(Entity(e));
+      }
+      skinTemplate.leftHorizontalSlices.clear();
+      for(auto e : skinTemplate.rightHorizontalSlices)
+      {
+        Entity::DestroyEntity(Entity(e));
+      }
+      skinTemplate.rightHorizontalSlices.clear();
+      for(auto e : skinTemplate.verticalSlices)
+      {
+        Entity::DestroyEntity(Entity(e));
+      }
+      skinTemplate.verticalSlices.clear();
+    
+      for(auto e : skinTemplate.splines)
+      {
+        Entity::DestroyEntity(Entity(e));
+      }
+      skinTemplate.splines.clear();
 
-    // check the sizes
-    auto& color = entity.GetComponent<ColorComponent>();
-    auto objectType = entity.GetComponent<CommonAttributesComponent>().temporary ? DrawObjectType::TEMPORARY : DrawObjectType::PERMANENT;
-    auto verticalStartPoint = transform.translation + glm::vec2{skinTemplate.boundingRectSize.x * skinTemplate.leftHorSliceWidthSpan, 0.0};
-    auto leftHorStartPoint = transform.translation + glm::vec2{0.0, (1 - skinTemplate.leftHorSliceHeightSpan) / 2 * skinTemplate.boundingRectSize.y};
-    auto rightHorStartPoint = transform.translation + 
-      glm::vec2{skinTemplate.boundingRectSize.x * (skinTemplate.leftHorSliceWidthSpan + skinTemplate.vertSliceWidthSpan), (1 - skinTemplate.rightHorSliceHeightSpan) / 2 * skinTemplate.boundingRectSize.y};
-    for (auto i = 0; i < skinTemplate.vertSliceCount; i++)
-    {
-      glm::vec2 sliceSize{skinTemplate.vertSliceWidthSpan / skinTemplate.vertSliceCount * skinTemplate.boundingRectSize.x, skinTemplate.boundingRectSize.y};
-      
-      glm::vec2 vertTopLeft =  verticalStartPoint + glm::vec2{ i * sliceSize.x, 0.0};
-      glm::vec2 vertBottomRight = verticalStartPoint + glm::vec2{ (i + 1) * sliceSize.x, sliceSize.y};
-      auto rect = RectangleComponentWrapper::CreateRectangle(vertTopLeft, vertBottomRight, objectType);
-      rect.GetComponent<ColorComponent>() = color; 
-      rect.GetComponent<CommonAttributesComponent>().composed = true;
-      rect.GetComponent<ThicknessComponent>() = entity.GetComponent<ThicknessComponent>();
-      skinTemplate.verticalSlices.push_back(rect.GetHandle());
-    }
-    for (auto i = 0; i < skinTemplate.leftHorSliceCount; i++)
-    {
-      float sliceWidth = skinTemplate.leftHorSliceWidthSpan * skinTemplate.boundingRectSize.x;
-      float sliceHeight = skinTemplate.leftHorSliceHeightSpan / skinTemplate.leftHorSliceCount * skinTemplate.boundingRectSize.y;
-      
-      glm::vec2 horTopLeft = leftHorStartPoint + glm::vec2{0.0, i * sliceHeight};
-      glm::vec2 horBottomRight = leftHorStartPoint + glm::vec2{sliceWidth, (i + 1) * sliceHeight};
-      auto rect = RectangleComponentWrapper::CreateRectangle(horTopLeft, horBottomRight, objectType);
-      rect.GetComponent<ColorComponent>() = color; 
-      rect.GetComponent<CommonAttributesComponent>().composed = true;
-      rect.GetComponent<ThicknessComponent>() = entity.GetComponent<ThicknessComponent>();
-      skinTemplate.leftHorizontalSlices.push_back(rect.GetHandle());
-    }
+      // check the sizes
+      auto& color = entity.GetComponent<ColorComponent>();
+      auto objectType = entity.GetComponent<CommonAttributesComponent>().temporary ? DrawObjectType::TEMPORARY : DrawObjectType::PERMANENT;
+      auto verticalStartPoint = transform.translation + glm::vec2{skinTemplate.boundingRectSize.x * skinTemplate.leftHorSliceWidthSpan, 0.0};
+      auto leftHorStartPoint = transform.translation + glm::vec2{0.0, (1 - skinTemplate.leftHorSliceHeightSpan) / 2 * skinTemplate.boundingRectSize.y};
+      auto rightHorStartPoint = transform.translation + 
+        glm::vec2{skinTemplate.boundingRectSize.x * (skinTemplate.leftHorSliceWidthSpan + skinTemplate.vertSliceWidthSpan), (1 - skinTemplate.rightHorSliceHeightSpan) / 2 * skinTemplate.boundingRectSize.y};
+      for (auto i = 0; i < skinTemplate.vertSliceCount; i++)
+      {
+        glm::vec2 sliceSize{skinTemplate.vertSliceWidthSpan / skinTemplate.vertSliceCount * skinTemplate.boundingRectSize.x, skinTemplate.boundingRectSize.y};
 
-    for (auto i = 0; i < skinTemplate.rightHorSliceCount; i++)
-    {
-      float sliceWidth = skinTemplate.rightHorSliceWidthSpan * skinTemplate.boundingRectSize.x;
-      float sliceHeight = skinTemplate.rightHorSliceHeightSpan / skinTemplate.rightHorSliceCount * skinTemplate.boundingRectSize.y;
-      
-      glm::vec2 horTopLeft = rightHorStartPoint + glm::vec2{0.0, i * sliceHeight};
-      glm::vec2 horBottomRight = rightHorStartPoint + glm::vec2{sliceWidth, (i + 1) * sliceHeight};
-      auto rect = RectangleComponentWrapper::CreateRectangle(horTopLeft, horBottomRight, objectType);
-      rect.GetComponent<ColorComponent>() = color; 
-      rect.GetComponent<CommonAttributesComponent>().composed = true;
-      rect.GetComponent<ThicknessComponent>() = entity.GetComponent<ThicknessComponent>();
-      skinTemplate.rightHorizontalSlices.push_back(rect.GetHandle());
+        glm::vec2 vertTopLeft =  verticalStartPoint + glm::vec2{ i * sliceSize.x, 0.0};
+        glm::vec2 vertBottomRight = verticalStartPoint + glm::vec2{ (i + 1) * sliceSize.x, sliceSize.y};
+        auto rect = RectangleComponentWrapper::CreateRectangle(vertTopLeft, vertBottomRight, objectType);
+        rect.GetComponent<ColorComponent>() = color; 
+        rect.GetComponent<CommonAttributesComponent>().composed = true;
+        rect.GetComponent<ThicknessComponent>() = entity.GetComponent<ThicknessComponent>();
+        skinTemplate.verticalSlices.push_back(rect.GetHandle());
+      }
+      for (auto i = 0; i < skinTemplate.leftHorSliceCount; i++)
+      {
+        float sliceWidth = skinTemplate.leftHorSliceWidthSpan * skinTemplate.boundingRectSize.x;
+        float sliceHeight = skinTemplate.leftHorSliceHeightSpan / skinTemplate.leftHorSliceCount * skinTemplate.boundingRectSize.y;
+
+        glm::vec2 horTopLeft = leftHorStartPoint + glm::vec2{0.0, i * sliceHeight};
+        glm::vec2 horBottomRight = leftHorStartPoint + glm::vec2{sliceWidth, (i + 1) * sliceHeight};
+        auto rect = RectangleComponentWrapper::CreateRectangle(horTopLeft, horBottomRight, objectType);
+        rect.GetComponent<ColorComponent>() = color; 
+        rect.GetComponent<CommonAttributesComponent>().composed = true;
+        rect.GetComponent<ThicknessComponent>() = entity.GetComponent<ThicknessComponent>();
+        skinTemplate.leftHorizontalSlices.push_back(rect.GetHandle());
+      }
+
+      for (auto i = 0; i < skinTemplate.rightHorSliceCount; i++)
+      {
+        float sliceWidth = skinTemplate.rightHorSliceWidthSpan * skinTemplate.boundingRectSize.x;
+        float sliceHeight = skinTemplate.rightHorSliceHeightSpan / skinTemplate.rightHorSliceCount * skinTemplate.boundingRectSize.y;
+
+        glm::vec2 horTopLeft = rightHorStartPoint + glm::vec2{0.0, i * sliceHeight};
+        glm::vec2 horBottomRight = rightHorStartPoint + glm::vec2{sliceWidth, (i + 1) * sliceHeight};
+        auto rect = RectangleComponentWrapper::CreateRectangle(horTopLeft, horBottomRight, objectType);
+        rect.GetComponent<ColorComponent>() = color; 
+        rect.GetComponent<CommonAttributesComponent>().composed = true;
+        rect.GetComponent<ThicknessComponent>() = entity.GetComponent<ThicknessComponent>();
+        skinTemplate.rightHorizontalSlices.push_back(rect.GetHandle());
+      }
+
+
+      if(skinTemplate.drawSpline)
+      {
+        // generate the slices
+        auto boundingRectSize = skinTemplate.boundingRectSize;
+        std::vector<glm::vec2> splinePoints = {
+          glm::vec2{0, boundingRectSize.y / 2} + glm::vec2(transform.translation),
+          glm::vec2{boundingRectSize.x / 2, 0} + glm::vec2(transform.translation),
+          glm::vec2{boundingRectSize.x, boundingRectSize.y} + glm::vec2{0, -boundingRectSize.y / 2} + glm::vec2(transform.translation),
+          glm::vec2{boundingRectSize.x, boundingRectSize.y} + glm::vec2{-boundingRectSize.x / 2, 0} + glm::vec2(transform.translation)
+        };
+
+        auto createSpline = [](glm::vec2 begin, glm::vec2 middle, glm::vec2 end, glm::vec4 color, DrawObjectType type) -> Entity
+        {
+          auto spline = SplineComponentWrapper::CreateSpline(begin, middle, end, type);
+          spline.GetComponent<ColorComponent>() = color; 
+          spline.GetComponent<CommonAttributesComponent>().composed = true;
+          return spline;
+        };
+        skinTemplate.splines.push_back(createSpline(splinePoints[0], splinePoints[1], splinePoints[2], color.color, objectType));
+        skinTemplate.splines.push_back(createSpline(splinePoints[0], splinePoints[3], splinePoints[2], color.color, objectType));
+      }
     }
   }
 
@@ -746,6 +811,18 @@ namespace medicimage
       RectangleComponentWrapper rw(rect);
       rw.Draw();
     }
+    for(auto e : skinTemplate.rightHorizontalSlices)
+    {
+      Entity rect(e);
+      RectangleComponentWrapper rw(rect);
+      rw.Draw();
+    }
+    for(auto e : skinTemplate.splines)
+    {
+      Entity entity(e);
+      SplineComponentWrapper sw(entity);
+      sw.Draw();
+    }
 
     auto commonAttributes = m_entity.GetComponent<CommonAttributesComponent>();
     if(commonAttributes.selected)
@@ -759,5 +836,6 @@ namespace medicimage
       }
     } 
   }
+
 
 } // namespace medicimage

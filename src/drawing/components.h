@@ -131,7 +131,15 @@ namespace medicimage
     LineComponent(glm::vec2 end, glm::vec2 begin)
       : end(end), begin(begin) {}
   };
-  
+
+  struct SplineComponent
+  {
+     glm::vec2 begin{0.0f, 0.0f};
+     glm::vec2 middle{0.0f, 0.0f};
+     glm::vec2 end{0.0f, 0.0f};
+     int lineCount = 0;
+  };
+
   struct SkinTemplateComponent
   {
     glm::vec2 boundingRectSize{0.0, 0.0};
@@ -146,6 +154,9 @@ namespace medicimage
     std::vector<entt::entity> leftHorizontalSlices; // TODO: here we should store the UUID of the rectangle
     std::vector<entt::entity> rightHorizontalSlices; // TODO: here we should store the UUID of the rectangle
     std::vector<entt::entity> verticalSlices;
+    std::vector<entt::entity> splines;
+    bool drawable = false;
+    bool drawSpline = true;
     SkinTemplateComponent() = default;
   };
 

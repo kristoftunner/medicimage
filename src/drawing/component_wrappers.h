@@ -93,6 +93,22 @@ public:
   void Draw() override;
 };
 
+/// @brief Component wrapper for Spline, it is special because it can be drawn from other components
+///         It does not follow the first->second point drawing principles 
+class SplineComponentWrapper : public BaseDrawComponentWrapper
+{
+public:
+  SplineComponentWrapper(Entity entity) : BaseDrawComponentWrapper(entity) {}
+  /// @brief Factory function for creating an entity describing an arrow 
+  /// @param baseEntity base entity to which we add all the other components 
+  /// @return Entity containing the components needed for describing an arrow, TODO: should we return with TextComponentWrapper 
+  static Entity CreateSpline(glm::vec2 begin, glm::vec2 middle, glm::vec2 end, DrawObjectType objectType);
+  void UpdateShapeAttributes() override {};
+  void OnPickPointDrag(glm::vec2 diff, int selectedPoint) override {}
+  void OnObjectDrag(glm::vec2 diff) override {};
+  void Draw() override;
+};
+
 class SkinTemplateComponentWrapper : public BaseDrawComponentWrapper
 {
 public:

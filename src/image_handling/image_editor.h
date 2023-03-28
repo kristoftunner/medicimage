@@ -33,6 +33,7 @@ public:
   static void DrawArrow(glm::vec2 begin, glm::vec2 end, glm::vec4 color, float thickness, double tipLengith);
   static void DrawLine(glm::vec2 begin, glm::vec2 end, glm::vec4 color, float thickness, double tipLengith);
   static void DrawText(glm::vec2 bottomLeft, const std::string& text, int fontSize, float thickness);
+  static void DrawSpline(glm::vec2 begin, glm::vec2 middle, glm::vec2 end, int lineCount, glm::vec4 color, float thickness);
   static glm::vec2 GetTextBoundingBox(const std::string& text, int fontSize, float thickness);
 private:
   static cv::UMat AddFooter(cv::UMat image, const std::string& footerText);

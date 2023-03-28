@@ -183,6 +183,30 @@ void ImageEditor::DrawText(glm::vec2 bottomLeft, const std::string &text, int fo
   cv::putText(s_image, text, scaledBottomLeft, s_defaultFont, fontSize, cv::Scalar::all(0), thickness);
 }
 
+
+void ImageEditor::DrawSpline(glm::vec2 begin, glm::vec2 middle, glm::vec2 end, int lineCount, glm::vec4 color, float thickness)
+{
+  std::vector<glm::vec2> splinePoints;
+  const float diff = 1.0 / static_cast<float>(lineCount);
+  glm::vec2 imageSize = {s_image.cols, s_image.rows};
+  for(int i = 0; i < (lineCount - 1); i++)
+  {
+    glm::vec2 t(diff * (i + 1)); 
+    glm::vec2 bezierPoint = t * t * begin + glm::vec2(2) * t * (glm::vec2(1) - t) * middle + (glm::vec2(1) - t)*(glm::vec2(1) - t) * end;
+    bezierPoint *= imageSize;
+    splinePoints.push_back(bezierPoint);
+  }
+
+  auto scaledColor = color * glm::vec4(255.0);
+  for(int i = 0; i < splinePoints.size() - 1; i++)
+  {
+    auto begin = splinePoints[i];
+    auto end = splinePoints[i + 1];
+    cv::line(s_image, cv::Point(static_cast<int>(begin.x), static_cast<int>(begin.y)), cv::Point(static_cast<int>(end.x), static_cast<int>(end.y)), 
+      cv::Scalar(scaledColor.b, scaledColor.g, scaledColor.r), static_cast<int>(thickness));
+  }
+}
+
 glm::vec2 ImageEditor::GetTextBoundingBox(const std::string &text, int fontSize, float thickness)
 {
   int baseline = 0;
