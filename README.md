@@ -89,8 +89,8 @@ Store the document with all the metadata (drawn objects and it's attributes) - t
 
 ## 2023.03.23. feature updates
 ### Bugs:
-- [ ] fix bug of dragging the object only with one mouse click
-- [ ] Incremental letters should go from A - ZZ
+- [x] fix bug of dragging the object only with one mouse click
+- [x] Incremental letters should go from A - ZZ
 
 ## Features for now
 - [x] property edit for font size

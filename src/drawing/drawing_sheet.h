@@ -183,7 +183,7 @@ public:
   void OnMouseButtonPressed(const glm::vec2 pos) override;
 private:
   void IncrementLetter();
-  std::string m_text = "a";
+  std::string m_text = "A";
 };
 
 // select states

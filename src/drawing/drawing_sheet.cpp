@@ -487,6 +487,7 @@ namespace medicimage
     {
       m_sheet->SetDrawCommand(DrawCommand::OBJECT_SELECT); 
       m_sheet->ChangeDrawState(std::make_unique<ObjectSelectInitialState>(m_sheet));
+      
     }
   }
   void DrawIncrementalLetters::OnMouseButtonPressed(const glm::vec2 pos)
@@ -499,31 +500,32 @@ namespace medicimage
 
   void DrawIncrementalLetters::IncrementLetter()
   {
-    char* currentLetter;
-    if(m_text.size() == 1)
-      currentLetter = &(m_text.at(0));
-    else if(m_text.size() == 2)
-      currentLetter = &(m_text.at(1));
-
+    if(m_text == "ZZ")
+    {
+      m_sheet->SetDrawCommand(DrawCommand::OBJECT_SELECT); 
+      m_sheet->ChangeDrawState(std::make_unique<ObjectSelectInitialState>(m_sheet));
+    }
+    
+    std::string::iterator currentLetter = m_text.end()-1;
+    if(m_text.size() > 2)
+      APP_CORE_ERR("Something went wrong with the letter increments");
+    
     char& c = *currentLetter;
-    if((c >= 'a') && (c < 'z'))
-      c++;
-    else if(c == 'z')
-      c = 'A';
-    else if((c >= 'A') && (c < 'Z'))
+    if((c >= 'A') && (c < 'Z'))
       c++;
     else if(c == 'Z')
     {
       if(m_text.size() == 1)
-        m_text += 'a';
+      {
+        m_text += 'A';
+        c = 'A';
+      }
       else if(m_text.size() == 2)
       {
-        m_sheet->SetDrawCommand(DrawCommand::OBJECT_SELECT); 
-        m_sheet->ChangeDrawState(std::make_unique<ObjectSelectInitialState>(m_sheet));
+        m_text.at(0)++;
+        c = 'A';
       }
     }
-    else
-      APP_CORE_WARN("Some edge case happened during letter incrementing");    
   }
 
   void ObjectSelectInitialState::OnMouseHovered(const glm::vec2 pos)
@@ -536,8 +538,14 @@ namespace medicimage
     m_sheet->m_firstPoint = pos / m_sheet->m_sheetSize; 
     auto entity = m_sheet->GetHoveredEntity(pos);
     if(entity.has_value())
+    {
       entity.value().GetComponent<CommonAttributesComponent>().selected = true; 
-    m_sheet->ChangeDrawState(std::make_unique<ObjectSelectionState>(m_sheet));
+      m_sheet->ChangeDrawState(std::make_unique<ObjectSelectedState>(m_sheet));
+    }
+    else
+    {
+      m_sheet->ChangeDrawState(std::make_unique<ObjectSelectionState>(m_sheet));
+    }
   }
 
   void ObjectSelectionState::OnMouseButtonDown(const glm::vec2 pos)
