@@ -351,6 +351,7 @@ namespace medicimage
     
     auto& transform = entity.GetComponent<TransformComponent>();
     auto& thickness = entity.AddComponent<ThicknessComponent>();
+    thickness.thickness = 2;
     transform.translation = firstPoint;
 
     auto& text = entity.AddComponent<TextComponent>();

@@ -109,6 +109,7 @@ class BaseDrawState
 {
 public:
   BaseDrawState(DrawingSheet* sheet, const std::string& stateName = "BaseDrawState") : m_sheet(sheet), m_stateName(stateName) {}
+  virtual ~BaseDrawState() = default;
   const std::string& GetName() const {return m_stateName;}
   virtual void OnMouseHovered(const glm::vec2 pos) {}
   virtual void OnMouseButtonPressed(const glm::vec2 pos) {}
@@ -167,12 +168,15 @@ class DrawTextState : public BaseDrawState
 {
 public:
   DrawTextState(DrawingSheet* sheet) : BaseDrawState(sheet, "DrawTextState") {m_sheet->ClearSelectionShapes();}
+  ~DrawTextState() override;
   void OnTextInput(const std::string& inputText) override; 
   void OnKeyPressed(KeyCode key) override;
   void OnMouseButtonPressed(const glm::vec2 pos) override;
   void OnUpdate() override;
 private:
-  std::string m_text;
+  void DrawFinalText();
+  std::string m_text = " "; // space is needed to have a blank space for indicating the cursor
+  constexpr static int s_defaultFontSize = 2;
 };
 
 class DrawIncrementalLetters : public BaseDrawState
@@ -183,7 +187,9 @@ public:
   void OnMouseButtonPressed(const glm::vec2 pos) override;
 private:
   void IncrementLetter();
+  void DecrementLetter();
   std::string m_text = "A";
+  constexpr static int s_defaultFontSize = 1;
 };
 
 // select states

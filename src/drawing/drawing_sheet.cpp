@@ -437,8 +437,20 @@ namespace medicimage
     m_sheet->ChangeDrawState(std::make_unique<DrawTextState>(m_sheet)); 
   }
 
+  DrawTextState::~DrawTextState()
+  {
+    if(m_text != "")
+    {
+        TextComponentWrapper tw(TextComponentWrapper::CreateText(m_sheet->m_firstPoint, m_text, s_defaultFontSize, DrawObjectType::PERMANENT));
+        tw.UpdateShapeAttributes();
+    }
+  }
+
   void DrawTextState::OnTextInput(const std::string &inputText)
   {
+    if(m_text == " ")   // first delete the space character, which is there only for showing a blank space when using text input
+      m_text = "";
+
     m_text += inputText;
   }
   
@@ -446,11 +458,6 @@ namespace medicimage
   { // exit the command if enter is pressed
     if(key == Key::MDIK_RETURN)
     {
-      if(m_text != "")
-      {
-        TextComponentWrapper tw(TextComponentWrapper::CreateText(m_sheet->m_firstPoint, m_text, 4, DrawObjectType::PERMANENT));
-        tw.UpdateShapeAttributes();
-      }
       m_sheet->SetDrawCommand(DrawCommand::OBJECT_SELECT); 
       m_sheet->ChangeDrawState(std::make_unique<ObjectSelectInitialState>(m_sheet));
     }
@@ -463,11 +470,6 @@ namespace medicimage
   
   void DrawTextState::OnMouseButtonPressed(const glm::vec2 pos)
   {
-    if(m_text != "")
-    {
-        TextComponentWrapper tw(TextComponentWrapper::CreateText(m_sheet->m_firstPoint, m_text, 4, DrawObjectType::PERMANENT));
-        tw.UpdateShapeAttributes();
-    }
     m_sheet->SetDrawCommand(DrawCommand::OBJECT_SELECT); 
     m_sheet->ChangeDrawState(std::make_unique<ObjectSelectInitialState>(m_sheet));
   }
@@ -476,24 +478,31 @@ namespace medicimage
   {
     if(m_text != "")
     {
-      TextComponentWrapper tw(TextComponentWrapper::CreateText(m_sheet->m_firstPoint, m_text, 4, DrawObjectType::TEMPORARY));
+      TextComponentWrapper tw(TextComponentWrapper::CreateText(m_sheet->m_firstPoint, m_text, s_defaultFontSize, DrawObjectType::TEMPORARY));
       tw.UpdateShapeAttributes();
     }
   }
-  
+
   void DrawIncrementalLetters::OnKeyPressed(KeyCode key)
   {
     if(key == Key::MDIK_RETURN)
     {
       m_sheet->SetDrawCommand(DrawCommand::OBJECT_SELECT); 
       m_sheet->ChangeDrawState(std::make_unique<ObjectSelectInitialState>(m_sheet));
-      
+    }
+    else if(key == Key::MDIK_UP)
+    {
+      IncrementLetter();
+    }
+    else if(key == Key::MDIK_DOWN)
+    {
+      DecrementLetter();
     }
   }
   void DrawIncrementalLetters::OnMouseButtonPressed(const glm::vec2 pos)
   {
     m_sheet->m_firstPoint = pos / m_sheet->m_sheetSize; 
-    TextComponentWrapper tw(TextComponentWrapper::CreateText(m_sheet->m_firstPoint, m_text, 2, DrawObjectType::PERMANENT));
+    TextComponentWrapper tw(TextComponentWrapper::CreateText(m_sheet->m_firstPoint, m_text, s_defaultFontSize, DrawObjectType::PERMANENT));
     tw.UpdateShapeAttributes();
     IncrementLetter();
   }
@@ -524,6 +533,36 @@ namespace medicimage
       {
         m_text.at(0)++;
         c = 'A';
+      }
+    }
+  }
+
+  void DrawIncrementalLetters::DecrementLetter()
+  {
+    if(m_text == "AA")
+    {
+      m_sheet->SetDrawCommand(DrawCommand::OBJECT_SELECT); 
+      m_sheet->ChangeDrawState(std::make_unique<ObjectSelectInitialState>(m_sheet));
+    }
+    
+    std::string::iterator currentLetter = m_text.end()-1;
+    if(m_text.size() > 2)
+      APP_CORE_ERR("Something went wrong with the letter increments");
+    
+    char& c = *currentLetter;
+    if((c > 'A') && (c <= 'Z'))
+      c--;
+    else if(c == 'A')
+    {
+      if(m_text.size() == 1)
+      {
+        m_text += 'Z';
+        c = 'Z';
+      }
+      else if(m_text.size() == 2)
+      {
+        m_text.at(0)--;
+        c = 'Z';
       }
     }
   }

@@ -30,7 +30,7 @@ void ImguiLayer::OnAttach()
   ImGuiIO& io = ImGui::GetIO(); (void)io;
   io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;   // Enable Keyboard Controls
   io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;           // Enable Docking
-  io.FontDefault = io.Fonts->AddFontFromFileTTF("assets/fonts/banschrift.ttf", 18.0);
+  io.FontDefault = io.Fonts->AddFontFromFileTTF("assets/fonts/calibri/calibri_regular.ttf", 18.0);
   ImGui::StyleColorsDark();
   // Setup Platform/Renderer backends
   bool ret = ImGui_ImplSDL2_InitForD3D(m_window);

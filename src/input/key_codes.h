@@ -1,5 +1,5 @@
 #pragma once
-
+#include "SDL_keycode.h"
 namespace medicimage 
 {
 	using KeyCode = uint16_t;
@@ -84,7 +84,12 @@ namespace medicimage
     MDIK_w = 'w',
     MDIK_x = 'x',
     MDIK_y = 'y',
-    MDIK_z = 'z'
+    MDIK_z = 'z',
+    
+    MDIK_RIGHT = SDL_SCANCODE_TO_KEYCODE(SDL_SCANCODE_RIGHT),
+    MDIK_LEFT = SDL_SCANCODE_TO_KEYCODE(SDL_SCANCODE_LEFT),
+    MDIK_DOWN = SDL_SCANCODE_TO_KEYCODE(SDL_SCANCODE_DOWN),
+    MDIK_UP = SDL_SCANCODE_TO_KEYCODE(SDL_SCANCODE_UP)
 		};
 	}
 }

@@ -46,7 +46,7 @@ static bool ShouldExit()
   std::time_t result = std::time(nullptr);
   auto time = std::gmtime(&result);
 
-  if ((time->tm_year == 123) && (time->tm_mon < (3)))
+  if ((time->tm_year == 123) && (time->tm_mon < (8)))
     if((time->tm_mday < 31) || (time->tm_mon < 1))
       return false;
   else

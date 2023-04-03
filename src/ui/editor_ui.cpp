@@ -92,9 +92,8 @@ void EditorUI::OnAttach()
 
   // load the bigger font and the smaller font for restoring
   ImGuiIO& io = ImGui::GetIO(); 
-  m_smallFont = io.Fonts->AddFontFromFileTTF("assets/fonts/banschrift.ttf", 18.0);
-  m_largeFont = io.Fonts->AddFontFromFileTTF("assets/fonts/banschrift.ttf", 48.0);
-  
+  m_smallFont = io.Fonts->AddFontFromFileTTF("assets/fonts/calibri/calibri_regular.ttf", 18.0);
+  m_largeFont = io.Fonts->AddFontFromFileTTF("assets/fonts/calibri/calibri_regular.ttf", 48.0);
   ImGuiStyle& style = ImGui::GetStyle();
   s_defaultFrameBgColor = style.Colors[ImGuiCol_Button];
 } 
@@ -151,12 +150,10 @@ void EditorUI::ShowImageWindow()
     glm::vec2 drawingSheetSize = {viewportMaxRegion.x - viewportMinRegion.x, viewportMaxRegion.y - viewportMinRegion.y};
     m_drawingSheet.SetDrawingSheetSize(drawingSheetSize);
     
-    // Mouse button actions are prioritized over the hovering 
+    auto mousePos = ImGui::GetMousePos();
+    const ImVec2 mousePosOnImage(mousePos.x - viewportOffset.x - viewportMinRegion.x, mousePos.y - viewportOffset.y - viewportMinRegion.y);
     if(ImGui::IsItemHovered())
     {
-      auto mousePos = ImGui::GetMousePos();
-      const ImVec2 mousePosOnImage(mousePos.x - viewportOffset.x - viewportMinRegion.x, mousePos.y - viewportOffset.y - viewportMinRegion.y);
-     
       if(ImGui::IsMouseClicked(ImGuiMouseButton_Left))
       {
         m_drawingSheet.OnMouseButtonPressed({mousePosOnImage.x, mousePosOnImage.y});
@@ -171,9 +168,9 @@ void EditorUI::ShowImageWindow()
       }
       else
         m_drawingSheet.OnMouseHovered({mousePosOnImage.x, mousePosOnImage.y});
-      
-      m_drawingSheet.OnUpdate();
     }
+      
+    m_drawingSheet.OnUpdate();
   }
   else
   { // just show the frame from the camera
@@ -204,6 +201,7 @@ void EditorUI::ShowImageWindow()
   if(ImGui::Button("Clear"))
   {
     m_inputText.fill(0);  // no clearing it because we dont use this as an iterated array, but C-style array in ImGui
+    m_imageSavers->DeselectImageSaver();
   }
   ImGui::PopFont();
 

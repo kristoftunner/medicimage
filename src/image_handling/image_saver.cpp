@@ -254,6 +254,15 @@ void ImageSaverContainer::SelectImageSaver(const std::string& uuid)
     APP_CORE_WARN("Please select a valid uuid for patient");
 }
 
+void ImageSaverContainer::DeselectImageSaver()
+{
+  if(m_selectedSaver != "")
+  {
+    m_savers[m_selectedSaver].ClearSavedImages();
+    m_selectedSaver = "";
+  }
+}
+
 bool ImageSaverContainer::HasSelectedSaver()
 {
   return !m_savers.empty() && m_selectedSaver != "";

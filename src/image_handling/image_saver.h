@@ -98,6 +98,7 @@ public:
   ImageSaverContainer(const std::filesystem::path& baseFolder); 
   void AddSaver(const std::string& uuid);
   void SelectImageSaver(const std::string& uuid);
+  void DeselectImageSaver();
   bool HasSelectedSaver();
   void UpdateAppFolder(const std::filesystem::path& appFolder); //TODO: this API call is a bit weird, we should just create a new one in case of changing the app folder
   // API to load the previously saved images from disk at init time of the application

@@ -111,7 +111,7 @@ void AttributeEditor::DrawAttributeEdit(Entity entity)
   DrawComponent<TextComponent>("Font size", entity, [&](auto& component)
   {
     ImGui::Text("FontSize");
-    ImGui::SliderInt("##F", &(component.fontSize), 2, 10, "%d");
+    ImGui::SliderInt("##F", &(component.fontSize), 1, 10, "%d");
   });
 
   DrawComponent<SkinTemplateComponent>("Skin template params", entity, [&](auto& component)

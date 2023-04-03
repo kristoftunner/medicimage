@@ -4,12 +4,9 @@
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/highgui.hpp>
 #include "image_editor.h"
-
 namespace medicimage
 {
-
 cv::UMat ImageEditor::s_image;
-
 static void DumpTexture(ID3D11Texture2D* texture)
 {
   // create texture for copy back data from GPU
