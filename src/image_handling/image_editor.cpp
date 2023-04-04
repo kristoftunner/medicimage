@@ -150,7 +150,6 @@ void ImageEditor::DrawArrow(glm::vec2 begin, glm::vec2 end, glm::vec4 color, flo
   begin *= imageSize; 
   end *= imageSize; 
   auto scaledLength = 10 / glm::length(end - begin);
-  APP_CORE_INFO("Arrow tip length:{}", scaledLength);
   color *= 255.0;
 
   cv::arrowedLine(s_image, cv::Point(static_cast<int>(begin.x), static_cast<int>(begin.y)), cv::Point(static_cast<int>(end.x), static_cast<int>(end.y)), 
@@ -219,7 +218,7 @@ cv::UMat ImageEditor::AddFooter(cv::UMat image, const std::string& footerText)
   // assuming the original texture has 1920x1080 resolution, expanding with 20-20 pixels left/right and 30 bottom, 20 top
   cv::UMat borderedImage;
   cv::copyMakeBorder(image, borderedImage, s_topBorder, s_bottomBorder, s_sideBorder, s_sideBorder, cv::BORDER_CONSTANT , cv::Scalar{255,255,255} ); // adding white border
-  cv::putText(borderedImage, footerText, cv::Point{20, borderedImage.rows - 20}, cv::FONT_HERSHEY_PLAIN, 4, cv::Scalar{128,128,128}, 3);
+  cv::putText(borderedImage, footerText, cv::Point{s_topBorder, borderedImage.rows - s_topBorder}, cv::FONT_HERSHEY_PLAIN, 3, cv::Scalar{0,0,0}, 3);
   return borderedImage;
 }
 
@@ -243,7 +242,7 @@ std::unique_ptr<Texture2D> ImageEditor::RemoveFooter(Texture2D *texture)
 {
   cv::UMat image;
   cv::directx::convertFromD3D11Texture2D(texture->GetTexturePtr(), image);
-  image = image(cv::Range(s_topBorder, image.rows - s_topBorder - s_bottomBorder), cv::Range(s_sideBorder, image.cols - 2*s_sideBorder));
+  image = image(cv::Range(s_topBorder, image.rows - s_bottomBorder), cv::Range(s_sideBorder, image.cols - s_sideBorder));
   cv::cvtColor(image, image, cv::COLOR_RGBA2BGR);
   cv::cvtColor(image, image, cv::COLOR_BGR2RGBA);
   

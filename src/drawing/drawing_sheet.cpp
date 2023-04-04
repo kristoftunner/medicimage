@@ -86,7 +86,7 @@ namespace medicimage
     std::stringstream ss;
     ss << std::put_time(std::localtime(&(m_originalDoc->timestamp)), "%d-%b-%Y %X");
     std::string footerText = m_originalDoc->documentId + " - " + ss.str();
-    m_drawing = ImageEditor::ReplaceImageFooter(footerText, m_originalDoc->texture.get());
+    m_drawing = ImageEditor::AddImageFooter(footerText, m_originalDoc->texture.get());
 
     ImageEditor::Begin(m_drawing.get());
     auto circles = Entity::View<CircleComponent>();

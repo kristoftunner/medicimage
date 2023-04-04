@@ -215,7 +215,7 @@ namespace medicimage
 
     glm::vec2 vec = arrow.begin - arrow.end; 
     glm::vec2 perp = glm::normalize(glm::vec2{-vec.y, vec.x});
-    glm::vec2 offset = perp * glm::length(vec) * glm::vec2(0.2);
+    glm::vec2 offset = perp * glm::vec2(0.01);
     boundingBox.cornerPoints = {offset, arrow.end + offset, arrow.end - offset, -offset, offset};
     pickPoints.pickPoints = {arrow.begin, arrow.end};
   }
@@ -294,7 +294,7 @@ namespace medicimage
 
     glm::vec2 vec = line.begin - line.end; 
     glm::vec2 perp = glm::normalize(glm::vec2{-vec.y, vec.x});
-    glm::vec2 offset = perp * glm::length(vec) * glm::vec2(0.2);
+    glm::vec2 offset = perp * glm::vec2(0.01);
     boundingBox.cornerPoints = {offset, line.end + offset, line.end - offset, -offset, offset};
     pickPoints.pickPoints = {line.begin, line.end};
   }

@@ -37,9 +37,9 @@ public:
   static glm::vec2 GetTextBoundingBox(const std::string& text, int fontSize, float thickness);
 private:
   static cv::UMat AddFooter(cv::UMat image, const std::string& footerText);
-  static constexpr int s_sideBorder = 20;
-  static constexpr int s_topBorder = 20;
-  static constexpr int s_bottomBorder = 100;
+  static constexpr int s_sideBorder = 10;
+  static constexpr int s_topBorder = 10;
+  static constexpr int s_bottomBorder = 50;
   static constexpr auto s_defaultFont = cv::FONT_HERSHEY_SIMPLEX;
   // TODO: move this into a better place
   static cv::UMat s_image;

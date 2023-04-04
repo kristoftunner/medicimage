@@ -268,7 +268,7 @@ void EditorUI::ShowToolbox()
       {
         if (m_imageSavers->HasSelectedSaver()) //TODO: should select it with an optional<ImageDocContainer> return type
         { // create the ImageDocument here, because the screenshot is made here
-          m_activeDocument = m_imageSavers->GetSelectedSaver().AddImage(*m_frame.get(), true);
+          m_activeDocument = m_imageSavers->GetSelectedSaver().AddImage(*m_frame.get(), false);
         }
         else
         {
@@ -292,7 +292,6 @@ void EditorUI::ShowToolbox()
     {
       if (m_imageSavers->HasSelectedSaver()) 
       { 
-        //auto image = ImageEditor::RemoveFooter(m_frame.get()); // need to remove the footer, because ImageDocument should store it, not the actual image
         m_imageSavers->GetSelectedSaver().AddImage(*m_frame.get(), true);
       }
       else
@@ -454,8 +453,10 @@ void EditorUI::ShowToolbox()
   // restore the default color
   style.Colors[ImGuiCol_Button] = s_defaultFrameBgColor; 
 
+  ImGui::End();
+
   //listbox for selecting saved uuids
-  ImGui::Separator();
+  ImGui::Begin("Load patients", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar);
   ImGui::Text("Loaded patients:");
   if (ImGui::BeginListBox("##listbox", ImVec2{ -FLT_MIN, 120 }))
   {
@@ -512,6 +513,7 @@ void EditorUI::ShowThumbnails()
       }
 
       // little tooltip showing a zoomed version of the thumbnail image
+      #if 0 // this feature is not needed for now
       ImVec2 buttonSize = ImGui::GetItemRectSize();
       if (ImGui::IsItemHovered())
       {
@@ -530,6 +532,7 @@ void EditorUI::ShowThumbnails()
         ImGui::Image(it->texture->GetShaderResourceView(), ImVec2(tooltipRegionSize* zoom, tooltipRegionSize* zoom), uv0, uv1, tintColor, backgroundColor);
         ImGui::EndTooltip();
       }
+      #endif
     }
     if(numOfPrevThumbs < numOfCurrentThumbs)
     {
@@ -630,6 +633,8 @@ void EditorUI::OnImguiRender()
   ImGui::Text("Editor state:%s", editorState.c_str());
   ImGui::SameLine();
   ImGui::Text("ToolsRegionSize:%f:%f", m_toolsRegionSize.x, m_toolsRegionSize.y);
+  ImGui::SameLine();
+  ImGui::Text("frame size:%d:%d", m_frame->GetWidth(), m_frame->GetHeight());
   ImGui::End();
 } 
 
