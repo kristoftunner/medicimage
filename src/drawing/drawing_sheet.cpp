@@ -39,6 +39,7 @@ namespace medicimage
       case DrawCommand::DRAW_ELLIPSE:
       case DrawCommand::DRAW_ARROW:
       case DrawCommand::DRAW_LINE:
+      case DrawCommand::DRAW_MULTILINE:
       case DrawCommand::DRAW_SKIN_TEMPLATE:
       {
         m_drawState = std::make_unique<InitialObjectDrawState>(this);
@@ -59,6 +60,24 @@ namespace medicimage
         m_drawState = std::make_unique<BaseDrawState>(this);
         break;
       }
+    }
+  }
+
+  const std::string DrawingSheet::GetDrawCommandName()
+  {
+    switch(m_currentDrawCommand)
+    {
+      case DrawCommand::DRAW_CIRCLE: return "DRAW_CIRCLE";
+      case DrawCommand::DRAW_RECTANGLE: return "DRAW_RECTANGLE";
+      case DrawCommand::DRAW_ELLIPSE: return "DRAW_ELLIPSE";
+      case DrawCommand::DRAW_ARROW: return "DRAW_ARROW";
+      case DrawCommand::DRAW_LINE: return "DRAW_LINE";
+      case DrawCommand::DRAW_MULTILINE: return "DRAW_MULTILINE";
+      case DrawCommand::DRAW_TEXT: return "DRAW_TEXT";
+      case DrawCommand::DRAW_INCREMENTAL_LETTERS: return "DRAW_INCREMENTAL_LETTERS";
+      case DrawCommand::DRAW_SKIN_TEMPLATE: return "DRAW_SKIN_TEMPLATE";
+      case DrawCommand::DO_NOTHING: return "DO_NOTHING";
+      default: return "UNKNOWN";
     }
   }
 
@@ -370,6 +389,7 @@ namespace medicimage
         break;
       }
       case DrawCommand::DRAW_LINE:
+      case DrawCommand::DRAW_MULTILINE:
       {
         LineComponentWrapper lw(LineComponentWrapper::CreateLine(m_sheet->m_firstPoint, m_sheet->m_secondPoint, DrawObjectType::TEMPORARY));
         lw.UpdateShapeAttributes();
@@ -409,6 +429,7 @@ namespace medicimage
         break;
       }
       case DrawCommand::DRAW_LINE:
+      case DrawCommand::DRAW_MULTILINE:
       {
         LineComponentWrapper lw(LineComponentWrapper::CreateLine(m_sheet->m_firstPoint, m_sheet->m_secondPoint, DrawObjectType::PERMANENT));
         lw.UpdateShapeAttributes();
@@ -421,9 +442,17 @@ namespace medicimage
         break;
       }
     }
-    
-    m_sheet->SetDrawCommand(DrawCommand::OBJECT_SELECT); 
-    m_sheet->ChangeDrawState(std::make_unique<ObjectSelectInitialState>(m_sheet));
+
+    if(m_sheet->m_currentDrawCommand == DrawCommand::DRAW_LINE) // line is a special case, because we are drawing multiple NOT connected lines
+      m_sheet->ChangeDrawState(std::make_unique<InitialObjectDrawState>(m_sheet));
+    else if(m_sheet->m_currentDrawCommand == DrawCommand::DRAW_MULTILINE)
+      m_sheet->m_firstPoint = m_sheet->m_secondPoint;
+    else
+    {
+      m_sheet->SetDrawCommand(DrawCommand::OBJECT_SELECT); 
+      m_sheet->ChangeDrawState(std::make_unique<ObjectSelectInitialState>(m_sheet));
+
+    }
   }
   
   void DrawTextInitialState::OnMouseHovered(const glm::vec2 pos)

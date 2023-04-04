@@ -156,7 +156,7 @@ namespace medicimage
     std::vector<entt::entity> verticalSlices;
     std::vector<entt::entity> splines;
     bool drawable = false;
-    bool drawSpline = true;
+    bool drawSpline = false;
     SkinTemplateComponent() = default;
   };
 

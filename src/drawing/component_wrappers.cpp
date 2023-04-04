@@ -402,10 +402,11 @@ namespace medicimage
     auto& color = entity.AddComponent<ColorComponent>();  
     auto& spline = entity.AddComponent<SplineComponent>();
     auto& thickness = entity.AddComponent<ThicknessComponent>();
+    color.color = {0.0, 0.0, 0.0, 1.0};
     spline.begin = {0.0,0.0};
     spline.middle = middle - begin;
     spline.end = end - begin;
-    spline.lineCount = static_cast<int>(glm::length(end - begin) / 0.001);
+    spline.lineCount = static_cast<int>(glm::length(end - begin) / 0.01);
     return entity;
   }
 
@@ -557,7 +558,7 @@ namespace medicimage
         auto createSpline = [](glm::vec2 begin, glm::vec2 middle, glm::vec2 end, glm::vec4 color, DrawObjectType type) -> Entity
         {
           auto spline = SplineComponentWrapper::CreateSpline(begin, middle, end, type);
-          spline.GetComponent<ColorComponent>() = color; 
+          spline.GetComponent<ColorComponent>().color = {0.0, 0.0, 0.0, 1.0}; 
           spline.GetComponent<CommonAttributesComponent>().composed = true;
           return spline;
         };

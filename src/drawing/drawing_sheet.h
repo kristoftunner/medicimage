@@ -25,7 +25,7 @@ class ObjectDraggingState;
 class DrawTextInitialState;
 class DrawTextState;
 class DrawIncrementalLetters; 
-enum class DrawCommand{DO_NOTHING, OBJECT_SELECT, DRAW_LINE, DRAW_CIRCLE, DRAW_RECTANGLE, 
+enum class DrawCommand{DO_NOTHING, OBJECT_SELECT, DRAW_LINE, DRAW_MULTILINE, DRAW_CIRCLE, DRAW_RECTANGLE, 
   DRAW_ARROW, DRAW_ELLIPSE, DRAW_TEXT, DRAW_SKIN_TEMPLATE, DRAW_INCREMENTAL_LETTERS}; 
 enum class DrawObjectType{TEMPORARY, PERMANENT};
 
@@ -47,6 +47,7 @@ public:
   void SetDocument(std::unique_ptr<ImageDocument> doc, glm::vec2 viewportSize); 
   void SetDrawCommand(const DrawCommand command); // initialize the state with the command's init state
   DrawCommand GetDrawCommand(){return m_currentDrawCommand;}
+  const std::string GetDrawCommandName();
   std::unique_ptr<Texture2D> Draw();
   void ChangeDrawState(std::unique_ptr<BaseDrawState> newState);
   void SetDrawingSheetSize(glm::vec2 size); 
@@ -78,7 +79,7 @@ private:
   std::optional<Entity> m_draggedEntity;
   std::optional<Entity> m_toBeDrawnEntity;
 
-  DrawCommand m_currentDrawCommand;
+  DrawCommand m_currentDrawCommand = DrawCommand::DO_NOTHING;
   std::unique_ptr<BaseDrawState> m_drawState; 
 
   glm::vec2 m_firstPoint{1.0f, 1.0f};

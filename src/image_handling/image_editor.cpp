@@ -149,10 +149,12 @@ void ImageEditor::DrawArrow(glm::vec2 begin, glm::vec2 end, glm::vec4 color, flo
   glm::vec2 imageSize = {s_image.cols, s_image.rows};
   begin *= imageSize; 
   end *= imageSize; 
+  auto scaledLength = 10 / glm::length(end - begin);
+  APP_CORE_INFO("Arrow tip length:{}", scaledLength);
   color *= 255.0;
 
   cv::arrowedLine(s_image, cv::Point(static_cast<int>(begin.x), static_cast<int>(begin.y)), cv::Point(static_cast<int>(end.x), static_cast<int>(end.y)), 
-    cv::Scalar(color.b, color.g, color.r), static_cast<int>(thickness));
+    cv::Scalar(color.b, color.g, color.r), static_cast<int>(thickness), tipLength = scaledLength);
 
   //TODO: add rotation 
 }

@@ -70,6 +70,7 @@ void EditorUI::OnAttach()
   m_undoIcon  = std::move(std::make_unique<Texture2D>("add-text","assets/icons/left-arrow.png"));
   m_skinTemplateIcon  = std::move(std::make_unique<Texture2D>("add-text","assets/icons/skin-template.png"));
   m_incrementalLettersIcon = std::move(std::make_unique<Texture2D>("add-incremental-letters","assets/icons/add-incremental-letters.png"));
+  m_multilineIcon = std::move(std::make_unique<Texture2D>("multiline","assets/icons/multiline.png"));
   
   // initieliaze the frames 
   m_frame = std::make_unique<Texture2D>("initial checkerboard", "assets/textures/Checkerboard.png"); // initialize the edited frame with the current frame and later update only the current frame in OnUpdate
@@ -416,12 +417,20 @@ void EditorUI::ShowToolbox()
   }
   ImGui::SameLine();
   
+  style.Colors[ImGuiCol_Button] = m_drawingSheet.GetDrawCommand() == DrawCommand::DRAW_MULTILINE ? s_toolUsedBgColor : s_defaultFrameBgColor; 
+  if (ImGui::ImageButton("multiline", m_multilineIcon->GetShaderResourceView(), smallIconSize, uvMin, uvMax, iconBg, tintColor))
+  {
+    if(m_editorState == EditorState::EDITING)
+      m_drawingSheet.SetDrawCommand(DrawCommand::DRAW_MULTILINE);
+  }
+  
   style.Colors[ImGuiCol_Button] = m_drawingSheet.GetDrawCommand() == DrawCommand::DRAW_RECTANGLE ? s_toolUsedBgColor : s_defaultFrameBgColor; 
   if (ImGui::ImageButton("rectangle", m_rectangleIcon->GetShaderResourceView(), smallIconSize, uvMin, uvMax, iconBg, tintColor))
   {
     if(m_editorState == EditorState::EDITING)
       m_drawingSheet.SetDrawCommand(DrawCommand::DRAW_RECTANGLE);
   }
+  ImGui::SameLine();
 
   style.Colors[ImGuiCol_Button] = m_drawingSheet.GetDrawCommand() == DrawCommand::DRAW_ARROW ? s_toolUsedBgColor : s_defaultFrameBgColor; 
   if (ImGui::ImageButton("arrow", m_arrowIcon->GetShaderResourceView(), smallIconSize, uvMin, uvMax, iconBg, tintColor))
@@ -429,7 +438,6 @@ void EditorUI::ShowToolbox()
     if(m_editorState == EditorState::EDITING)
       m_drawingSheet.SetDrawCommand(DrawCommand::DRAW_ARROW);
   }
-  ImGui::SameLine();
   
   style.Colors[ImGuiCol_Button] = m_drawingSheet.GetDrawCommand() == DrawCommand::DRAW_SKIN_TEMPLATE ? s_toolUsedBgColor : s_defaultFrameBgColor; 
   if (ImGui::ImageButton("skin-template", m_skinTemplateIcon->GetShaderResourceView(), smallIconSize, uvMin, uvMax, iconBg, tintColor))
@@ -437,6 +445,7 @@ void EditorUI::ShowToolbox()
     if(m_editorState == EditorState::EDITING)
       m_drawingSheet.SetDrawCommand(DrawCommand::DRAW_SKIN_TEMPLATE);
   }
+  ImGui::SameLine();
 
   if(m_editorState != EditorState::EDITING)
   {
@@ -610,7 +619,9 @@ void EditorUI::OnImguiRender()
   ImGui::Begin("Profiling");
   ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
   auto state = m_drawingSheet.GetDrawState()->GetName();
-  ImGui::Text("Editor State:%s", state.c_str());
+  ImGui::Text("Draw state:%s", state.c_str());
+  ImGui::SameLine();
+  ImGui::Text("Draw command:%s", m_drawingSheet.GetDrawCommandName().c_str());
   ImGui::SameLine();
   auto drawPoints = m_drawingSheet.GetDrawingPoints();
   ImGui::Text("FirstPoint: %.2f:%.2f SecondPoint: %.2f:%.2f", drawPoints[0].x, drawPoints[0].y, drawPoints[1].x, drawPoints[1].y);
