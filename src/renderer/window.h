@@ -12,7 +12,7 @@ struct WindowProps{
   unsigned int heigth;
 
   WindowProps(const std::string& title = "Medical imaging",
-              unsigned int width = 1280, unsigned int heigth = 720)
+              unsigned int width = 1280, unsigned int heigth = 645)
             : title(title), width(width), heigth(heigth){}
 };
 
@@ -23,6 +23,18 @@ public:
   ~Window();
   static Window* Create(const WindowProps& windowProperties);
   SDL_Window* GetNativeWindow(){ return m_window; }
+  int GetWindowHeight()
+  {
+    int widht,height;
+    SDL_GetWindowSize(m_window, &widht, &height);
+    return height;
+  }
+  int GetWindowWidth()
+  {
+    int width,height;
+    SDL_GetWindowSize(m_window, &width, &height);
+    return width;
+  }
 private:
   void Init(const WindowProps& windowProperties);
   void ShutDown();

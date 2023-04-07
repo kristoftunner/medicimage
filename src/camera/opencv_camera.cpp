@@ -29,9 +29,6 @@ CameraAPI::Frame OpenCvCamera::CaptureFrame()
     return CameraAPI::Frame();
   }
 
-  //int width  = static_cast<int>(m_cap.get(cv::CAP_PROP_FRAME_WIDTH));
-  //int height = static_cast<int>(m_cap.get(cv::CAP_PROP_FRAME_HEIGHT));
-  //int format = static_cast<int>(m_cap.get(cv::CAP_PROP_FORMAT));
   constexpr int width = 1920;
   constexpr int height = 1080; 
   cv::Mat frame;

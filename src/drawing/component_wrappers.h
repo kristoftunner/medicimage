@@ -44,7 +44,7 @@ public:
   /// @brief Factory function for creating an entity describing a circle 
   /// @param baseEntity base entity to which we add all the other components 
   /// @return Entity containing the components needed for describing a circle, TODO: should we return with CircleComponentWrapper 
-  static Entity CreateCircle(glm::vec2 firstPoint, glm::vec2 secondPoint, DrawObjectType objectType);
+  static Entity CreateCircle(glm::vec2 firstPoint, glm::vec2 secondPoint, float aspectRatio, DrawObjectType objectType);
   void UpdateShapeAttributes() override;
   void OnPickPointDrag(glm::vec2 diff, int selectedPoint) override;
   void OnObjectDrag(glm::vec2 diff) override;

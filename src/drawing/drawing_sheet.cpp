@@ -372,7 +372,7 @@ namespace medicimage
     {
       case DrawCommand::DRAW_CIRCLE:
       {
-        CircleComponentWrapper cw(CircleComponentWrapper::CreateCircle(m_sheet->m_firstPoint, m_sheet->m_secondPoint, DrawObjectType::TEMPORARY));
+        CircleComponentWrapper cw(CircleComponentWrapper::CreateCircle(m_sheet->m_firstPoint, m_sheet->m_secondPoint, m_sheet->m_sheetSize.x / m_sheet->m_sheetSize.y, DrawObjectType::TEMPORARY));
         cw.UpdateShapeAttributes();
         break;
       }
@@ -412,7 +412,7 @@ namespace medicimage
     {
       case DrawCommand::DRAW_CIRCLE:
       {
-        CircleComponentWrapper cw(CircleComponentWrapper::CreateCircle(m_sheet->m_firstPoint, m_sheet->m_secondPoint, DrawObjectType::PERMANENT));
+        CircleComponentWrapper cw(CircleComponentWrapper::CreateCircle(m_sheet->m_firstPoint, m_sheet->m_secondPoint, m_sheet->m_sheetSize.x / m_sheet->m_sheetSize.y, DrawObjectType::PERMANENT));
         cw.UpdateShapeAttributes();
         break;
       }
@@ -755,12 +755,46 @@ namespace medicimage
   void ObjectDraggingState::OnMouseButtonDown(const glm::vec2 pos)
   {
     if(m_sheet->m_draggedEntity.has_value())
-    { // TODO: call here the OnObjectDrag function
+    { // TODO: implement a proper visitor pattern here
+
       auto currentPoint = pos / m_sheet->m_sheetSize; 
       auto diff = (currentPoint - m_sheet->m_firstPoint) * glm::vec2(1.0);
+      
+      if(m_sheet->m_draggedEntity.value().HasComponent<SkinTemplateComponent>())
+      {
+        SkinTemplateComponentWrapper sw(m_sheet->m_draggedEntity.value());
+        sw.OnObjectDrag(diff);
+      }
+      else if(m_sheet->m_draggedEntity.value().HasComponent<RectangleComponent>())
+      {
+        RectangleComponentWrapper rw(m_sheet->m_draggedEntity.value());
+        rw.OnObjectDrag(diff);
+      }
+      else if(m_sheet->m_draggedEntity.value().HasComponent<CircleComponent>())
+      {
+        CircleComponentWrapper cw(m_sheet->m_draggedEntity.value());
+        cw.OnObjectDrag(diff);
+      }
+      else if(m_sheet->m_draggedEntity.value().HasComponent<ArrowComponent>())
+      {
+        ArrowComponentWrapper aw(m_sheet->m_draggedEntity.value());
+        aw.OnObjectDrag(diff);
+      }
+      else if(m_sheet->m_draggedEntity.value().HasComponent<LineComponent>())
+      {
+        LineComponentWrapper lw(m_sheet->m_draggedEntity.value());
+        lw.OnObjectDrag(diff);
+      }
+      else if(m_sheet->m_draggedEntity.value().HasComponent<TextComponent>())
+      {
+        TextComponentWrapper tw(m_sheet->m_draggedEntity.value());
+        tw.OnObjectDrag(diff);
+      }
+      else
+        APP_CORE_ERR("WTF this component I am dragging???");
       m_sheet->m_firstPoint = pos / m_sheet->m_sheetSize;
-      auto& transform = m_sheet->m_draggedEntity.value().GetComponent<TransformComponent>();
-      transform.translation += diff;
+      //auto& transform = m_sheet->m_draggedEntity.value().GetComponent<TransformComponent>();
+      //transform.translation += diff;
     }
     else
       APP_CORE_ERR("Something went wrong with dragging");

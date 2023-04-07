@@ -90,7 +90,7 @@ void Application::Run()
     m_editor.OnImguiRender();
     m_imguiLayer->End();
 
-    renderer.SwapBuffers(); // this should be integrated into m_window->OnUpdate ??? idk..
+    renderer.SwapBuffers(); // TODO: this should be integrated into m_window->OnUpdate ??? idk..
     //m_window->OnUpdate(); 
   }
 }

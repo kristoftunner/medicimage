@@ -101,7 +101,7 @@ namespace medicimage
     }
   }
 
-  Entity medicimage::CircleComponentWrapper::CreateCircle(glm::vec2 firstPoint, glm::vec2 secondPoint, DrawObjectType objectType)
+  Entity medicimage::CircleComponentWrapper::CreateCircle(glm::vec2 firstPoint, glm::vec2 secondPoint, float aspectRatio, DrawObjectType objectType)
   {
     auto entity = Entity::CreateEntity(0, "Circle");
     entity.GetComponent<CommonAttributesComponent>().temporary = objectType == DrawObjectType::TEMPORARY ? true : false;
@@ -113,6 +113,7 @@ namespace medicimage
     auto& circle = entity.AddComponent<CircleComponent>();
     auto& thickness = entity.AddComponent<ThicknessComponent>();
     circle.radius = glm::length(firstPoint - secondPoint);
+    circle.aspectRatio = aspectRatio;
 
     return entity;
   }
@@ -128,28 +129,44 @@ namespace medicimage
     
     auto& boundingBox = m_entity.GetComponent<BoundingContourComponent>();
     auto& pickPoints = m_entity.GetComponent<PickPointsComponent>();
-    auto radius = circle.radius;
     // bounding polyigon of the circle is a square actually
-    boundingBox.cornerPoints = {{-radius, -radius}, {radius, -radius}, {radius, radius}, {-radius, radius}, {0,0}};
-    pickPoints.pickPoints = {{radius, 0}, {0, circle.radius}, {-circle.radius, 0}, {0, -circle.radius}};
+    float aspectRatio = circle.aspectRatio;
+    float radius = circle.radius;
+    // need to scale the y component, because the aspect ratio is not 1:1
+    boundingBox.cornerPoints = {{-radius, -radius * aspectRatio}, {radius, -radius * aspectRatio}, {radius, radius * aspectRatio}, {-radius, radius * aspectRatio}, {0,0}};
+    pickPoints.pickPoints = {{radius, 0}, {0, radius * aspectRatio}, {-radius, 0}, {0, -radius * aspectRatio}};
   }
 
   void CircleComponentWrapper::OnPickPointDrag(glm::vec2 diff, int selectedPoint)
   {
+    float& radius = m_entity.GetComponent<CircleComponent>().radius; 
     switch(selectedPoint)  // [TODO REFACTOR]: extract these out into functions
     {
       case static_cast<int>(CirclePickPoints::RIGHT):
-        m_entity.GetComponent<CircleComponent>().radius += diff.x;
+      {
+        auto updatedRadius = radius + diff.x;
+        radius = updatedRadius > 0 ? updatedRadius : radius;
         break;
+
+      }
       case static_cast<int>(CirclePickPoints::LEFT):
-        m_entity.GetComponent<CircleComponent>().radius += -diff.x;
+      {
+        auto updatedRadius = radius - diff.x;
+        radius = updatedRadius > 0 ? updatedRadius : radius;
         break;
+      }
       case static_cast<int>(CirclePickPoints::BOTTOM):
-        m_entity.GetComponent<CircleComponent>().radius += diff.y;
+      {
+        auto updatedRadius = radius + diff.y;
+        radius = updatedRadius > 0 ? updatedRadius : radius;
         break;
+      }
       case static_cast<int>(CirclePickPoints::TOP):
-        m_entity.GetComponent<CircleComponent>().radius += -diff.y;
+      {
+        auto updatedRadius = radius - diff.y;
+        radius = updatedRadius > 0 ? updatedRadius : radius;
         break;
+      }
       default:
         APP_CORE_ERR("Wrong pickpoint index({}) at component:{}", selectedPoint, m_entity.GetComponent<IDComponent>().ID);
         break;
@@ -779,17 +796,7 @@ namespace medicimage
     // TODO: some checks wether we drag the component outside or not etc..
     auto& transform = m_entity.GetComponent<TransformComponent>();
     transform.translation += diff;
-    auto& skinTemplate = m_entity.GetComponent<SkinTemplateComponent>();
-    for(auto e : skinTemplate.leftHorizontalSlices)
-    {
-      Entity rect(e);
-      rect.GetComponent<TransformComponent>().translation += diff;
-    }
-    for(auto e : skinTemplate.verticalSlices)
-    {
-      Entity rect(e);
-      rect.GetComponent<TransformComponent>().translation += diff;
-    }
+    UpdateShapeAttributes();
   }
 
   void SkinTemplateComponentWrapper::Draw()

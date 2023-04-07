@@ -95,6 +95,7 @@ namespace medicimage
   {
     // center is described by the translation in the transform component
     float radius = 0.0f;  // normalized
+    float aspectRatio = 1.0;  // aspect ratio of the image, because the radius is normalized, we need to know the aspect ratio of the image to scale it correctly
   
     CircleComponent() = default;
     CircleComponent(float radius)

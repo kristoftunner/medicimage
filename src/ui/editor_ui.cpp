@@ -143,15 +143,15 @@ void EditorUI::ShowImageWindow()
   if(m_editorState == EditorState::EDITING)
   {
     m_frame = m_drawingSheet.Draw(); 
-  
-    ImGui::Image(m_frame->GetShaderResourceView(), canvasSize, uvMin, uvMax, tintColor, borderColor);
+    ImVec2 imageSize = { canvasSize.x, static_cast<float>(canvasSize.x / 1.777) };
     auto viewportMinRegion = ImGui::GetWindowContentRegionMin();
     auto viewportMaxRegion = ImGui::GetWindowContentRegionMax();
-    auto viewportOffset = ImGui::GetWindowPos();
     glm::vec2 drawingSheetSize = {viewportMaxRegion.x - viewportMinRegion.x, viewportMaxRegion.y - viewportMinRegion.y};
+    ImGui::Image(m_frame->GetShaderResourceView(), imageSize, uvMin, uvMax, tintColor, borderColor);
     m_drawingSheet.SetDrawingSheetSize(drawingSheetSize);
     
     auto mousePos = ImGui::GetMousePos();
+    auto viewportOffset = ImGui::GetWindowPos();
     const ImVec2 mousePosOnImage(mousePos.x - viewportOffset.x - viewportMinRegion.x, mousePos.y - viewportOffset.y - viewportMinRegion.y);
     if(ImGui::IsItemHovered())
     {
@@ -201,8 +201,11 @@ void EditorUI::ShowImageWindow()
   ImGui::SameLine();
   if(ImGui::Button("Clear"))
   {
-    m_inputText.fill(0);  // no clearing it because we dont use this as an iterated array, but C-style array in ImGui
-    m_imageSavers->DeselectImageSaver();
+    if(m_editorState == EditorState::SHOW_CAMERA)
+    {
+      m_inputText.fill(0);  // no clearing it because we dont use this as an iterated array, but C-style array in ImGui
+      m_imageSavers->DeselectImageSaver();
+    }
   }
   ImGui::PopFont();
 
@@ -215,7 +218,7 @@ void EditorUI::ShowImageWindow()
       {
         if(std::isalnum(c) == 0)
         {
-          if (c == '.' || c == ',' || c == '_' || c == '-')
+          if (c == '.' || c == ',' || c == '_' || c == '-' || c == ' ')
             ;
           else
             return false;
@@ -240,7 +243,7 @@ void EditorUI::ShowImageWindow()
       }
     }
     else
-      APP_CORE_ERR("Add only letters numbers and \\.\\,\\-\\_ characters for uuid");
+      APP_CORE_ERR("Add only letters, numbers, whitespace and \\.\\,\\-\\_ characters for uuid");
   }
   ImGui::End();
 
@@ -505,11 +508,13 @@ void EditorUI::ShowThumbnails()
       float aspectRatio = static_cast<float>(m_frame->GetWidth()) / static_cast<float>(m_frame->GetHeight());
       if(ImGui::ImageButton(it->documentId.c_str(), it->texture->GetShaderResourceView(), ImVec2{canvasSize.x, canvasSize.x / aspectRatio}, uvMin, uvMax, backgroundColor, tintColor))
       {
-        // we can go into edit mode if we select an image from the thumbnails
-        m_editorState = EditorState::EDITING;
-        m_activeDocument = it;
-        m_drawingSheet.SetDocument(std::move(std::make_unique<ImageDocument>(*it)), {it->texture->GetWidth(), it->texture->GetHeight()});  // BIG TODO: update store the image size somewhere 
-        m_drawingSheet.ChangeDrawState(std::make_unique<ObjectSelectInitialState>(&m_drawingSheet));
+        if(m_editorState == EditorState::SHOW_CAMERA)
+        {
+          m_editorState = EditorState::EDITING;
+          m_activeDocument = it;
+          m_drawingSheet.SetDocument(std::move(std::make_unique<ImageDocument>(*it)), {it->texture->GetWidth(), it->texture->GetHeight()});  // BIG TODO: update store the image size somewhere 
+          m_drawingSheet.ChangeDrawState(std::make_unique<ObjectSelectInitialState>(&m_drawingSheet));
+        }
       }
 
       // little tooltip showing a zoomed version of the thumbnail image
