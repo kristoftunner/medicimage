@@ -36,6 +36,7 @@ public:
       return false;
   }
   bool Running(){return m_running;}
+  void Reset(){m_timerDuration = 0;}
 private:
   std::chrono::time_point<std::chrono::system_clock> m_startTime;
   int m_timerDuration = 0;

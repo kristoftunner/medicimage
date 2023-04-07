@@ -479,8 +479,9 @@ namespace medicimage
   {
     if(m_text == " ")   // first delete the space character, which is there only for showing a blank space when using text input
       m_text = "";
-
     m_text += inputText;
+    
+    m_timer.Start(1000);
   }
   
   void DrawTextState::OnKeyPressed(KeyCode key)
@@ -509,6 +510,12 @@ namespace medicimage
     {
       TextComponentWrapper tw(TextComponentWrapper::CreateText(m_sheet->m_firstPoint, m_text, s_defaultFontSize, DrawObjectType::TEMPORARY));
       tw.UpdateShapeAttributes();
+    }
+    
+    if(m_timer.Done())
+    {
+      m_sheet->SetDrawCommand(DrawCommand::OBJECT_SELECT); 
+      m_sheet->ChangeDrawState(std::make_unique<ObjectSelectInitialState>(m_sheet));
     }
   }
 
@@ -654,25 +661,35 @@ namespace medicimage
   void ObjectSelectedState::OnMouseButtonPressed(const glm::vec2 pos)
   {
     m_sheet->m_firstPoint = pos / m_sheet->m_sheetSize;
-    auto view = Entity::View<PickPointsComponent>();
+    auto view = Entity::View<BoundingContourComponent>();
+    // first iterate trough all the selected objects to see if we are clicking on a pickpoint or drag area
     for(auto e : view)
     {
       Entity entity(e);
-      if(m_sheet->IsPickpointSelected(entity, m_sheet->m_firstPoint))
+      if(entity.GetComponent<CommonAttributesComponent>().selected)
       {
-        m_sheet->ChangeDrawState(std::make_unique<PickPointSelectedState>(m_sheet));
-        return; 
-      }
-      else if(m_sheet->IsDragAreaSelected(entity, m_sheet->m_firstPoint))
-      {
-        m_sheet->m_draggedEntity = entity;
-        m_sheet->ChangeDrawState(std::make_unique<ObjectDraggingState>(m_sheet)); 
-        return;
+        if(m_sheet->IsPickpointSelected(entity, m_sheet->m_firstPoint))
+        {
+          m_sheet->ChangeDrawState(std::make_unique<PickPointSelectedState>(m_sheet));
+          return; 
+        }
+        else if(m_sheet->IsDragAreaSelected(entity, m_sheet->m_firstPoint))
+        {
+          m_sheet->m_draggedEntity = entity;
+          m_sheet->ChangeDrawState(std::make_unique<ObjectDraggingState>(m_sheet)); 
+          return;
+        }
       }
     }
-   
-    // clicking outside of the pickpoints and drage area, clear selection and go back to initial state
+    // next iterate trough all the not selected objects to see if we are clicking on the bounding box
     m_sheet->ClearSelectionShapes();
+    auto hoveredEntity = m_sheet->GetHoveredEntity(pos);
+    if(hoveredEntity.has_value())
+    {
+      hoveredEntity.value().GetComponent<CommonAttributesComponent>().selected = true;
+      return;
+    }
+    // clicking outside of the pickpoints and drage area, clear selection and go back to initial state
     m_sheet->ChangeDrawState(std::make_unique<ObjectSelectInitialState>(m_sheet));
   }
 

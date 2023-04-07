@@ -5,7 +5,7 @@
 #include "drawing/entity.h"
 #include "core/assert.h"
 #include "input/key_codes.h"
-
+#include "core/utils.h"
 #include <glm/glm.hpp>
 #include <string>
 #include <optional>
@@ -176,6 +176,7 @@ public:
   void OnUpdate() override;
 private:
   void DrawFinalText();
+  Timer m_timer;
   std::string m_text = " "; // space is needed to have a blank space for indicating the cursor
   constexpr static int s_defaultFontSize = 2;
 };
