@@ -31,12 +31,13 @@ CameraAPI::Frame OpenCvCamera::CaptureFrame()
 
   constexpr int width = 1920;
   constexpr int height = 1080; 
-  cv::Mat frame;
+  cv::UMat frame;
   m_cap.read(frame);
+  //cv::resize(frame, frame, cv::Size(width, height));
   cv::cvtColor(frame, frame, cv::COLOR_BGR2RGBA);
-  cv::resize(frame, frame, cv::Size(width,height));
-  Frame frameTexture = std::make_unique<Texture2D>("frame", width, height);
-  Renderer::GetInstance().GetDeviceContext()->UpdateSubresource(frameTexture.value()->GetTexturePtr(), 0, 0, frame.data, (UINT)frame.step[0], (UINT)frame.total());
+  
+  Frame frameTexture = std::make_unique<Texture2D>("frame", frame.cols, frame.rows);
+  cv::directx::convertToD3D11Texture2D(frame, frameTexture.value()->GetTexturePtr());
   frame.release();
   return std::move(frameTexture);
 }

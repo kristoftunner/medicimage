@@ -220,7 +220,8 @@ namespace medicimage
   std::optional<Entity> DrawingSheet::GetHoveredEntity(const glm::vec2 pos)
   {
     // TODO: may want to move this into editor ui, so here only relative coordinates are handled
-    const glm::vec2 relPos = pos / m_sheetSize;
+    const glm::vec2 relPos = GetNormalizedPos(pos);
+    //const glm::vec2 relPos = pos / m_sheetSize;
     auto view = Entity::View<BoundingContourComponent>();
     for(auto e : view)
     {
@@ -339,6 +340,13 @@ namespace medicimage
     m_draggedEntity.reset();
   }
 
+  glm::vec2 DrawingSheet::GetNormalizedPos(const glm::vec2 pos)
+  {
+    glm::vec2 normalizedPos = pos / m_sheetSize;
+    normalizedPos.x = std::clamp(normalizedPos.x, 0.0f, 1.0f);
+    normalizedPos.y = std::clamp(normalizedPos.y, 0.0f, 1.0f);
+    return normalizedPos;
+  }
 
   void InitialObjectDrawState::OnMouseHovered(const glm::vec2 pos)
   {
@@ -352,7 +360,8 @@ namespace medicimage
 
   void FirstClickRecievedState::OnMouseButtonDown(const glm::vec2 pos)
   {
-    m_sheet->m_firstPoint = pos / m_sheet->m_sheetSize; 
+    m_sheet->m_firstPoint = m_sheet->GetNormalizedPos(pos);
+    //m_sheet->m_firstPoint = pos / m_sheet->m_sheetSize; 
     m_sheet->ChangeDrawState(std::make_unique<DrawingTemporaryState>(m_sheet)); 
   }
 
@@ -365,7 +374,8 @@ namespace medicimage
 
   void DrawingTemporaryState::OnMouseButtonDown(const glm::vec2 pos)
   { // TODO REFACTOR: implement here the visitor pattern and extract the creaton functionality into a class 
-    m_sheet->m_secondPoint = pos / m_sheet->m_sheetSize;
+    m_sheet->m_secondPoint = m_sheet->GetNormalizedPos(pos);
+    //m_sheet->m_secondPoint = pos / m_sheet->m_sheetSize;
     Entity entity;
 
     switch(m_sheet->m_currentDrawCommand)
@@ -406,7 +416,8 @@ namespace medicimage
 
   void DrawingTemporaryState::OnMouseButtonReleased(const glm::vec2 pos)
   { // TODO REFACTOR: see above 
-    m_sheet->m_secondPoint = pos / m_sheet->m_sheetSize;
+    m_sheet->m_secondPoint = m_sheet->GetNormalizedPos(pos);
+    //m_sheet->m_secondPoint = pos / m_sheet->m_sheetSize;
     Entity entity;
     switch(m_sheet->m_currentDrawCommand)
     {
@@ -465,7 +476,8 @@ namespace medicimage
   
   void DrawTextInitialState::OnMouseButtonPressed(const glm::vec2 pos)
   {
-    m_sheet->m_firstPoint = pos / m_sheet->m_sheetSize; 
+    m_sheet->m_firstPoint = m_sheet->GetNormalizedPos(pos);
+    //m_sheet->m_firstPoint = pos / m_sheet->m_sheetSize; 
     m_sheet->ChangeDrawState(std::make_unique<DrawTextState>(m_sheet)); 
   }
 
@@ -534,7 +546,8 @@ namespace medicimage
   }
   void DrawIncrementalLetters::OnMouseButtonPressed(const glm::vec2 pos)
   {
-    m_sheet->m_firstPoint = pos / m_sheet->m_sheetSize; 
+    m_sheet->m_firstPoint = m_sheet->GetNormalizedPos(pos);
+    //m_sheet->m_firstPoint = pos / m_sheet->m_sheetSize; 
     TextComponentWrapper tw(TextComponentWrapper::CreateText(m_sheet->m_firstPoint, m_text, s_defaultFontSize, DrawObjectType::PERMANENT));
     tw.UpdateShapeAttributes();
     IncrementLetter();
@@ -608,7 +621,8 @@ namespace medicimage
 
   void ObjectSelectInitialState::OnMouseButtonPressed(const glm::vec2 pos)
   {
-    m_sheet->m_firstPoint = pos / m_sheet->m_sheetSize; 
+    m_sheet->m_firstPoint = m_sheet->GetNormalizedPos(pos);
+    //m_sheet->m_firstPoint = pos / m_sheet->m_sheetSize; 
     auto entity = m_sheet->GetHoveredEntity(pos);
     if(entity.has_value())
     {
@@ -623,7 +637,8 @@ namespace medicimage
 
   void ObjectSelectionState::OnMouseButtonDown(const glm::vec2 pos)
   {
-    m_sheet->m_secondPoint = pos / m_sheet->m_sheetSize;
+    m_sheet->m_secondPoint = m_sheet->GetNormalizedPos(pos);
+    //m_sheet->m_secondPoint = pos / m_sheet->m_sheetSize;
     auto& firstPoint = m_sheet->m_firstPoint;
     auto& secondPoint = m_sheet->m_secondPoint;
     if ((firstPoint.x != secondPoint.x) && (firstPoint.y != secondPoint.y)) // TODO: may not need this
@@ -658,7 +673,8 @@ namespace medicimage
 
   void ObjectSelectedState::OnMouseButtonPressed(const glm::vec2 pos)
   {
-    m_sheet->m_firstPoint = pos / m_sheet->m_sheetSize;
+    m_sheet->m_firstPoint = m_sheet->GetNormalizedPos(pos);
+    //m_sheet->m_firstPoint = pos / m_sheet->m_sheetSize;
     auto view = Entity::View<BoundingContourComponent>();
     // first iterate trough all the selected objects to see if we are clicking on a pickpoint or drag area
     for(auto e : view)
@@ -693,9 +709,11 @@ namespace medicimage
 
   void PickPointSelectedState::OnMouseButtonDown(const glm::vec2 pos)
   {
-    auto currentPoint = pos / m_sheet->m_sheetSize; 
+    auto currentPoint = m_sheet->GetNormalizedPos(pos);
+    //auto currentPoint = pos / m_sheet->m_sheetSize; 
     auto diff = (currentPoint - m_sheet->m_firstPoint) * glm::vec2(1.0);
-    m_sheet->m_firstPoint = pos / m_sheet->m_sheetSize;
+    m_sheet->m_firstPoint = m_sheet->GetNormalizedPos(pos);
+    //m_sheet->m_firstPoint = pos / m_sheet->m_sheetSize;
     auto view = Entity::View<PickPointsComponent>();
     for(auto e : view)
     {
@@ -755,7 +773,8 @@ namespace medicimage
     if(m_sheet->m_draggedEntity.has_value())
     { // TODO: implement a proper visitor pattern here
 
-      auto currentPoint = pos / m_sheet->m_sheetSize; 
+      auto currentPoint = m_sheet->GetNormalizedPos(pos);
+      //auto currentPoint = pos / m_sheet->m_sheetSize; 
       auto diff = (currentPoint - m_sheet->m_firstPoint) * glm::vec2(1.0);
       
       if(m_sheet->m_draggedEntity.value().HasComponent<SkinTemplateComponent>())

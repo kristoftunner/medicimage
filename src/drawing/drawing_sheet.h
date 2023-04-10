@@ -77,6 +77,9 @@ public:
   bool IsDragAreaSelected(Entity entity, glm::vec2 pos);
 
   void ClearSelectionShapes();
+
+  // helper functions
+  glm::vec2 GetNormalizedPos(const glm::vec2 pos);
 private:
   std::unique_ptr<ImageDocument> m_originalDoc;
   std::unique_ptr<Texture2D> m_drawing;

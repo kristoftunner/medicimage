@@ -125,7 +125,11 @@ bool EditorUI::OnKeyPressedEvent(KeyPressedEvent* e)
   }
   return true;
 }
-
+static ImVec2 mousePos;
+static ImVec2 viewportOffset;
+static ImVec2 mousePosOnImage;
+static glm::vec2 drawingSheetSize;
+static ImVec2 imageSize;
 void EditorUI::ShowImageWindow()
 {
   // Main window containing the stream and uuid input
@@ -140,19 +144,20 @@ void EditorUI::ShowImageWindow()
   constexpr ImVec4 borderColor = ImVec4(1.0f, 1.0f, 1.0f, 0.0f); // 50% opaque white
   ImVec2 canvasSize = ImGui::GetContentRegionAvail();   // Resize canvas to what's available
 
-  if(m_editorState == EditorState::EDITING)
+  if(m_editorState == EditorState::EDITING || m_editorState == EditorState::IMAGE_SELECTION)
   {
-    m_frame = m_drawingSheet.Draw(); 
-    ImVec2 imageSize = { canvasSize.x, static_cast<float>(canvasSize.x / 1.777) };
+    m_frame = m_drawingSheet.Draw();
+    float aspectRatio = static_cast<float>(m_frame->GetWidth()) / static_cast<float>(m_frame->GetHeight()); 
+    imageSize = { canvasSize.x, static_cast<float>(canvasSize.x / aspectRatio) };
     auto viewportMinRegion = ImGui::GetWindowContentRegionMin();
     auto viewportMaxRegion = ImGui::GetWindowContentRegionMax();
-    glm::vec2 drawingSheetSize = {viewportMaxRegion.x - viewportMinRegion.x, viewportMaxRegion.y - viewportMinRegion.y};
+    drawingSheetSize = {viewportMaxRegion.x - viewportMinRegion.x, viewportMaxRegion.y - viewportMinRegion.y};
     ImGui::Image(m_frame->GetShaderResourceView(), imageSize, uvMin, uvMax, tintColor, borderColor);
-    m_drawingSheet.SetDrawingSheetSize(drawingSheetSize);
+    m_drawingSheet.SetDrawingSheetSize({ imageSize.x, imageSize.y });
     
-    auto mousePos = ImGui::GetMousePos();
-    auto viewportOffset = ImGui::GetWindowPos();
-    const ImVec2 mousePosOnImage(mousePos.x - viewportOffset.x - viewportMinRegion.x, mousePos.y - viewportOffset.y - viewportMinRegion.y);
+    mousePos = ImGui::GetMousePos();
+    viewportOffset = ImGui::GetWindowPos();
+    mousePosOnImage = { mousePos.x - viewportOffset.x - viewportMinRegion.x, mousePos.y - viewportOffset.y - viewportMinRegion.y };
     if(ImGui::IsItemHovered())
     {
       if(ImGui::IsMouseClicked(ImGuiMouseButton_Left))
@@ -490,6 +495,7 @@ void EditorUI::ShowThumbnails()
         {
           m_editorState = EditorState::IMAGE_SELECTION;
           m_activeDocument = it;
+          m_drawingSheet.StartAnnotation();
           m_drawingSheet.SetDocument(std::move(std::make_unique<ImageDocument>(*it)), {it->texture->GetWidth(), it->texture->GetHeight()});  // BIG TODO: update store the image size somewhere 
           m_drawingSheet.ChangeDrawState(std::make_unique<BaseDrawState>(&m_drawingSheet));
         }
@@ -616,9 +622,16 @@ void EditorUI::OnImguiRender()
   auto editorState = EditorStateName(m_editorState);
   ImGui::Text("Editor state:%s", editorState.c_str());
   ImGui::SameLine();
-  ImGui::Text("ToolsRegionSize:%f:%f", m_toolsRegionSize.x, m_toolsRegionSize.y);
+  ImGui::Text("Mouse pos:%.2f:%.2f", mousePos.x, mousePos.y);
   ImGui::SameLine();
+  ImGui::Text("Viewport offset:%.2f%.2f", viewportOffset.x, viewportOffset.y);
+
+  ImGui::Text("MousePosOnImage size:%.2f:%.2f", mousePosOnImage.x, mousePosOnImage.y);
+  ImGui::SameLine();
+  ImGui::Text("DrawingSheeSize: %.2f:%.2f", drawingSheetSize.x, drawingSheetSize.y);
   ImGui::Text("frame size:%d:%d", m_frame->GetWidth(), m_frame->GetHeight());
+  ImGui::SameLine();
+  ImGui::Text("ImageSize: %.2f:%.2f", imageSize.x, imageSize.y);
   ImGui::End();
 } 
 
