@@ -442,6 +442,8 @@ namespace medicimage
         break;
       }
     }
+    
+    m_sheet->Annotated(); // needed for weird UI feature
 
     if(m_sheet->m_currentDrawCommand == DrawCommand::DRAW_LINE) // line is a special case, because we are drawing multiple NOT connected lines
       m_sheet->ChangeDrawState(std::make_unique<InitialObjectDrawState>(m_sheet));
@@ -453,6 +455,7 @@ namespace medicimage
       m_sheet->ChangeDrawState(std::make_unique<ObjectSelectInitialState>(m_sheet));
 
     }
+
   }
   
   void DrawTextInitialState::OnMouseHovered(const glm::vec2 pos)
@@ -470,8 +473,9 @@ namespace medicimage
   {
     if(m_text != "")
     {
-        TextComponentWrapper tw(TextComponentWrapper::CreateText(m_sheet->m_firstPoint, m_text, s_defaultFontSize, DrawObjectType::PERMANENT));
-        tw.UpdateShapeAttributes();
+      TextComponentWrapper tw(TextComponentWrapper::CreateText(m_sheet->m_firstPoint, m_text, s_defaultFontSize, DrawObjectType::PERMANENT));
+      tw.UpdateShapeAttributes();
+      m_sheet->Annotated(); // needed for weird UI feature
     }
   }
 
@@ -480,8 +484,6 @@ namespace medicimage
     if(m_text == " ")   // first delete the space character, which is there only for showing a blank space when using text input
       m_text = "";
     m_text += inputText;
-    
-    m_timer.Start(1000);
   }
   
   void DrawTextState::OnKeyPressed(KeyCode key)
@@ -512,11 +514,6 @@ namespace medicimage
       tw.UpdateShapeAttributes();
     }
     
-    if(m_timer.Done())
-    {
-      m_sheet->SetDrawCommand(DrawCommand::OBJECT_SELECT); 
-      m_sheet->ChangeDrawState(std::make_unique<ObjectSelectInitialState>(m_sheet));
-    }
   }
 
   void DrawIncrementalLetters::OnKeyPressed(KeyCode key)
@@ -541,6 +538,7 @@ namespace medicimage
     TextComponentWrapper tw(TextComponentWrapper::CreateText(m_sheet->m_firstPoint, m_text, s_defaultFontSize, DrawObjectType::PERMANENT));
     tw.UpdateShapeAttributes();
     IncrementLetter();
+    m_sheet->Annotated(); // needed for weird UI feature
   }
 
   void DrawIncrementalLetters::IncrementLetter()

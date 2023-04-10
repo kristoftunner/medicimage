@@ -182,68 +182,71 @@ void EditorUI::ShowImageWindow()
   // uuid input
   bool openUuidInput = true;
   ImGui::Begin("UuidInput", &openUuidInput , ImGuiWindowFlags_NoTitleBar);
-  static bool uuidTextInputTriggered = false;
-  ImGui::PushFont(m_largeFont); 
-  ImGui::PushItemWidth(-260); // TODO: do not hardcode it
-  float sz = ImGui::GetTextLineHeight();
-  if(ImGui::InputText("##label", m_inputText.data(), m_inputText.size(), ImGuiInputTextFlags_EnterReturnsTrue))
   {
-    uuidTextInputTriggered = true;
-  }
-
-  ImGui::PopItemWidth();
-  ImGui::SameLine();
-  if(ImGui::Button("Submit"))
-  {
-    uuidTextInputTriggered = true;
-  }
-
-  ImGui::SameLine();
-  if(ImGui::Button("Clear"))
-  {
-    if(m_editorState == EditorState::SHOW_CAMERA)
+    GuiDisableGuard disableGuard(m_editorState == EditorState::EDITING);
+    static bool uuidTextInputTriggered = false;
+    ImGui::PushFont(m_largeFont); 
+    ImGui::PushItemWidth(-260); // TODO: do not hardcode it
+    float sz = ImGui::GetTextLineHeight();
+    if(ImGui::InputText("##label", m_inputText.data(), m_inputText.size(), ImGuiInputTextFlags_EnterReturnsTrue))
     {
-      m_inputText.fill(0);  // no clearing it because we dont use this as an iterated array, but C-style array in ImGui
-      m_imageSavers->DeselectImageSaver();
+      uuidTextInputTriggered = true;
     }
-  }
-  ImGui::PopFont();
 
-  if(uuidTextInputTriggered)
-  {
-    std::string inputText = std::string(m_inputText.data());
-    uuidTextInputTriggered = false;
-    auto checkInput = [&](const std::string& inputString){
-      for(auto c : inputString)
+    ImGui::PopItemWidth();
+    ImGui::SameLine();
+    if(ImGui::Button("Submit"))
+    {
+      uuidTextInputTriggered = true;
+    }
+
+    ImGui::SameLine();
+    if(ImGui::Button("Clear"))
+    {
+      if(m_editorState == EditorState::SHOW_CAMERA)
       {
-        if(std::isalnum(c) == 0)
+        m_inputText.fill(0);  // no clearing it because we dont use this as an iterated array, but C-style array in ImGui
+        m_imageSavers->DeselectImageSaver();
+      }
+    }
+    ImGui::PopFont();
+
+    if(uuidTextInputTriggered)
+    {
+      std::string inputText = std::string(m_inputText.data());
+      uuidTextInputTriggered = false;
+      auto checkInput = [&](const std::string& inputString){
+        for(auto c : inputString)
         {
-          if (c == '.' || c == ',' || c == '_' || c == '-' || c == ' ')
-            ;
-          else
-            return false;
+          if(std::isalnum(c) == 0)
+          {
+            if (c == '.' || c == ',' || c == '_' || c == '-' || c == ' ')
+              ;
+            else
+              return false;
+          }
+        }
+        return true;};
+      if (m_inputText[0] != '\0' && checkInput(inputText))
+      {
+        size_t pos;
+        try
+        {
+          m_imageSavers->SelectImageSaver(inputText);
+          m_appConfig.PushPatientFolder(m_imageSavers->GetSelectedSaver().GetPatientFolder());
+        }
+        catch (std::invalid_argument const& ex)
+        {
+          APP_CORE_WARN("Please write only numbers for a viable uuid!"); 
+        }
+        catch (std::out_of_range const& ex)
+        {
+          APP_CORE_WARN("Please add a number smaller for uuid!"); 
         }
       }
-      return true;};
-    if (m_inputText[0] != '\0' && checkInput(inputText))
-    {
-      size_t pos;
-      try
-      {
-        m_imageSavers->SelectImageSaver(inputText);
-        m_appConfig.PushPatientFolder(m_imageSavers->GetSelectedSaver().GetPatientFolder());
-      }
-      catch (std::invalid_argument const& ex)
-      {
-        APP_CORE_WARN("Please write only numbers for a viable uuid!"); 
-      }
-      catch (std::out_of_range const& ex)
-      {
-        APP_CORE_WARN("Please add a number smaller for uuid!"); 
-      }
+      else
+        APP_CORE_ERR("Add only letters, numbers, whitespace and \\.\\,\\-\\_ characters for uuid");
     }
-    else
-      APP_CORE_ERR("Add only letters, numbers, whitespace and \\.\\,\\-\\_ characters for uuid");
   }
   ImGui::End();
 
@@ -262,76 +265,78 @@ void EditorUI::ShowToolbox()
   float bigIconWidth = m_toolsRegionSize.x - padding.x;
   float smallIconWidth = m_toolsRegionSize.x / 2.0f - padding.x * 3;                       
   ImVec2 bigIconSize = ImVec2(bigIconWidth, bigIconWidth); 
-  ImVec2 smallIconSize = ImVec2(smallIconWidth, smallIconWidth);                         
-  if (ImGui::ImageButton("screenshot", m_screenshotIcon->GetShaderResourceView(), bigIconSize, uvMin, uvMax, iconBg, tintColor))
+  ImVec2 smallIconSize = ImVec2(smallIconWidth, smallIconWidth);   
+
   {
-    if(m_editorState == EditorState::SHOW_CAMERA)
+    GuiDisableGuard disableGuard(m_editorState == EditorState::EDITING || m_editorState == EditorState::IMAGE_SELECTION);
+    if (ImGui::ImageButton("screenshot", m_screenshotIcon->GetShaderResourceView(), bigIconSize, uvMin, uvMax, iconBg, tintColor))
     {
-      if(m_frame.get() != nullptr)
+      if(m_editorState == EditorState::SHOW_CAMERA)
       {
-        if (m_imageSavers->HasSelectedSaver()) //TODO: should select it with an optional<ImageDocContainer> return type
-        { // create the ImageDocument here, because the screenshot is made here
-          m_activeDocument = m_imageSavers->GetSelectedSaver().AddImage(*m_frame.get(), false);
+        if(m_frame.get() != nullptr)
+        {
+          if (m_imageSavers->HasSelectedSaver()) //TODO: should select it with an optional<ImageDocContainer> return type
+          { // create the ImageDocument here, because the screenshot is made here
+            m_activeDocument = m_imageSavers->GetSelectedSaver().AddImage(*m_frame.get(), false);
+          }
+          else
+          {
+            APP_CORE_ERR("Please input valid UUID for saving the current image!");
+          }
+        }
+        m_editorState = EditorState::SCREENSHOT;
+        m_timer.Start(500);
+      }
+    }
+  }
+
+  {
+    GuiDisableGuard disableGuard(m_editorState != EditorState::EDITING);
+    if (ImGui::ImageButton("save", m_saveIcon->GetShaderResourceView(), smallIconSize, uvMin, uvMax, iconBg, tintColor))
+    {
+      if(m_editorState == EditorState::EDITING)
+      {
+        if (m_imageSavers->HasSelectedSaver()) 
+        { 
+          m_imageSavers->GetSelectedSaver().AddImage(*m_frame.get(), true);
         }
         else
-        {
           APP_CORE_ERR("Please input valid UUID for saving the current image!");
-        }
+        // we can get out of edit mode only with saving the image
+        m_editorState = EditorState::SHOW_CAMERA;
+        m_drawingSheet.SetDrawCommand(DrawCommand::DO_NOTHING);
       }
-      m_editorState = EditorState::SCREENSHOT;
-      m_timer.Start(500);
-    }
+    } 
   }
-
-  if(m_editorState != EditorState::EDITING)
-  {
-    ImGui::BeginDisabled();
-    iconBg = ImVec4(0.5f, 0.5f, 0.5f, 1.0f);
-  }
-
-  if (ImGui::ImageButton("save", m_saveIcon->GetShaderResourceView(), smallIconSize, uvMin, uvMax, iconBg, tintColor))
-  {
-    if(m_editorState == EditorState::EDITING)
-    {
-      if (m_imageSavers->HasSelectedSaver()) 
-      { 
-        m_imageSavers->GetSelectedSaver().AddImage(*m_frame.get(), true);
-      }
-      else
-        APP_CORE_ERR("Please input valid UUID for saving the current image!");
-      // we can get out of edit mode only with saving the image
-      m_editorState = EditorState::SHOW_CAMERA;
-      m_drawingSheet.SetDrawCommand(DrawCommand::DO_NOTHING);
-      ImGui::BeginDisabled();
-    }
-  } 
+  
   ImGui::SameLine();
 
-  if (ImGui::ImageButton("delete", m_deleteIcon->GetShaderResourceView(), smallIconSize, uvMin, uvMax, iconBg, tintColor))
   {
-    if(m_editorState == EditorState::EDITING)
+    GuiDisableGuard disableGuard(m_editorState != EditorState::IMAGE_SELECTION);
+    if (ImGui::ImageButton("delete", m_deleteIcon->GetShaderResourceView(), smallIconSize, uvMin, uvMax, iconBg, tintColor))
     {
-      ImGui::OpenPopup("delete");
-      ImVec2 center = ImGui::GetMainViewport()->GetCenter();
-      ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+      if(m_editorState == EditorState::IMAGE_SELECTION)
+      {
+        ImGui::OpenPopup("delete");
+        ImVec2 center = ImGui::GetMainViewport()->GetCenter();
+        ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+      }
     }
   }
 
-  if(m_editorState == EditorState::EDITING)
+  if(m_editorState == EditorState::IMAGE_SELECTION)
   {
     if (ImGui::BeginPopupModal("delete", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
     {
       std::string imageName = m_activeDocument->documentId; 
       ImGui::Text("Are you sure you want to delete image %s?\n deletion cannot be undone!", imageName.c_str());
       ImGui::Separator();
-      bool beginDisabling = false;
       if (ImGui::Button("OK", ImVec2(120, 0))) 
       { 
         ImGui::CloseCurrentPopup();
         if(m_imageSavers->HasSelectedSaver())
           m_imageSavers->GetSelectedSaver().DeleteImage(m_activeDocument);
         m_editorState = EditorState::SHOW_CAMERA;
-        beginDisabling = true;
       }
       ImGui::SetItemDefaultFocus();
       ImGui::SameLine();
@@ -339,39 +344,46 @@ void EditorUI::ShowToolbox()
       { 
         ImGui::CloseCurrentPopup(); 
         m_editorState = EditorState::SHOW_CAMERA;
-        beginDisabling = true;
       }
       ImGui::EndPopup();
-      if (beginDisabling)
-        ImGui::BeginDisabled();
       m_drawingSheet.SetDrawCommand(DrawCommand::DO_NOTHING);
     }
   } 
-
-  if (ImGui::ImageButton("undo", m_undoIcon->GetShaderResourceView(), smallIconSize, uvMin, uvMax, iconBg, tintColor))
+  
   {
-    if(m_editorState == EditorState::EDITING)
+    GuiDisableGuard disableGuard(m_editorState == EditorState::SHOW_CAMERA || m_editorState == EditorState::SCREENSHOT);
+    if (ImGui::ImageButton("undo", m_undoIcon->GetShaderResourceView(), smallIconSize, uvMin, uvMax, iconBg, tintColor))
     {
-      ImGui::OpenPopup("undo");
-      ImVec2 center = ImGui::GetMainViewport()->GetCenter();
-      ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+      if(m_editorState == EditorState::EDITING || m_editorState == EditorState::IMAGE_SELECTION)
+      {
+        if(m_drawingSheet.HasAnnotated())
+        {
+          ImGui::OpenPopup("undo");
+          ImVec2 center = ImGui::GetMainViewport()->GetCenter();
+          ImGui::SetNextWindowPos(center, ImGuiCond_Appearing, ImVec2(0.5f, 0.5f));
+        }
+        else
+        {
+          m_editorState = EditorState::SHOW_CAMERA;
+          m_drawingSheet.SetDrawCommand(DrawCommand::DO_NOTHING);
+        }
+      }
     }
   }
+
   ImGui::SameLine();
   
-  if(m_editorState == EditorState::EDITING)
+  if(m_editorState == EditorState::EDITING || m_editorState == EditorState::IMAGE_SELECTION)
   {
     if (ImGui::BeginPopupModal("undo", nullptr, ImGuiWindowFlags_AlwaysAutoResize))
     {
       std::string imageName = m_activeDocument->documentId; 
       ImGui::Text("Are you sure you want to clear the annotations?");
       ImGui::Separator();
-      bool beginDisabling = false;
       if (ImGui::Button("OK", ImVec2(120, 0))) 
       { 
         ImGui::CloseCurrentPopup();
         m_editorState = EditorState::SHOW_CAMERA;
-        beginDisabling = true;
       }
       ImGui::SetItemDefaultFocus();
       ImGui::SameLine();
@@ -380,79 +392,42 @@ void EditorUI::ShowToolbox()
         ImGui::CloseCurrentPopup(); 
       }
       ImGui::EndPopup();
-      if (beginDisabling)
-        ImGui::BeginDisabled();
       m_drawingSheet.SetDrawCommand(DrawCommand::DO_NOTHING);
     }
   } 
   
   // setting green border for the selected button
   ImGuiStyle& style = ImGui::GetStyle();
-  
-  style.Colors[ImGuiCol_Button] = m_drawingSheet.GetDrawCommand() == DrawCommand::DRAW_TEXT ? s_toolUsedBgColor : s_defaultFrameBgColor; 
-  if (ImGui::ImageButton("addText", m_addTextIcon->GetShaderResourceView(), smallIconSize, uvMin, uvMax, iconBg, tintColor))
-  {
-    if(m_editorState == EditorState::EDITING)
-      m_drawingSheet.SetDrawCommand(DrawCommand::DRAW_TEXT);
-  }
-  
-  style.Colors[ImGuiCol_Button] = m_drawingSheet.GetDrawCommand() == DrawCommand::DRAW_INCREMENTAL_LETTERS ? s_toolUsedBgColor : s_defaultFrameBgColor; 
-  if (ImGui::ImageButton("addIncrementalLetters", m_incrementalLettersIcon->GetShaderResourceView(), smallIconSize, uvMin, uvMax, iconBg, tintColor))
-  {
-    if(m_editorState == EditorState::EDITING)
-      m_drawingSheet.SetDrawCommand(DrawCommand::DRAW_INCREMENTAL_LETTERS);
-  }
-  ImGui::SameLine();
-  
-  style.Colors[ImGuiCol_Button] = m_drawingSheet.GetDrawCommand() == DrawCommand::DRAW_CIRCLE ? s_toolUsedBgColor : s_defaultFrameBgColor; 
-  if (ImGui::ImageButton("circle", m_circleIcon->GetShaderResourceView(), smallIconSize, uvMin, uvMax, iconBg, tintColor))
-  {
-    if(m_editorState == EditorState::EDITING)
-      m_drawingSheet.SetDrawCommand(DrawCommand::DRAW_CIRCLE);
-  }
-  
-  style.Colors[ImGuiCol_Button] = m_drawingSheet.GetDrawCommand() == DrawCommand::DRAW_LINE ? s_toolUsedBgColor : s_defaultFrameBgColor; 
-  if (ImGui::ImageButton("line", m_lineIcon->GetShaderResourceView(), smallIconSize, uvMin, uvMax, iconBg, tintColor))
-  {
-    if(m_editorState == EditorState::EDITING)
-      m_drawingSheet.SetDrawCommand(DrawCommand::DRAW_LINE);
-  }
-  ImGui::SameLine();
-  
-  style.Colors[ImGuiCol_Button] = m_drawingSheet.GetDrawCommand() == DrawCommand::DRAW_MULTILINE ? s_toolUsedBgColor : s_defaultFrameBgColor; 
-  if (ImGui::ImageButton("multiline", m_multilineIcon->GetShaderResourceView(), smallIconSize, uvMin, uvMax, iconBg, tintColor))
-  {
-    if(m_editorState == EditorState::EDITING)
-      m_drawingSheet.SetDrawCommand(DrawCommand::DRAW_MULTILINE);
-  }
-  
-  style.Colors[ImGuiCol_Button] = m_drawingSheet.GetDrawCommand() == DrawCommand::DRAW_RECTANGLE ? s_toolUsedBgColor : s_defaultFrameBgColor; 
-  if (ImGui::ImageButton("rectangle", m_rectangleIcon->GetShaderResourceView(), smallIconSize, uvMin, uvMax, iconBg, tintColor))
-  {
-    if(m_editorState == EditorState::EDITING)
-      m_drawingSheet.SetDrawCommand(DrawCommand::DRAW_RECTANGLE);
-  }
-  ImGui::SameLine();
+  auto drawDrawingTool = [&](const std::string& name, Texture2D* icon, DrawCommand command){
+    bool toolActivated = m_drawingSheet.GetDrawCommand() == command;
+    style.Colors[ImGuiCol_Button] = toolActivated ? s_toolUsedBgColor : s_defaultFrameBgColor;
+    if(ImGui::ImageButton(name.c_str(), icon->GetShaderResourceView(), smallIconSize, uvMin, uvMax, iconBg, tintColor))
+    {
+      if(m_editorState == EditorState::IMAGE_SELECTION)
+      {
+        m_editorState = EditorState::EDITING;
+        m_drawingSheet.StartAnnotation();
+      }
+      m_drawingSheet.SetDrawCommand(command);
+    }
+  };
 
-  style.Colors[ImGuiCol_Button] = m_drawingSheet.GetDrawCommand() == DrawCommand::DRAW_ARROW ? s_toolUsedBgColor : s_defaultFrameBgColor; 
-  if (ImGui::ImageButton("arrow", m_arrowIcon->GetShaderResourceView(), smallIconSize, uvMin, uvMax, iconBg, tintColor))
   {
-    if(m_editorState == EditorState::EDITING)
-      m_drawingSheet.SetDrawCommand(DrawCommand::DRAW_ARROW);
+    GuiDisableGuard disableGuard(m_editorState == EditorState::SHOW_CAMERA || m_editorState == EditorState::SCREENSHOT);
+    drawDrawingTool("text", m_addTextIcon.get(), DrawCommand::DRAW_TEXT);
+    drawDrawingTool("addIncrementalText", m_incrementalLettersIcon.get(), DrawCommand::DRAW_INCREMENTAL_LETTERS);
+    ImGui::SameLine();
+    drawDrawingTool("circle", m_circleIcon.get(), DrawCommand::DRAW_CIRCLE);
+    drawDrawingTool("line", m_lineIcon.get(), DrawCommand::DRAW_LINE);
+    ImGui::SameLine();
+    drawDrawingTool("mutliline", m_multilineIcon.get(), DrawCommand::DRAW_MULTILINE);
+    drawDrawingTool("rectangle", m_rectangleIcon.get(), DrawCommand::DRAW_RECTANGLE);
+    ImGui::SameLine();
+    drawDrawingTool("arrow", m_arrowIcon.get(), DrawCommand::DRAW_ARROW);
+    drawDrawingTool("skin-template", m_skinTemplateIcon.get(), DrawCommand::DRAW_SKIN_TEMPLATE);
+    ImGui::SameLine();
   }
   
-  style.Colors[ImGuiCol_Button] = m_drawingSheet.GetDrawCommand() == DrawCommand::DRAW_SKIN_TEMPLATE ? s_toolUsedBgColor : s_defaultFrameBgColor; 
-  if (ImGui::ImageButton("skin-template", m_skinTemplateIcon->GetShaderResourceView(), smallIconSize, uvMin, uvMax, iconBg, tintColor))
-  {
-    if(m_editorState == EditorState::EDITING)
-      m_drawingSheet.SetDrawCommand(DrawCommand::DRAW_SKIN_TEMPLATE);
-  }
-  ImGui::SameLine();
-
-  if(m_editorState != EditorState::EDITING)
-  {
-    ImGui::EndDisabled();
-  }
   // restore the default color
   style.Colors[ImGuiCol_Button] = s_defaultFrameBgColor; 
 
@@ -461,24 +436,27 @@ void EditorUI::ShowToolbox()
   //listbox for selecting saved uuids
   ImGui::Begin("Load patients", nullptr, ImGuiWindowFlags_NoCollapse | ImGuiWindowFlags_NoTitleBar);
   ImGui::Text("Loaded patients:");
-  if (ImGui::BeginListBox("##listbox", ImVec2{ -FLT_MIN, 120 }))
   {
-    for(const auto& saverMap : m_imageSavers->GetImageSavers())
+    GuiDisableGuard disableGuard(m_editorState == EditorState::EDITING);
+    if (ImGui::BeginListBox("##listbox", ImVec2{ -FLT_MIN, 120 }))
     {
-      auto& saver = saverMap.second;
-      bool selected = saver.GetUuid() == m_imageSavers->GetSelectedUuid();
-      auto uuid = saver.GetUuid();
-      if(ImGui::Selectable(uuid.c_str(), &selected))
+      for(const auto& saverMap : m_imageSavers->GetImageSavers())
       {
-        assert(m_inputText.size() >= uuid.size());
-        m_inputText.fill(0);
-        std::copy(uuid.begin(), uuid.end(), m_inputText.begin());
-        m_imageSavers->SelectImageSaver(uuid);
-        m_imageSavers->GetSelectedSaver().LoadPatientsFolder();
+        auto& saver = saverMap.second;
+        bool selected = saver.GetUuid() == m_imageSavers->GetSelectedUuid();
+        auto uuid = saver.GetUuid();
+        if(ImGui::Selectable(uuid.c_str(), &selected))
+        {
+          assert(m_inputText.size() >= uuid.size());
+          m_inputText.fill(0);
+          std::copy(uuid.begin(), uuid.end(), m_inputText.begin());
+          m_imageSavers->SelectImageSaver(uuid);
+          m_imageSavers->GetSelectedSaver().LoadPatientsFolder();
+        }
       }
-    }
-    ImGui::EndListBox();
-  } 
+      ImGui::EndListBox();
+    } 
+  }
 
   ImGui::End();
 }
@@ -508,12 +486,12 @@ void EditorUI::ShowThumbnails()
       float aspectRatio = static_cast<float>(m_frame->GetWidth()) / static_cast<float>(m_frame->GetHeight());
       if(ImGui::ImageButton(it->documentId.c_str(), it->texture->GetShaderResourceView(), ImVec2{canvasSize.x, canvasSize.x / aspectRatio}, uvMin, uvMax, backgroundColor, tintColor))
       {
-        if(m_editorState == EditorState::SHOW_CAMERA)
+        if(m_editorState == EditorState::SHOW_CAMERA || m_editorState == EditorState::IMAGE_SELECTION)
         {
-          m_editorState = EditorState::EDITING;
+          m_editorState = EditorState::IMAGE_SELECTION;
           m_activeDocument = it;
           m_drawingSheet.SetDocument(std::move(std::make_unique<ImageDocument>(*it)), {it->texture->GetWidth(), it->texture->GetHeight()});  // BIG TODO: update store the image size somewhere 
-          m_drawingSheet.ChangeDrawState(std::make_unique<ObjectSelectInitialState>(&m_drawingSheet));
+          m_drawingSheet.ChangeDrawState(std::make_unique<BaseDrawState>(&m_drawingSheet));
         }
       }
 
@@ -555,6 +533,7 @@ static std::string EditorStateName(EditorState state)
     case EditorState::EDITING:      return "Editing";
     case EditorState::SCREENSHOT:   return "Screenshot";
     case EditorState::SHOW_CAMERA:  return "ShowCamera";
+    case EditorState::IMAGE_SELECTION: return "ImageSelection";
     default: return "undefined";
   }
 }

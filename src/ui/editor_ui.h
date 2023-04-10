@@ -19,7 +19,7 @@
 namespace medicimage
 {
 
-enum class EditorState{SHOW_CAMERA, EDITING, SCREENSHOT};
+enum class EditorState{SHOW_CAMERA, IMAGE_SELECTION, EDITING, SCREENSHOT};
 enum class EditingCommandType{INITIAL, DRAWING};
 
 class EditorUI : public Layer
@@ -92,5 +92,21 @@ private:
   // debug informations
   ImVec2 m_toolsRegionSize;
 };
-  
+
+struct GuiDisableGuard
+{
+  GuiDisableGuard(bool shouldDisable) : m_shouldDisable(shouldDisable)
+  {
+    if (m_shouldDisable)
+      ImGui::BeginDisabled();
+  }
+  ~GuiDisableGuard()
+  {
+    if (m_shouldDisable)
+      ImGui::EndDisabled();
+  }
+private:
+  bool m_shouldDisable;
+};
+
 } // namespace medicimage

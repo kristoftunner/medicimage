@@ -50,6 +50,12 @@ public:
   const std::string GetDrawCommandName();
   std::unique_ptr<Texture2D> Draw();
   void ChangeDrawState(std::unique_ptr<BaseDrawState> newState);
+
+  // some weird functions to handle the annotation process
+  void StartAnnotation(){m_annotated = false;}
+  void Annotated(){m_annotated = true;}
+  bool HasAnnotated(){return m_annotated;}
+
   void SetDrawingSheetSize(glm::vec2 size); 
   void OnMouseHovered(const glm::vec2 pos);
   void OnMouseButtonPressed(const glm::vec2 pos); // assuming only left mouse button can be pressed, BIG TODO: 
@@ -78,7 +84,7 @@ private:
   std::optional<Entity> m_hoveredEntity;
   std::optional<Entity> m_draggedEntity;
   std::optional<Entity> m_toBeDrawnEntity;
-
+  bool m_annotated = false;
   DrawCommand m_currentDrawCommand = DrawCommand::DO_NOTHING;
   std::unique_ptr<BaseDrawState> m_drawState; 
 
