@@ -33,7 +33,7 @@ CameraAPI::Frame OpenCvCamera::CaptureFrame()
   constexpr int height = 1080; 
   cv::UMat frame;
   m_cap.read(frame);
-  //cv::resize(frame, frame, cv::Size(width, height));
+  cv::resize(frame, frame, cv::Size(width, height));
   cv::cvtColor(frame, frame, cv::COLOR_BGR2RGBA);
   
   Frame frameTexture = std::make_unique<Texture2D>("frame", frame.cols, frame.rows);

@@ -5,7 +5,6 @@
 #include "ui/editor_ui.h"
 #include "renderer/renderer.h"
 #include "input/event.h"
-
 #include "renderer/window.h"
 
 namespace medicimage

@@ -373,7 +373,7 @@ namespace medicimage
 
 
   void DrawingTemporaryState::OnMouseButtonDown(const glm::vec2 pos)
-  { // TODO REFACTOR: implement here the visitor pattern and extract the creaton functionality into a class 
+  { 
     m_sheet->m_secondPoint = m_sheet->GetNormalizedPos(pos);
     //m_sheet->m_secondPoint = pos / m_sheet->m_sheetSize;
     Entity entity;

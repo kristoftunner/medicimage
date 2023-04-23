@@ -12,3 +12,5 @@ set_property(TARGET ocv PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:D
 add_executable(sandbox_old sandbox_old.cpp)
 target_link_libraries(sandbox_old PUBLIC medicimage)
 set_property(TARGET sandbox_old PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)

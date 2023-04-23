@@ -4,7 +4,7 @@ project("medicimage" CXX)
 
 # setup cmake globally
 include(cmake/setup_env.cmake)
-
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE INTERNAL "")
 # add the dependencies
 #add_subdirectory(ext)
 find_package(OpenCV REQUIRED PATHS "d:\\dev\\repos\\opencv\\build\\install\\x64\\vc17\\staticlib") # first build openCV in ext then get the static libs from there

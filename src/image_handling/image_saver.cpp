@@ -172,9 +172,9 @@ std::vector<ImageDocument>::iterator ImageDocContainer::AddImage(Texture2D& text
   
   std::string footerText = doc.GenerateFooterText();
   std::unique_ptr<Texture2D> borderedImage;
-  if(hasFooter)
-    borderedImage = ImageEditor::ReplaceImageFooter(footerText, doc.texture.get());
-  else
+  //if(hasFooter)
+  //  borderedImage = ImageEditor::ReplaceImageFooter(footerText, doc.texture.get());
+  //else
     borderedImage = ImageEditor::AddImageFooter(footerText, doc.texture.get());
 
   cv::UMat ocvImage;

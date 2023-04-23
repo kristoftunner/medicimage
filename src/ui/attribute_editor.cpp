@@ -34,6 +34,7 @@ static void DrawComponent(const std::string& name, Entity entity, UIFunction uiF
     ImVec2 contentRegionAvailable = ImGui::GetContentRegionAvail();
     ImGui::Separator();
     bool open = ImGui::TreeNodeEx((void*)typeid(T).hash_code(), treeNodeFlags, name.c_str());
+    ImGui::ColorButton()
     if (open)
     {
       uiFunction(component);

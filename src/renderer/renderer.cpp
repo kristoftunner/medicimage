@@ -1,6 +1,5 @@
 #include "renderer/renderer.h"
 #include "image_handling/image_loader.h"
-
 #include "backends/imgui_impl_sdl.h"
 #include "backends/imgui_impl_dx11.h"
 #include <opencv2/core.hpp>
@@ -113,7 +112,7 @@ static void GetHardwareAdapter(
   IDXGIFactory6* factory6;
   ThrowIfFailed(pFactory->QueryInterface(IID_PPV_ARGS(&factory6)));
   
-  if (!SUCCEEDED(factory6->EnumAdapterByGpuPreference(0, DXGI_GPU_PREFERENCE_MINIMUM_POWER, IID_PPV_ARGS(&adapter))))
+  if (!SUCCEEDED(factory6->EnumAdapterByGpuPreference(0, DXGI_GPU_PREFERENCE_HIGH_PERFORMANCE, IID_PPV_ARGS(&adapter))))
     APP_CORE_ERR("Havent find a high performance GPU for DirectX");
   
   DXGI_ADAPTER_DESC1 desc;

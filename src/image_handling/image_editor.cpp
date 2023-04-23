@@ -218,7 +218,7 @@ cv::UMat ImageEditor::AddFooter(cv::UMat image, const std::string& footerText)
   // assuming the original texture has 1920x1080 resolution, expanding with 20-20 pixels left/right and 30 bottom, 20 top
   cv::UMat borderedImage;
   cv::copyMakeBorder(image, borderedImage, s_topBorder, s_bottomBorder, s_sideBorder, s_sideBorder, cv::BORDER_CONSTANT , cv::Scalar{255,255,255} ); // adding white border
-  cv::putText(borderedImage, footerText, cv::Point{s_topBorder, borderedImage.rows - s_topBorder}, cv::FONT_HERSHEY_PLAIN, 3, cv::Scalar{0,0,0}, 3);
+  cv::putText(borderedImage, footerText, cv::Point{s_topBorder, borderedImage.rows - s_topBorder}, s_defaultFont, 1, cv::Scalar{0,0,0}, 3);
   return borderedImage;
 }
 

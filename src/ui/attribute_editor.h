@@ -13,7 +13,7 @@ public:
 
   void OnImguiRender();
 private:
-  void DrawAttributeEdit(Entity entity);
+  void DrawAttibuteEdit(Entity entity);
 
 private:
   DrawingSheet* m_sheet;  // TODO: have a shared_ptr or something??
