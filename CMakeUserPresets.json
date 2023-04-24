@@ -1,0 +1,9 @@
+{
+    "version": 4,
+    "vendor": {
+        "conan": {}
+    },
+    "include": [
+        "D:\\dev\\repos\\imguiapp\\build\\CMakePresets.json"
+    ]
+}

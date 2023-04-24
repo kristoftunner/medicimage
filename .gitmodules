@@ -1,6 +1,3 @@
-[submodule "ext/opencv"]
-	path = ext/opencv
-	url = git@github.com:opencv/opencv.git
 [submodule "ext/spdlog"]
 	path = ext/spdlog
 	url = git@github.com:gabime/spdlog.git
@@ -10,9 +7,3 @@
 [submodule "ext/sdl"]
 	path = ext/sdl
 	url = git@github.com:libsdl-org/SDL.git
-[submodule "ext/entt"]
-	path = ext/entt
-	url = git@github.com:skypjack/entt.git
-[submodule "ext/glm"]
-	path = ext/glm
-	url = git@github.com:g-truc/glm.git

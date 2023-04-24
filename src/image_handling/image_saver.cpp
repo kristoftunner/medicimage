@@ -111,7 +111,7 @@ void ImageDocContainer::LoadPatientsFolder()
           ss >> std::get_time(&t, "%d-%b-%Y %X");
           std::time_t timestamp = mktime(&t);
           LoadImage(name, dirEntry.path(), timestamp);
-          APP_CORE_INFO("Picture {} is loaded", dirEntry.path());
+          APP_CORE_INFO("Picture {} is loaded", dirEntry.path().string());
         }
       }
     }
@@ -278,14 +278,20 @@ ImageSaverContainer::ImageSaverContainer(const std::filesystem::path& baseFolder
   : m_dataFolder(baseFolder)
 {
   if(!std::filesystem::create_directory(m_dataFolder))
-    APP_CORE_INFO("Data folder alredy created, using that one:{}", m_dataFolder);
+  {
+    const std::string folderName = m_dataFolder.string();
+    APP_CORE_INFO("Data folder alredy created, using that one:{}", folderName);
+  }
 }
 
 void ImageSaverContainer::UpdateAppFolder(const std::filesystem::path& appFolder)
 {
   m_dataFolder = appFolder;
   if (!std::filesystem::create_directory(m_dataFolder))
-    APP_CORE_INFO("Directory: {} alredy created, using that one", m_dataFolder);
+  {
+    const std::string folderName = m_dataFolder.string();
+    APP_CORE_INFO("Directory: {} alredy created, using that one", folderName);
+  }
 }
 
 std::unique_ptr<Texture2D> medicimage::ImageDocument::DrawFooter()

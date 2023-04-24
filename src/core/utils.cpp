@@ -40,8 +40,9 @@ AppConfig::AppConfig()
 
 bool AppConfig::UpdateAppFolder(const std::filesystem::path& path)
 {
-  if(!(std::filesystem::create_directory(path)))
-    APP_CORE_WARN("Directory:{} already created, using as the app base folder.", path);
+  if (!(std::filesystem::create_directory(path)))
+    ;
+    //APP_CORE_WARN("Directory:{} already created, using as the app base folder.", path);
   m_appFolderPath = path;
 
   json config;

@@ -1,5 +1,7 @@
 [requires]
-sdl/2.26.1
+glm/cci.20230113
+entt/3.11.1
 
 [generators]
-cmake
+CMakeDeps
+CMakeToolchain

@@ -37,6 +37,7 @@ build
 # IDE files
 .vs
 .vscode
+.cache
 
 out
 build

@@ -1,5 +1,4 @@
 #include "ui/attribute_editor.h"
-#include "attribute_editor.h"
 #include "drawing/drawing_sheet.h"
 #include "drawing/component_wrappers.h"
 #include "core/log.h"
@@ -10,7 +9,7 @@
 namespace medicimage
 {
 
-void medicimage::AttributeEditor::OnImguiRender()
+void AttributeEditor::OnImguiRender()
 {
   bool open = true;
   ImGui::Begin("Properties", &open, ImGuiWindowFlags_None);
@@ -19,7 +18,7 @@ void medicimage::AttributeEditor::OnImguiRender()
   if(selectedEntities.size() != 0)
   {
     auto& entity = selectedEntities[0];
-    DrawAttributeEdit(entity);
+    DrawAttibuteEdit(entity);
   } 
 
   ImGui::End();
@@ -34,7 +33,6 @@ static void DrawComponent(const std::string& name, Entity entity, UIFunction uiF
     ImVec2 contentRegionAvailable = ImGui::GetContentRegionAvail();
     ImGui::Separator();
     bool open = ImGui::TreeNodeEx((void*)typeid(T).hash_code(), treeNodeFlags, name.c_str());
-    ImGui::ColorButton()
     if (open)
     {
       uiFunction(component);
@@ -43,7 +41,7 @@ static void DrawComponent(const std::string& name, Entity entity, UIFunction uiF
   }
 }
 
-void AttributeEditor::DrawAttributeEdit(Entity entity)
+void AttributeEditor::DrawAttibuteEdit(Entity entity)
 {
   DrawComponent<ColorComponent>("Color", entity, [&](auto& component)
   {

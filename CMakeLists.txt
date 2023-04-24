@@ -4,9 +4,9 @@ project("medicimage" CXX)
 
 # setup cmake globally
 include(cmake/setup_env.cmake)
+set(CMAKE_TOOLCHAIN_FILE "build/conan_toolchain.cmake")
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON CACHE INTERNAL "")
 # add the dependencies
-#add_subdirectory(ext)
 find_package(OpenCV REQUIRED PATHS "d:\\dev\\repos\\opencv\\build\\install\\x64\\vc17\\staticlib") # first build openCV in ext then get the static libs from there
 message(STATUS "opencv libs: ${OpenCV_LIBS} includes:${OpenCV_INCLUDE_DIRS}")
 # this workaround is needed because of this OpenCV build issue: https://github.com/opencv/opencv/issues/22348
@@ -21,8 +21,6 @@ add_subdirectory(ext/imgui)
 add_subdirectory(ext/stb)
 add_subdirectory(ext/spdlog)
 add_subdirectory(ext/json)
-add_subdirectory(ext/entt)
-add_subdirectory(ext/glm)
 #set_property(TARGET spdlog PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Release>:>")
 set_property(TARGET spdlog PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 # the actual library build
