@@ -63,7 +63,7 @@ private:
 
   std::vector<ImageDocument>::const_iterator m_activeDocument;
   std::unique_ptr<Texture2D> m_frame;
-  OpenCvCamera m_camera = OpenCvCamera(0);
+  OpenCvCamera m_camera;
    
   // UI editor state specific members
   ImageEditor m_imageEditor; 

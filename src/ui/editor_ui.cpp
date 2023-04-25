@@ -74,7 +74,8 @@ void EditorUI::OnAttach()
   
   // initieliaze the frames 
   m_frame = std::make_unique<Texture2D>("initial checkerboard", "assets/textures/Checkerboard.png"); // initialize the edited frame with the current frame and later update only the current frame in OnUpdate
-  m_camera.Open();
+  m_camera.Init();
+  m_camera.Open(0);
   
   // init file dialog
   ifd::FileDialog::Instance().CreateTexture = [&](uint8_t* data, int w, int h, char fmt) -> void*
@@ -583,7 +584,25 @@ void EditorUI::OnImguiRender()
         }
         ImGui::EndMenu();
       }
-      APP_CORE_TRACE("Menu bar opened");
+      if(ImGui::BeginMenu("Camera selection"))
+      {
+        for(int i = 0; i < m_camera.GetNumberOfDevices(); i++)
+        {
+          std::string cameraName = m_camera.GetDeviceName(i); 
+          {
+            const auto cameraName = m_camera.GetDeviceName(i);
+            auto selectedDevice = m_camera.GetSelectedDevices();
+            GuiDisableGuard guard(selectedDevice.has_value() && (selectedDevice.value() == i));
+            if(ImGui::Button(cameraName.c_str()))
+            {
+              m_camera.Open(i);
+              break;
+            }
+          }
+        }
+        // TODO: add camera selection logic
+        ImGui::EndMenu();
+      }
       ImGui::EndMenu();
     }
 

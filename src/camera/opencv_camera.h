@@ -1,3 +1,5 @@
+#pragma once
+
 #include "camera/camera_api.h"
 
 #include <opencv2/core.hpp>
@@ -10,15 +12,15 @@ namespace medicimage
 class OpenCvCamera final : public CameraAPI
 {
 public:
-  OpenCvCamera(int cameraId);
   ~OpenCvCamera() = default;
-  void Init() override {} // there is nothing to initialize with OpenCV camera capture api, just need to open
-  void Open() override;
+  void Init() override;  
+  void Open(int index) override;
   CameraAPI::Frame CaptureFrame() override;
   void Close() override;
+  std::string GetDeviceName(int index) override;
 private:
-  int m_cameraId = 0;
   cv::VideoCapture m_cap;
+  std::vector<std::string> m_deviceNames;
 };
  
 } // namespace medicimage

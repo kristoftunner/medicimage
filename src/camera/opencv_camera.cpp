@@ -5,20 +5,51 @@
 #include <opencv2/imgproc.hpp>
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/highgui.hpp>
+#include "opencv_camera.h"
 
 namespace medicimage
 {
 
-OpenCvCamera::OpenCvCamera(int cameraId) : m_cameraId(cameraId), CameraAPI()
+void OpenCvCamera::Init()
 {
-  
+  std::vector<cv::VideoCapture> devices;
+  cv::VideoCapture temp;
+
+  // Iterate through all device IDs starting from 0 until no more devices are found
+  for (int i = 0;; i++)
+  {
+    temp.open(i);
+    if (!temp.isOpened())
+      break;
+    std::string deviceName = std::string("camera") + "_" + std::to_string(i);
+    //std::string deviceName = temp.getBackendName() + "_" + std::to_string(temp.get(cv::CAP_PROP_BACKEND)) +  "_" + std::to_string(temp.get(cv::CAP_PROP_GUID)) + "_" + std::to_string(i);
+    m_deviceNames.push_back(deviceName);
+    devices.push_back(temp);
+  }
+
+  m_numberOfDevices = devices.size();
+  APP_CORE_INFO("Number of cameras attached: {0}", m_numberOfDevices);
+  for(auto& device : devices)
+  {
+    device.release();
+  }
 }
 
-void OpenCvCamera::Open()
+void OpenCvCamera::Open(int index)
 {
-  m_cap.open(m_cameraId, cv::CAP_ANY);
+  assert(index < m_numberOfDevices && "Camera ID is out of range!");
+  m_cap.open(index, cv::CAP_ANY);
   if(!m_cap.isOpened())
+  {
+    m_selectedDevice = -1;
+    m_opened = false;
     APP_CORE_ERR("Cannot open camera!!");
+  }
+  else
+  {
+    m_opened = true;
+    m_selectedDevice = index;
+  }
 }
 
 CameraAPI::Frame OpenCvCamera::CaptureFrame()
@@ -46,5 +77,8 @@ void OpenCvCamera::Close()
 {
   m_cap.release();
 }
-  
+std::string OpenCvCamera::GetDeviceName(int index)
+{
+  return m_deviceNames[index];
+}
 } // namespace medicimage
