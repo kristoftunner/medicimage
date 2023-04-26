@@ -43,6 +43,11 @@ static void DrawComponent(const std::string& name, Entity entity, UIFunction uiF
 
 void AttributeEditor::DrawAttibuteEdit(Entity entity)
 {
+  if(ImGui::Button("Delete"))
+  {
+    Entity::DestroyEntity(entity);
+    return;
+  }
   DrawComponent<ColorComponent>("Color", entity, [&](auto& component)
   {
     static ImVec4 backup_color;
