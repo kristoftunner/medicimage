@@ -6,6 +6,7 @@
 #include "image_handling/image_editor.h"
 #include <algorithm>
 #include <chrono>
+#include <memory>
 
 #include <glm/gtx/perpendicular.hpp>
 #include "drawing_sheet.h"
@@ -221,7 +222,6 @@ namespace medicimage
   {
     // TODO: may want to move this into editor ui, so here only relative coordinates are handled
     const glm::vec2 relPos = GetNormalizedPos(pos);
-    //const glm::vec2 relPos = pos / m_sheetSize;
     auto view = Entity::View<BoundingContourComponent>();
     for(auto e : view)
     {
@@ -361,7 +361,6 @@ namespace medicimage
   void FirstClickRecievedState::OnMouseButtonDown(const glm::vec2 pos)
   {
     m_sheet->m_firstPoint = m_sheet->GetNormalizedPos(pos);
-    //m_sheet->m_firstPoint = pos / m_sheet->m_sheetSize; 
     m_sheet->ChangeDrawState(std::make_unique<DrawingTemporaryState>(m_sheet)); 
   }
 
@@ -371,88 +370,53 @@ namespace medicimage
     m_sheet->ChangeDrawState(std::make_unique<InitialObjectDrawState>(m_sheet));
   }
 
-
-  void DrawingTemporaryState::OnMouseButtonDown(const glm::vec2 pos)
-  { 
-    m_sheet->m_secondPoint = m_sheet->GetNormalizedPos(pos);
-    //m_sheet->m_secondPoint = pos / m_sheet->m_sheetSize;
-    Entity entity;
-
-    switch(m_sheet->m_currentDrawCommand)
+  static std::unique_ptr<BaseDrawComponentWrapper> CreateComponentWrapper(DrawCommand command, glm::vec2 firstPoint, glm::vec2 secondPoint, glm::vec2 sheetSize, DrawObjectType objectType)
+  {
+    switch(command)
     {
       case DrawCommand::DRAW_CIRCLE:
       {
-        CircleComponentWrapper cw(CircleComponentWrapper::CreateCircle(m_sheet->m_firstPoint, m_sheet->m_secondPoint, m_sheet->m_sheetSize.x / m_sheet->m_sheetSize.y, DrawObjectType::TEMPORARY));
-        cw.UpdateShapeAttributes();
-        break;
+        return std::make_unique<CircleComponentWrapper>(CircleComponentWrapper::CreateCircle(firstPoint, secondPoint, sheetSize.x / sheetSize.y, objectType));
       }
       case DrawCommand::DRAW_RECTANGLE:
       {
-        RectangleComponentWrapper rw(RectangleComponentWrapper::CreateRectangle(m_sheet->m_firstPoint, m_sheet->m_secondPoint, DrawObjectType::TEMPORARY));
-        rw.UpdateShapeAttributes();
-        break;
+        return std::make_unique<RectangleComponentWrapper>(RectangleComponentWrapper::CreateRectangle(firstPoint, secondPoint, objectType));
       }
       case DrawCommand::DRAW_ARROW:
       {
-        ArrowComponentWrapper aw(ArrowComponentWrapper::CreateArrow(m_sheet->m_firstPoint, m_sheet->m_secondPoint, DrawObjectType::TEMPORARY));
-        aw.UpdateShapeAttributes();
-        break;
+        return std::make_unique<ArrowComponentWrapper>(ArrowComponentWrapper::CreateArrow(firstPoint, secondPoint, objectType));
       }
       case DrawCommand::DRAW_LINE:
       case DrawCommand::DRAW_MULTILINE:
       {
-        LineComponentWrapper lw(LineComponentWrapper::CreateLine(m_sheet->m_firstPoint, m_sheet->m_secondPoint, DrawObjectType::TEMPORARY));
-        lw.UpdateShapeAttributes();
-        break;
+        return std::make_unique<LineComponentWrapper>(LineComponentWrapper::CreateLine(firstPoint, secondPoint, objectType));
       }
       case DrawCommand::DRAW_SKIN_TEMPLATE:
       {
-        SkinTemplateComponentWrapper sw(SkinTemplateComponentWrapper::CreateSkinTemplate(m_sheet->m_firstPoint, m_sheet->m_secondPoint, DrawObjectType::TEMPORARY));
-        sw.UpdateShapeAttributes();
-        break;
+        return std::make_unique<SkinTemplateComponentWrapper>(SkinTemplateComponentWrapper::CreateSkinTemplate(firstPoint, secondPoint, objectType));
+      }
+      default:
+      {
+        APP_CORE_ERR("Invalid draw command");
+        return nullptr;
       }
     }
+  }
+  void DrawingTemporaryState::OnMouseButtonDown(const glm::vec2 pos)
+  { 
+    m_sheet->m_secondPoint = m_sheet->GetNormalizedPos(pos);
+    Entity entity;
+
+    auto wrapper = CreateComponentWrapper(m_sheet->m_currentDrawCommand, m_sheet->m_firstPoint, m_sheet->m_secondPoint, m_sheet->m_sheetSize, DrawObjectType::TEMPORARY);
+    wrapper->UpdateShapeAttributes();
   }
 
   void DrawingTemporaryState::OnMouseButtonReleased(const glm::vec2 pos)
   { // TODO REFACTOR: see above 
     m_sheet->m_secondPoint = m_sheet->GetNormalizedPos(pos);
-    //m_sheet->m_secondPoint = pos / m_sheet->m_sheetSize;
     Entity entity;
-    switch(m_sheet->m_currentDrawCommand)
-    {
-      case DrawCommand::DRAW_CIRCLE:
-      {
-        CircleComponentWrapper cw(CircleComponentWrapper::CreateCircle(m_sheet->m_firstPoint, m_sheet->m_secondPoint, m_sheet->m_sheetSize.x / m_sheet->m_sheetSize.y, DrawObjectType::PERMANENT));
-        cw.UpdateShapeAttributes();
-        break;
-      }
-      case DrawCommand::DRAW_RECTANGLE:
-      {
-        RectangleComponentWrapper rw(RectangleComponentWrapper::CreateRectangle(m_sheet->m_firstPoint, m_sheet->m_secondPoint, DrawObjectType::PERMANENT));
-        rw.UpdateShapeAttributes();
-        break;
-      }
-      case DrawCommand::DRAW_ARROW:
-      {
-        ArrowComponentWrapper aw(ArrowComponentWrapper::CreateArrow(m_sheet->m_firstPoint, m_sheet->m_secondPoint, DrawObjectType::PERMANENT));
-        aw.UpdateShapeAttributes();
-        break;
-      }
-      case DrawCommand::DRAW_LINE:
-      case DrawCommand::DRAW_MULTILINE:
-      {
-        LineComponentWrapper lw(LineComponentWrapper::CreateLine(m_sheet->m_firstPoint, m_sheet->m_secondPoint, DrawObjectType::PERMANENT));
-        lw.UpdateShapeAttributes();
-        break;
-      }
-      case DrawCommand::DRAW_SKIN_TEMPLATE:
-      {
-        SkinTemplateComponentWrapper sw(SkinTemplateComponentWrapper::CreateSkinTemplate(m_sheet->m_firstPoint, m_sheet->m_secondPoint, DrawObjectType::PERMANENT));
-        sw.UpdateShapeAttributes();
-        break;
-      }
-    }
+    auto wrapper = CreateComponentWrapper(m_sheet->m_currentDrawCommand, m_sheet->m_firstPoint, m_sheet->m_secondPoint, m_sheet->m_sheetSize, DrawObjectType::PERMANENT);
+    wrapper->UpdateShapeAttributes();
     
     m_sheet->Annotated(); // needed for weird UI feature
 
@@ -477,7 +441,6 @@ namespace medicimage
   void DrawTextInitialState::OnMouseButtonPressed(const glm::vec2 pos)
   {
     m_sheet->m_firstPoint = m_sheet->GetNormalizedPos(pos);
-    //m_sheet->m_firstPoint = pos / m_sheet->m_sheetSize; 
     m_sheet->ChangeDrawState(std::make_unique<DrawTextState>(m_sheet)); 
   }
 
@@ -547,7 +510,6 @@ namespace medicimage
   void DrawIncrementalLetters::OnMouseButtonPressed(const glm::vec2 pos)
   {
     m_sheet->m_firstPoint = m_sheet->GetNormalizedPos(pos);
-    //m_sheet->m_firstPoint = pos / m_sheet->m_sheetSize; 
     TextComponentWrapper tw(TextComponentWrapper::CreateText(m_sheet->m_firstPoint, m_text, s_defaultFontSize, DrawObjectType::PERMANENT));
     tw.UpdateShapeAttributes();
     IncrementLetter();
@@ -622,7 +584,6 @@ namespace medicimage
   void ObjectSelectInitialState::OnMouseButtonPressed(const glm::vec2 pos)
   {
     m_sheet->m_firstPoint = m_sheet->GetNormalizedPos(pos);
-    //m_sheet->m_firstPoint = pos / m_sheet->m_sheetSize; 
     auto entity = m_sheet->GetHoveredEntity(pos);
     if(entity.has_value())
     {
@@ -638,7 +599,6 @@ namespace medicimage
   void ObjectSelectionState::OnMouseButtonDown(const glm::vec2 pos)
   {
     m_sheet->m_secondPoint = m_sheet->GetNormalizedPos(pos);
-    //m_sheet->m_secondPoint = pos / m_sheet->m_sheetSize;
     auto& firstPoint = m_sheet->m_firstPoint;
     auto& secondPoint = m_sheet->m_secondPoint;
     if ((firstPoint.x != secondPoint.x) && (firstPoint.y != secondPoint.y)) // TODO: may not need this
@@ -674,7 +634,6 @@ namespace medicimage
   void ObjectSelectedState::OnMouseButtonPressed(const glm::vec2 pos)
   {
     m_sheet->m_firstPoint = m_sheet->GetNormalizedPos(pos);
-    //m_sheet->m_firstPoint = pos / m_sheet->m_sheetSize;
     auto view = Entity::View<BoundingContourComponent>();
     // first iterate trough all the selected objects to see if we are clicking on a pickpoint or drag area
     for(auto e : view)
@@ -707,13 +666,42 @@ namespace medicimage
     m_sheet->ChangeDrawState(std::make_unique<ObjectSelectInitialState>(m_sheet));
   }
 
+  static std::unique_ptr<BaseDrawComponentWrapper> CreateDrawComponentWrapper(Entity entity)
+  {
+    if (entity.HasComponent<RectangleComponent>())
+    {
+      return std::make_unique<RectangleComponentWrapper>(entity);
+    }
+    else if(entity.HasComponent<CircleComponent>())
+    {
+      return std::make_unique<CircleComponentWrapper>(entity);
+    }
+    else if(entity.HasComponent<ArrowComponent>())
+    {
+      return std::make_unique<ArrowComponentWrapper>(entity);
+    }
+    else if(entity.HasComponent<LineComponent>())
+    {
+      return std::make_unique<LineComponentWrapper>(entity);
+    }
+    else if(entity.HasComponent<SkinTemplateComponent>())
+    {
+      return std::make_unique<SkinTemplateComponentWrapper>(entity);
+    }
+    else if(entity.HasComponent<TextComponent>())
+    { // Do nothing wiht tex component
+      ;
+    }
+    else
+      APP_CORE_ERR("WTF this component");
+
+  }   
+
   void PickPointSelectedState::OnMouseButtonDown(const glm::vec2 pos)
   {
     auto currentPoint = m_sheet->GetNormalizedPos(pos);
-    //auto currentPoint = pos / m_sheet->m_sheetSize; 
     auto diff = (currentPoint - m_sheet->m_firstPoint) * glm::vec2(1.0);
     m_sheet->m_firstPoint = m_sheet->GetNormalizedPos(pos);
-    //m_sheet->m_firstPoint = pos / m_sheet->m_sheetSize;
     auto view = Entity::View<PickPointsComponent>();
     for(auto e : view)
     {
@@ -721,37 +709,8 @@ namespace medicimage
       auto selectedPointIndex = entity.GetComponent<PickPointsComponent>().selectedPoint;
       if(selectedPointIndex != -1)
       {
-        if (entity.HasComponent<RectangleComponent>())
-        {
-          RectangleComponentWrapper rw(entity);
-          rw.OnPickPointDrag(diff, selectedPointIndex);
-        }
-        else if(entity.HasComponent<CircleComponent>())
-        {
-          CircleComponentWrapper cw(entity);
-          cw.OnPickPointDrag(diff, selectedPointIndex);
-        }
-        else if(entity.HasComponent<ArrowComponent>())
-        {
-          ArrowComponentWrapper aw(entity);
-          aw.OnPickPointDrag(diff, selectedPointIndex);
-        }
-        else if(entity.HasComponent<LineComponent>())
-        {
-          LineComponentWrapper lw(entity);
-          lw.OnPickPointDrag(diff, selectedPointIndex);
-        }
-        else if(entity.HasComponent<SkinTemplateComponent>())
-        {
-          SkinTemplateComponentWrapper sw(entity);
-          sw.OnPickPointDrag(diff, selectedPointIndex);
-        }
-        else if(entity.HasComponent<TextComponent>())
-        { // Do nothing wiht tex component
-          ;
-        }
-        else
-          APP_CORE_ERR("WTF this component");
+        auto wrapper = CreateDrawComponentWrapper(entity);
+        wrapper->OnPickPointDrag(diff, selectedPointIndex);
       }
     }
   }
@@ -774,47 +733,11 @@ namespace medicimage
     { // TODO: implement a proper visitor pattern here
 
       auto currentPoint = m_sheet->GetNormalizedPos(pos);
-      //auto currentPoint = pos / m_sheet->m_sheetSize; 
       auto diff = (currentPoint - m_sheet->m_firstPoint) * glm::vec2(1.0);
       
-      if(m_sheet->m_draggedEntity.value().HasComponent<SkinTemplateComponent>())
-      {
-        SkinTemplateComponentWrapper sw(m_sheet->m_draggedEntity.value());
-        sw.OnObjectDrag(diff);
-      }
-      else if(m_sheet->m_draggedEntity.value().HasComponent<RectangleComponent>())
-      {
-        RectangleComponentWrapper rw(m_sheet->m_draggedEntity.value());
-        rw.OnObjectDrag(diff);
-      }
-      else if(m_sheet->m_draggedEntity.value().HasComponent<CircleComponent>())
-      {
-        CircleComponentWrapper cw(m_sheet->m_draggedEntity.value());
-        cw.OnObjectDrag(diff);
-      }
-      else if(m_sheet->m_draggedEntity.value().HasComponent<ArrowComponent>())
-      {
-        ArrowComponentWrapper aw(m_sheet->m_draggedEntity.value());
-        aw.OnObjectDrag(diff);
-      }
-      else if(m_sheet->m_draggedEntity.value().HasComponent<LineComponent>())
-      {
-        LineComponentWrapper lw(m_sheet->m_draggedEntity.value());
-        lw.OnObjectDrag(diff);
-      }
-      else if(m_sheet->m_draggedEntity.value().HasComponent<TextComponent>())
-      {
-        TextComponentWrapper tw(m_sheet->m_draggedEntity.value());
-        tw.OnObjectDrag(diff);
-      }
-      else
-        APP_CORE_ERR("WTF this component I am dragging???");
-      m_sheet->m_firstPoint = pos / m_sheet->m_sheetSize;
-      //auto& transform = m_sheet->m_draggedEntity.value().GetComponent<TransformComponent>();
-      //transform.translation += diff;
+      auto wrapper = CreateDrawComponentWrapper(m_sheet->m_draggedEntity.value());
+      wrapper->OnObjectDrag(diff);
     }
-    else
-      APP_CORE_ERR("Something went wrong with dragging");
   }
 
   void ObjectDraggingState::OnMouseButtonReleased(const glm::vec2 pos)
