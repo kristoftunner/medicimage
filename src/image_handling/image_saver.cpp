@@ -31,6 +31,9 @@ void FileLogger::LogFileOperation(const std::string& filename, FileOperation fil
   {
     logfile.close();
     std::ofstream file(m_logFileName);
+    json files = json::array();
+    json entry = { { "files", files } };
+    file << entry;
     file.close();
   }
   logfile.close();
@@ -81,6 +84,7 @@ ImageDocContainer::ImageDocContainer(const std::string& uuid, const std::filesys
 void ImageDocContainer::ClearSavedImages()
 {
   m_savedImages.clear();
+  APP_CORE_TRACE("Images cleared from patient:{}", m_uuid);
 }
 
 void ImageDocContainer::LoadPatientsFolder()
@@ -111,7 +115,7 @@ void ImageDocContainer::LoadPatientsFolder()
           ss >> std::get_time(&t, "%d-%b-%Y %X");
           std::time_t timestamp = mktime(&t);
           LoadImage(name, dirEntry.path(), timestamp);
-          APP_CORE_INFO("Picture {} is loaded", dirEntry.path().string());
+          APP_CORE_TRACE("Picture {} is loaded", dirEntry.path().string());
         }
       }
     }
@@ -241,6 +245,7 @@ void ImageSaverContainer::AddSaver(const std::string& uuid)
   
 void ImageSaverContainer::SelectImageSaver(const std::string& uuid)
 {
+  DeselectImageSaver(); // deselect and flush the loaded images
   if(uuid != "")
   {
     // first clear the images saved into memory, add the saver if doesnt exist in the container, select and load the images 

@@ -281,7 +281,7 @@ void EditorUI::ShowToolbox()
       {
         if(m_frame.get() != nullptr)
         {
-          if (m_imageSavers->HasSelectedSaver()) //TODO: should select it with an optional<ImageDocContainer> return type
+          if (m_imageSavers->HasSelectedSaver()) 
           { // create the ImageDocument here, because the screenshot is made here
             m_activeDocument = m_imageSavers->GetSelectedSaver().AddImage(*m_frame.get(), false);
           }
@@ -600,7 +600,6 @@ void EditorUI::OnImguiRender()
             }
           }
         }
-        // TODO: add camera selection logic
         ImGui::EndMenu();
       }
       ImGui::EndMenu();

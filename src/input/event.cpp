@@ -47,7 +47,6 @@ void EventInputHandler::PollEvents()
     }
     else if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_RESIZED && event.window.windowID == SDL_GetWindowID(m_window))
     {
-      APP_CORE_TRACE("Resize event recieved");
       Renderer::GetInstance().Resize(); // TODO: move this into an application layer, not the event generation stack
     }
     else if(event.type == SDL_TEXTINPUT)
@@ -55,13 +54,11 @@ void EventInputHandler::PollEvents()
       // TODO: do UTF8 decoding here
       auto textInput = new KeyTextInputEvent(event.text.text); 
       m_events.push_back(textInput);
-      APP_CORE_TRACE("Event received: {}", textInput->ToString());
     }
     else if(event.type == SDL_KEYDOWN)
     {
       auto keyDownEvent = new KeyPressedEvent(event.key.keysym.sym);  // TODO: proper mapping of SDL keys into KeyPressedEvent keymap
       m_events.push_back(keyDownEvent);
-      APP_CORE_TRACE("Key pressed event received: {}", keyDownEvent->ToString());
     }
   }
 }
