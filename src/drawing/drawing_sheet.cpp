@@ -690,7 +690,7 @@ namespace medicimage
     }
     else if(entity.HasComponent<TextComponent>())
     { // Do nothing wiht tex component
-      ;
+      return std::make_unique<TextComponentWrapper>(entity);
     }
     else
       APP_CORE_ERR("WTF this component");
@@ -734,6 +734,7 @@ namespace medicimage
 
       auto currentPoint = m_sheet->GetNormalizedPos(pos);
       auto diff = (currentPoint - m_sheet->m_firstPoint) * glm::vec2(1.0);
+      m_sheet->m_firstPoint = m_sheet->GetNormalizedPos(pos);
       
       auto wrapper = CreateDrawComponentWrapper(m_sheet->m_draggedEntity.value());
       wrapper->OnObjectDrag(diff);

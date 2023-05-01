@@ -96,3 +96,9 @@ Store the document with all the metadata (drawn objects and it's attributes) - t
 - [x] property edit for font size
 ### Features for the future:
 - [ ] select camera in the settings
+
+## Found bugs 2023.05.01
+- camera_0 -> Camera0  - done
+- moving annotations buggy  - done
+- opening up patients ID - seems to be working now
+- moving the textbox -> crashes - done

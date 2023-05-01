@@ -18,11 +18,10 @@ void OpenCvCamera::Init()
   // Iterate through all device IDs starting from 0 until no more devices are found
   for (int i = 0;; i++)
   {
-    temp.open(i);
+    temp.open(i, cv::CAP_DSHOW);
     if (!temp.isOpened())
       break;
-    std::string deviceName = std::string("camera") + "_" + std::to_string(i);
-    //std::string deviceName = temp.getBackendName() + "_" + std::to_string(temp.get(cv::CAP_PROP_BACKEND)) +  "_" + std::to_string(temp.get(cv::CAP_PROP_GUID)) + "_" + std::to_string(i);
+    std::string deviceName = std::string("Camera") + std::to_string(i);
     m_deviceNames.push_back(deviceName);
     devices.push_back(temp);
   }
@@ -38,7 +37,7 @@ void OpenCvCamera::Init()
 void OpenCvCamera::Open(int index)
 {
   assert(index < m_numberOfDevices && "Camera ID is out of range!");
-  m_cap.open(index, cv::CAP_ANY);
+  m_cap.open(index, cv::CAP_DSHOW);
   if(!m_cap.isOpened())
   {
     m_selectedDevice = -1;
