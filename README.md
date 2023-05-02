@@ -102,3 +102,10 @@ Store the document with all the metadata (drawn objects and it's attributes) - t
 - moving annotations buggy  - done
 - opening up patients ID - seems to be working now
 - moving the textbox -> crashes - done
+
+# WxWidgets migration
+## Features to test
+- printing an image on the screen - working properly
+- annotating on the image - annotation system is quite good
+- OpenGL interop - hmm
+- mouse interaction - working properly
