@@ -1,5 +1,4 @@
 #pragma once
-
 #include "camera/camera_api.h"
 
 #include <opencv2/core.hpp>

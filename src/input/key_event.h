@@ -1,8 +1,7 @@
 #pragma once
-
+#if 0
 #include "input/event.h"
 #include "input/key_codes.h"
-
 #include <sstream>
 
 namespace medicimage
@@ -60,3 +59,4 @@ private:
 };
 
 } // namespace medicimage
+#endif

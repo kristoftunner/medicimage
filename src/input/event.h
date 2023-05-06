@@ -1,4 +1,5 @@
 #pragma once
+#if 0
 #include <memory>
 #include <vector>
 #include "ui/imgui_layer.h"
@@ -82,15 +83,15 @@ private:
 class EventInputHandler 
 {
 public:
-  EventInputHandler(std::shared_ptr<ImguiLayer> imgui, SDL_Window* window);
+  EventInputHandler(SDL_Window* window);
   ~EventInputHandler();
   void PollEvents();
   void FlushEvents();
   std::vector<Event*>& GetCollectedEvents(){return m_events;}
 private:
   SDL_Window* m_window;
-  std::shared_ptr<ImguiLayer> m_imguiLayer;
   std::vector<Event*> m_events;
 };
 
 } // namespace medicimage
+#endif

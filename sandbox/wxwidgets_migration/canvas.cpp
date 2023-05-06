@@ -1,9 +1,14 @@
 #include "canvas.h"
+#include <image_handling/image_editor.h>
+#include <renderer/texture.h>
+
 #include <wx/wxprec.h>
 #include <wx/dcclient.h>
 #include <wx/wx.h>
 #include <wx/image.h>
 #include <wx/dcmemory.h>
+
+using namespace medicimage;
 
 wxBEGIN_EVENT_TABLE(Canvas, wxScrolledWindow)
   EVT_PAINT(Canvas::OnPaint)
@@ -16,6 +21,10 @@ Canvas::Canvas( wxWindow *parent, wxWindowID id, const wxPoint &pos, const wxSiz
   SetBackgroundColour( *wxWHITE );
   SetCursor(wxCursor(wxCURSOR_ARROW));
   wxInitAllImageHandlers();  
+  auto image = std::make_unique <Image2D>("Checkerboard.png");
+  wxBitmap::Rescale(image->GetBitmap(), {600, 500});
+  m_drawingSheet.SetDrawingSheetSize({image->GetWidth(), image->GetHeight()});
+  m_drawingSheet.SetDocument(std::make_unique<ImageDocument>(std::move(image)), {600, 500});
 }
 
 Canvas::~Canvas()
@@ -26,22 +35,25 @@ void Canvas::OnMouseEvent(wxMouseEvent &event)
 {
   wxClientDC dc(this);
   PrepareDC(dc);
- 
-  const wxPoint pt(event.GetLogicalPosition(dc));
-  if(event.ButtonDown(wxMOUSE_BTN_LEFT))
-  {
-    wxLogDebug("Left button down at (%d, %d)", pt.x, pt.y);
-    dc.SetBackground(*wxWHITE_BRUSH);
-    dc.Clear();
-    dc.SetPen(*wxRED_PEN);
-    dc.SetBrush(*wxTRANSPARENT_BRUSH);
-    dc.DrawRectangle(200, 200, 100, 100);
-    dc.DrawText("Hello World", 0, 0);
 
+  auto image = m_drawingSheet.Draw();
+
+  const wxPoint pt(event.GetLogicalPosition(dc));
+  if(event.LeftDown())
+  {
+    m_drawingSheet.OnMouseButtonPressed({pt.x, pt.y});
   }
-  else if(event.ButtonDown(wxMOUSE_BTN_RIGHT))
-    wxLogDebug("Right button down at (%d, %d)", pt.x, pt.y);
-  
+  else if(event.LeftIsDown())
+  {
+    m_drawingSheet.OnMouseButtonDown({pt.x, pt.y});
+  }
+  else if(event.LeftUp())
+  {
+    m_drawingSheet.OnMouseButtonReleased({pt.x, pt.y});
+  }
+  m_drawingSheet.OnUpdate();
+
+  dc.DrawBitmap(image->GetBitmap(), 0, 0); 
 }
 
 void Canvas::OnPaint(wxPaintEvent &event)
@@ -56,29 +68,22 @@ void Canvas::OnPaint(wxPaintEvent &event)
   wxImage image("Checkerboard.png");
   if(image.IsOk())
   {
-    wxBitmap bitmap(image);
-    wxBitmap::Rescale(bitmap, {1920, 1080});
+    ;
+    //wxBitmap::Rescale(image2d->GetBitmap(), {600, 500});
+    //ImageEditor::Begin(std::move(image2d));
+    //ImageEditor::DrawLine({ 0.2,0.2 }, { 0.8, 0.8 }, { 0.5,0.5,0.5,1.0 }, 2, 1);
+    //ImageEditor::DrawRectangle({ 0.0,0.1 }, { 0.3, 0.4 }, { 0.5,0.5,0.5,1.0 }, 2, false);
+    //ImageEditor::DrawCircle({ 0.5,0.5 }, 0.2, { 0.5,0.5,0.5,1.0 }, 2, false);
+    //image2d = ImageEditor::End();
 
-    wxMemoryDC memDC(bitmap);
-    memDC.SetBrush(dc.GetBrush());
-    memDC.SetPen(dc.GetPen());
-    memDC.DrawRectangle(200, 200, 100, 100);
-    memDC.SelectObject(wxNullBitmap);
-    ////wxColour c;
-    //if (memDC.GetPixel(dc.FromDIP(11), dc.FromDIP(11), &c))
-    //{
-    //  memDC.SetBrush(wxColour(128, 128, 0));
-    //  memDC.FloodFill(dc.FromDIP(11), dc.FromDIP(11), c, wxFLOOD_SURFACE);
-    //}
-
-
-    dc.DrawBitmap(bitmap, 0, 0);
+    //dc.DrawBitmap(image2d->GetBitmap(), 0, 0);
   }
   else
   {
     wxMessageBox("Image not found");
   }
-  
-  dc.DrawRectangle(100, 100, 100, 100);
-  dc.DrawText("Hello World", 0, 0);
+
+  m_drawingSheet.SetDrawCommand(DrawCommand::DRAW_LINE); 
+  //dc.DrawRectangle(100, 100, 100, 100);
+  //dc.DrawText("Hello World", 0, 0);
 }

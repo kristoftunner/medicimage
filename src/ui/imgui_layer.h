@@ -1,4 +1,5 @@
 #pragma once
+#if 0
 
 #include "core/layer.h"
 
@@ -30,3 +31,4 @@ private:
 };
   
 } // namespace medicimage
+#endif

@@ -1,7 +1,8 @@
+#if 0
 #include "renderer/renderer.h"
 #include "image_handling/image_loader.h"
-#include "backends/imgui_impl_sdl.h"
-#include "backends/imgui_impl_dx11.h"
+//#include "backends/imgui_impl_sdl.h"
+//#include "backends/imgui_impl_dx11.h"
 #include <opencv2/core.hpp>
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
@@ -217,3 +218,4 @@ void Renderer::CleanupDevice()
 }
 } // namespace medicimage
 
+#endif

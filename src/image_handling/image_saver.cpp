@@ -2,11 +2,6 @@
 #include "core/log.h"
 #include "image_handling/image_editor.h"
 
-#include "opencv2/core/directx.hpp"
-#include "opencv2/core/ocl.hpp"
-#include <opencv2/imgproc.hpp>
-#include <opencv2/imgcodecs.hpp>
-#include <opencv2/highgui.hpp>
 #include <fstream>
 #include <json.hpp>
 #include "image_saver.h"
@@ -139,13 +134,13 @@ void ImageDocContainer::LoadImage(std::string imageName, const std::filesystem::
   auto it = std::find_if(m_savedImages.begin(), m_savedImages.end(), findByName);
   if(it == m_savedImages.end())
   {
-    auto texture = std::make_unique<Texture2D>(imageName, filePath.string()); 
-    texture = std::move(ImageEditor::RemoveFooter(texture.get()));
-    m_savedImages.push_back({std::move(texture), filePath.stem().string(), timestamp});
+    auto image = std::make_unique<Image2D>(filePath.string()); 
+    image = std::move(ImageEditor::RemoveFooter(*image.get()));
+    m_savedImages.push_back({std::move(image), filePath.stem().string(), timestamp});
   }
 }
 
-std::vector<ImageDocument>::iterator ImageDocContainer::AddImage(Texture2D& texture, bool hasFooter)
+std::vector<ImageDocument>::iterator ImageDocContainer::AddImage(Image2D& image, bool hasFooter)
 {
   json jsonData;
   std::ifstream fs(m_descriptorsFileName);
@@ -163,11 +158,11 @@ std::vector<ImageDocument>::iterator ImageDocContainer::AddImage(Texture2D& text
     }
   } 
   std::string name = m_uuid + "_" + std::to_string(docNumber);
-  ImageDocument doc(std::make_unique<Texture2D>(texture.GetTexturePtr(), texture.GetName()));
+  ImageDocument doc(std::make_unique<Image2D>(image));
   doc.documentId = name;
   doc.timestamp = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
   if(hasFooter)
-    doc.texture = ImageEditor::RemoveFooter(doc.texture.get());
+    doc.image = ImageEditor::RemoveFooter(*doc.image.get());
   m_savedImages.push_back(doc);
     
   name += ".jpeg";
@@ -175,15 +170,15 @@ std::vector<ImageDocument>::iterator ImageDocContainer::AddImage(Texture2D& text
   std::filesystem::path thumbImagePath = m_dirPath / "thumbs" / name;
   
   std::string footerText = doc.GenerateFooterText();
-  std::unique_ptr<Texture2D> borderedImage;
-  borderedImage = ImageEditor::AddImageFooter(footerText, doc.texture.get());
+  std::unique_ptr<Image2D> borderedImage;
+  borderedImage = ImageEditor::AddImageFooter(footerText, *doc.image.get());
 
-  cv::UMat ocvImage;
-  cv::directx::convertFromD3D11Texture2D(borderedImage->GetTexturePtr(), ocvImage);
-  cv::cvtColor(ocvImage, ocvImage, cv::COLOR_RGBA2BGR);
-  cv::imwrite(imagePath.string(), ocvImage);
-  cv::resize(ocvImage, ocvImage, cv::Size(640,360) );
-  cv::imwrite(thumbImagePath.string(), ocvImage);
+  //cv::UMat ocvImage;
+  ////cv::directx::convertFromD3D11Texture2D(borderedImage->GetTexturePtr(), ocvImage);
+  //cv::cvtColor(ocvImage, ocvImage, cv::COLOR_RGBA2BGR);
+  //cv::imwrite(imagePath.string(), ocvImage);
+  //cv::resize(ocvImage, ocvImage, cv::Size(640,360) );
+  //cv::imwrite(thumbImagePath.string(), ocvImage);
   m_fileLogger->LogFileOperation(name, FileLogger::FileOperation::FILE_SAVE);
   UpdateDocListFile();
   return m_savedImages.end();
@@ -296,10 +291,10 @@ void ImageSaverContainer::UpdateAppFolder(const std::filesystem::path& appFolder
   }
 }
 
-std::unique_ptr<Texture2D> medicimage::ImageDocument::DrawFooter()
+std::unique_ptr<Image2D> medicimage::ImageDocument::DrawFooter()
 {
   std::string footerText = GenerateFooterText();
-  return ImageEditor::AddImageFooter(footerText, texture.get());
+  return ImageEditor::AddImageFooter(footerText, *image.get());
 }
 
 } // namespace medicimage

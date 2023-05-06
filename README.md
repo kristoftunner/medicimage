@@ -109,3 +109,9 @@ Store the document with all the metadata (drawn objects and it's attributes) - t
 - annotating on the image - annotation system is quite good
 - OpenGL interop - hmm
 - mouse interaction - working properly
+
+## Migration roadmap
+- work with images, get to know how wxwidgets handles them
+- figure out how the event system works, especially keys and mouse event on the canvas
+- implement annotation on a single canvas
+- implement camera feed into the annotation

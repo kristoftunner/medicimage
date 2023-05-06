@@ -1,4 +1,5 @@
 #pragma once
+#if 0
 
 #include "input/application_event.h"
 #include "ui/imgui_layer.h"
@@ -6,7 +7,6 @@
 #include "renderer/renderer.h"
 #include "input/event.h"
 #include "renderer/window.h"
-
 namespace medicimage
 {
   class Application{
@@ -27,3 +27,4 @@ namespace medicimage
   };
   
 } // namespace medicimage
+#endif

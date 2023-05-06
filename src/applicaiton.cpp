@@ -1,9 +1,9 @@
+#if 0
 #include "application.h"
 #include "renderer/texture.h"
 #include "core/log.h"
 
 #include <ctime>
-
 namespace medicimage
 {
 Application::Application()
@@ -13,7 +13,7 @@ Application::Application()
 
   Renderer& renderer = Renderer::GetInstance();
   m_imguiLayer = std::make_shared<ImguiLayer>(m_window->GetNativeWindow(), renderer.GetDevice(), renderer.GetDeviceContext());
-  m_inputHandler = std::make_unique<EventInputHandler>(m_imguiLayer, m_window->GetNativeWindow());
+  m_inputHandler = std::make_unique<EventInputHandler>(m_window->GetNativeWindow());
 }
 
 Application::~Application()
@@ -62,8 +62,7 @@ void Application::Run()
   while(m_running)
   {
     // Event handling;
-    auto texture = Texture2D("checkerboard", "assets/textures/Checkerboard.png");
-    texture.Bind(0);
+    auto image = Image2D("assets/textures/Checkerboard.png");
     renderer.Draw();
     // simple check for exiting the app
     if (ShouldExit())
@@ -96,3 +95,4 @@ void Application::Run()
 }
   
 } // namespace medicimage
+#endif

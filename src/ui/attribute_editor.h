@@ -1,7 +1,7 @@
 #pragma once
+#if 0
 
 #include "drawing/drawing_sheet.h"
-
 namespace medicimage
 {
 
@@ -20,3 +20,4 @@ private:
 };
 
 } // namespace medicimage
+#endif

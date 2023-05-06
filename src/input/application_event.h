@@ -1,8 +1,8 @@
 #pragma once
+#if 0
 
 #include "input/event.h"
 #include <sstream>
-
 namespace medicimage
 {
 
@@ -35,3 +35,4 @@ public:
 };
 
 } // namespace medicimage
+#endif

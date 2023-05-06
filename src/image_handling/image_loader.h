@@ -1,5 +1,4 @@
 #pragma once
-
 #include <vector>
 
 namespace medicimage 
@@ -36,4 +35,3 @@ private:
 };
 
 } // namespace medicimage 
-

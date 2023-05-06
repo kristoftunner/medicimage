@@ -2,7 +2,7 @@
 #include "image_handling/image_editor.h"
 #include "core/log.h"
 #include "component_wrappers.h"
-
+#include <opencv2/imgproc.hpp>
 namespace medicimage
 {
   Entity RectangleComponentWrapper::CreateRectangle(glm::vec2 firstPoint, glm::vec2 secondPoint, DrawObjectType objectType)

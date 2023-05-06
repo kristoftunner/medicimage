@@ -10,7 +10,7 @@ namespace medicimage
 class CameraAPI
 {
 public:
-  using Frame = std::optional<std::unique_ptr<Texture2D>>;  
+  using Frame = std::optional<std::unique_ptr<Image2D>>;  
 public:
   CameraAPI() = default;
   ~CameraAPI(){}

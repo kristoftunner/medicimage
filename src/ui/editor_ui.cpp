@@ -1,9 +1,9 @@
+#if 0
 #include "ui/editor_ui.h"
 #include "core/log.h"
 
 #include "widgets/ImFileDialog.h"
 #include <assert.h>
-
 namespace medicimage
 {
 
@@ -58,22 +58,22 @@ void EditorUI::OnAttach()
   m_attributeEditor = AttributeEditor(&m_drawingSheet);
 
   // loading in the icons
-  m_circleIcon  = std::move(std::make_unique<Texture2D>("circle","assets/icons/circle.png"));
-  m_screenshotIcon  = std::move(std::make_unique<Texture2D>("screenshot","assets/icons/screenshot.png"));
-  m_lineIcon  = std::move(std::make_unique<Texture2D>("line","assets/icons/line.png"));
-  m_pencilIcon  = std::move(std::make_unique<Texture2D>("pencil","assets/icons/pencil.png"));
-  m_saveIcon  = std::move(std::make_unique<Texture2D>("save","assets/icons/save.png"));
-  m_deleteIcon  = std::move(std::make_unique<Texture2D>("delete","assets/icons/delete.png"));
-  m_rectangleIcon  = std::move(std::make_unique<Texture2D>("rectangle","assets/icons/rectangle.png"));
-  m_arrowIcon  = std::move(std::make_unique<Texture2D>("arrow","assets/icons/arrow.png"));
-  m_addTextIcon  = std::move(std::make_unique<Texture2D>("add-text","assets/icons/add-text.png"));
-  m_undoIcon  = std::move(std::make_unique<Texture2D>("add-text","assets/icons/left-arrow.png"));
-  m_skinTemplateIcon  = std::move(std::make_unique<Texture2D>("add-text","assets/icons/skin-template.png"));
-  m_incrementalLettersIcon = std::move(std::make_unique<Texture2D>("add-incremental-letters","assets/icons/add-incremental-letters.png"));
-  m_multilineIcon = std::move(std::make_unique<Texture2D>("multiline","assets/icons/multiline.png"));
+  m_circleIcon  = std::move(std::make_unique<Image2D>("circle","assets/icons/circle.png"));
+  m_screenshotIcon  = std::move(std::make_unique<Image2D>("screenshot","assets/icons/screenshot.png"));
+  m_lineIcon  = std::move(std::make_unique<Image2D>("line","assets/icons/line.png"));
+  m_pencilIcon  = std::move(std::make_unique<Image2D>("pencil","assets/icons/pencil.png"));
+  m_saveIcon  = std::move(std::make_unique<Image2D>("save","assets/icons/save.png"));
+  m_deleteIcon  = std::move(std::make_unique<Image2D>("delete","assets/icons/delete.png"));
+  m_rectangleIcon  = std::move(std::make_unique<Image2D>("rectangle","assets/icons/rectangle.png"));
+  m_arrowIcon  = std::move(std::make_unique<Image2D>("arrow","assets/icons/arrow.png"));
+  m_addTextIcon  = std::move(std::make_unique<Image2D>("add-text","assets/icons/add-text.png"));
+  m_undoIcon  = std::move(std::make_unique<Image2D>("add-text","assets/icons/left-arrow.png"));
+  m_skinTemplateIcon  = std::move(std::make_unique<Image2D>("add-text","assets/icons/skin-template.png"));
+  m_incrementalLettersIcon = std::move(std::make_unique<Image2D>("add-incremental-letters","assets/icons/add-incremental-letters.png"));
+  m_multilineIcon = std::move(std::make_unique<Image2D>("multiline","assets/icons/multiline.png"));
   
   // initieliaze the frames 
-  m_frame = std::make_unique<Texture2D>("initial checkerboard", "assets/textures/Checkerboard.png"); // initialize the edited frame with the current frame and later update only the current frame in OnUpdate
+  m_frame = std::make_unique<Image2D>("initial checkerboard", "assets/textures/Checkerboard.png"); // initialize the edited frame with the current frame and later update only the current frame in OnUpdate
   m_camera.Init();
   m_camera.Open(0);
   
@@ -83,7 +83,7 @@ void EditorUI::OnAttach()
     // Here, there is a memory leak, because on DirectX there is no similar API for storing textures, like OpenGL 
     // but these textures are just the thumbnails on file dialog.. so for now it is okay, in the future this has 
     // to be fixed with either another filedialog plugin or fixing this one: TODO
-    auto* texture = new medicimage::Texture2D("icon", w, h);
+    auto* texture = new medicimage::Image2D("icon", w, h);
     Renderer::GetInstance().GetDeviceContext()->UpdateSubresource(texture->GetTexturePtr(), 0, 0, data, w*4, w*h*4);
     return reinterpret_cast<void*>(texture->GetShaderResourceView());
   }; 
@@ -404,7 +404,7 @@ void EditorUI::ShowToolbox()
   
   // setting green border for the selected button
   ImGuiStyle& style = ImGui::GetStyle();
-  auto drawDrawingTool = [&](const std::string& name, Texture2D* icon, DrawCommand command){
+  auto drawDrawingTool = [&](const std::string& name, Image2D* icon, DrawCommand command){
     bool toolActivated = m_drawingSheet.GetDrawCommand() == command;
     style.Colors[ImGuiCol_Button] = toolActivated ? s_toolUsedBgColor : s_defaultFrameBgColor;
     if(ImGui::ImageButton(name.c_str(), icon->GetShaderResourceView(), smallIconSize, uvMin, uvMax, iconBg, tintColor))
@@ -655,3 +655,4 @@ void EditorUI::OnImguiRender()
 
 } // namespace medicimage
 
+#endif

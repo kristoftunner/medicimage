@@ -1,3 +1,4 @@
+#if 0
 #include <iostream>
 
 #include "input/event.h"
@@ -13,8 +14,8 @@
 namespace medicimage
 {
 
-EventInputHandler::EventInputHandler(std::shared_ptr<ImguiLayer> imgui, SDL_Window* window)
-  : m_imguiLayer(imgui), m_window(window)
+EventInputHandler::EventInputHandler(SDL_Window* window)
+  : m_window(window)
 {
   if(window == nullptr)
     std::cout << "EventHandler got nullptr window" << std::endl;
@@ -64,3 +65,4 @@ void EventInputHandler::PollEvents()
 }
   
 } // namespace medicimage
+#endif

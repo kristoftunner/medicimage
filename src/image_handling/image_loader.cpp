@@ -1,4 +1,3 @@
-
 #include <iostream>
 
 #include "image_handling/image_loader.h"

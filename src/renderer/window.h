@@ -1,4 +1,5 @@
 #pragma once
+#if 0
 
 #include <string>
 #include <SDL.h>
@@ -44,3 +45,4 @@ private:
 };
 
 } // namespace medicimage
+#endif

@@ -11,8 +11,8 @@ namespace medicimage
 struct SavedImagePair
 {
   std::string name;
-  std::optional<std::shared_ptr<Texture2D>> originalImage;
-  std::optional<std::shared_ptr<Texture2D>> annotatedImage;
+  std::optional<std::shared_ptr<Image2D>> originalImage;
+  std::optional<std::shared_ptr<Image2D>> annotatedImage;
 };
 
 class FileLogger
@@ -33,23 +33,23 @@ struct ImageDocument
 {
 public:  
   ImageDocument() = default;
-  ImageDocument(std::unique_ptr<Texture2D> tex) : texture(std::move(tex)){} // TODO REFACTOR: these ctors should be refactored in the future
-  ImageDocument(std::unique_ptr<Texture2D> tex, const std::string& id) : texture(std::move(tex)), documentId(id){}
-  ImageDocument(std::unique_ptr<Texture2D> tex, const std::string& id, const std::time_t& time) : texture(std::move(tex)), documentId(id), timestamp(time){}
+  ImageDocument(std::unique_ptr<Image2D> im) : image(std::move(im)){} // TODO REFACTOR: these ctors should be refactored in the future
+  ImageDocument(std::unique_ptr<Image2D> im, const std::string& id) : image(std::move(im)), documentId(id){}
+  ImageDocument(std::unique_ptr<Image2D> im, const std::string& id, const std::time_t& time) : image(std::move(im)), documentId(id), timestamp(time){}
   ImageDocument(const ImageDocument& doc)
   {
     timestamp = doc.timestamp;
     documentId = doc.documentId;
-    texture = std::make_unique<Texture2D>(doc.texture->GetTexturePtr(), "texture");
+    image = std::make_unique<Image2D>(*doc.image.get());
   }
   ImageDocument& operator=(const ImageDocument& doc)
   {
     timestamp = doc.timestamp;
     documentId = doc.documentId;
-    texture = std::make_unique<Texture2D>(doc.texture->GetTexturePtr(), "texture");
+    image = std::make_unique<Image2D>(*doc.image.get());
     return *this;
   }
-  std::unique_ptr<Texture2D> DrawFooter();
+  std::unique_ptr<Image2D> DrawFooter();
   std::string GenerateFooterText()
   {
     std::stringstream ss;
@@ -58,9 +58,9 @@ public:
   }
 
 public:
-  std::time_t timestamp;
+  std::time_t timestamp = 1683406541;
   std::string documentId = "";
-  std::unique_ptr<Texture2D> texture;
+  std::unique_ptr<Image2D> image;
 };
 
 class ImageDocContainer
@@ -72,7 +72,7 @@ public:
   // original images are saved only once when doing a screenshot of the image. The original's annotated pair can be replaced multiple
   // times, when it is selected from the thumbnails, edited and then saved as a ANNOTATED image. The original pair can be found
   // by the texture name
-  std::vector<ImageDocument>::iterator AddImage(Texture2D& texture, bool hasFooter);
+  std::vector<ImageDocument>::iterator AddImage(Image2D& image, bool hasFooter);
   void ClearSavedImages();
   void LoadPatientsFolder();
   void CreatePatientDir();

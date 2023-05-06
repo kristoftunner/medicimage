@@ -1,3 +1,4 @@
+#if 0
 #include "ui/attribute_editor.h"
 #include "drawing/drawing_sheet.h"
 #include "drawing/component_wrappers.h"
@@ -5,7 +6,6 @@
 
 #include "imgui.h"
 #include <glm/gtc/type_ptr.hpp>
-
 namespace medicimage
 {
 
@@ -138,3 +138,4 @@ void AttributeEditor::DrawAttibuteEdit(Entity entity)
 }
 
 } // namespace medicimage
+#endif

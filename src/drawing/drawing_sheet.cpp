@@ -8,6 +8,7 @@
 #include <chrono>
 #include <memory>
 
+#include <opencv2/imgproc.hpp>
 #include <glm/gtx/perpendicular.hpp>
 #include "drawing_sheet.h"
 
@@ -25,7 +26,7 @@ namespace medicimage
 
     m_sheetSize = viewportSize;
     m_originalDoc = std::move(doc);
-    m_drawing = std::make_unique<Texture2D>(m_originalDoc->texture->GetTexturePtr(), "texture");
+    m_drawing = std::make_unique<Image2D>(*m_originalDoc->image.get());
   }
   
   void DrawingSheet::SetDrawCommand(const DrawCommand command)
@@ -82,14 +83,14 @@ namespace medicimage
     }
   }
 
-  std::unique_ptr<Texture2D> DrawingSheet::Draw()
+  std::unique_ptr<Image2D> DrawingSheet::Draw()
   {
     std::stringstream ss;
     ss << std::put_time(std::localtime(&(m_originalDoc->timestamp)), "%d-%b-%Y %X");
     std::string footerText = m_originalDoc->documentId + " - " + ss.str();
-    m_drawing = ImageEditor::AddImageFooter(footerText, m_originalDoc->texture.get());
+    m_drawing = ImageEditor::AddImageFooter(footerText, *m_originalDoc->image.get());
 
-    ImageEditor::Begin(m_drawing.get());
+    ImageEditor::Begin(std::move(m_drawing));
     auto circles = Entity::View<CircleComponent>();
     for(auto e : circles)
     {
@@ -153,7 +154,7 @@ namespace medicimage
         sw.Draw();
     }
 
-    ImageEditor::End(m_drawing.get());
+    m_drawing = ImageEditor::End();
 
     std::for_each(circles.begin(), circles.end(), m_drawState->DeleteTemporaries());
     std::for_each(rectangles.begin(), rectangles.end(), m_drawState->DeleteTemporaries());
@@ -163,7 +164,7 @@ namespace medicimage
     std::for_each(skinTemplates.begin(), skinTemplates.end(), m_drawState->DeleteTemporaries());
     std::for_each(splines.begin(), splines.end(), m_drawState->DeleteTemporaries());
 
-    return std::move(std::make_unique<Texture2D>(*m_drawing.get()));
+    return std::move(std::make_unique<Image2D>(*m_drawing.get()));
   }
 
   void DrawingSheet::ChangeDrawState(std::unique_ptr<BaseDrawState> newState)

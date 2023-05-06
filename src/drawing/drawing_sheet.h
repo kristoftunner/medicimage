@@ -48,7 +48,7 @@ public:
   void SetDrawCommand(const DrawCommand command); // initialize the state with the command's init state
   DrawCommand GetDrawCommand(){return m_currentDrawCommand;}
   const std::string GetDrawCommandName();
-  std::unique_ptr<Texture2D> Draw();
+  std::unique_ptr<Image2D> Draw();
   void ChangeDrawState(std::unique_ptr<BaseDrawState> newState);
 
   // some weird functions to handle the annotation process
@@ -82,7 +82,7 @@ public:
   glm::vec2 GetNormalizedPos(const glm::vec2 pos);
 private:
   std::unique_ptr<ImageDocument> m_originalDoc;
-  std::unique_ptr<Texture2D> m_drawing;
+  std::unique_ptr<Image2D> m_drawing;
 
   std::optional<Entity> m_hoveredEntity;
   std::optional<Entity> m_draggedEntity;

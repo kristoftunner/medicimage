@@ -1,4 +1,5 @@
 #pragma once
+#if 0
 #include <ctime>
 #include <stack>
 #include <string>
@@ -8,7 +9,6 @@
 #include <filesystem>
 #include <unordered_map>
 #include <algorithm> // std::min, std::max
-
 #include "image_handling/image_loader.h"
 
 #define IFD_DIALOG_FILE			0
@@ -142,3 +142,4 @@ namespace ifd {
 		void m_renderFileDialog();
 	};
 }
+#endif

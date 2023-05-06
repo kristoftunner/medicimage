@@ -1,4 +1,5 @@
 #pragma once
+#if 0
 
 #include "core/layer.h"
 #include "renderer/texture.h"
@@ -15,7 +16,6 @@
 #include <array>
 #include <memory>
 #include <vector>
-
 namespace medicimage
 {
 
@@ -57,12 +57,12 @@ private:
 
   static bool s_enterPressed;
 
-  std::unique_ptr<Texture2D> m_circleIcon, m_lineIcon, m_pencilIcon, m_saveIcon, m_deleteIcon,
+  std::unique_ptr<Image2D> m_circleIcon, m_lineIcon, m_pencilIcon, m_saveIcon, m_deleteIcon,
     m_rectangleIcon, m_arrowIcon, m_addTextIcon, m_screenshotIcon, m_undoIcon, m_skinTemplateIcon,
     m_incrementalLettersIcon, m_multilineIcon;
 
   std::vector<ImageDocument>::const_iterator m_activeDocument;
-  std::unique_ptr<Texture2D> m_frame;
+  std::unique_ptr<Image2D> m_frame;
   OpenCvCamera m_camera;
    
   // UI editor state specific members
@@ -110,3 +110,4 @@ private:
 };
 
 } // namespace medicimage
+#endif

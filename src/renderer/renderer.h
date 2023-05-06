@@ -1,7 +1,7 @@
 #pragma once
+#if 0
 
 #include "core/layer.h"
-
 #include <d3d11.h>
 #include <d3dcompiler.h>
 #include <Windows.h>
@@ -79,3 +79,4 @@ inline void ThrowIfFailed(HRESULT hr)
 
 } // namespace medicimage
 
+#endif

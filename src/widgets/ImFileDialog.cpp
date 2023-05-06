@@ -1,3 +1,4 @@
+#if 0
 #if defined(_MSC_VER) && !defined(_CRT_SECURE_NO_WARNINGS)
 #define _CRT_SECURE_NO_WARNINGS
 #endif
@@ -1488,3 +1489,4 @@ const char* ifd::GetDefaultFileIcon()
 {
 	return (const char*)&file_icon[0];
 }
+#endif

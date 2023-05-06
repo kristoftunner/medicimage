@@ -1,18 +1,15 @@
 #pragma once
 
 #include "renderer/texture.h"
-#include "imgui.h"
-
-#include <d3d11.h>
-#include "opencv2/core/directx.hpp"
-#include "opencv2/core/ocl.hpp"
-#include <opencv2/imgproc.hpp>
 
 #include <memory>
 #include <vector>
 #include <optional>
 #include <glm/glm.hpp>
 
+#include <wx/dcmemory.h>
+#include <wx/image.h>
+#include <opencv2/imgproc.hpp>
 namespace medicimage
 {
 
@@ -20,14 +17,13 @@ class ImageEditor
 {
 public:
   ImageEditor() = default;
-  void Init(ID3D11Device* device);
   // topLeft, width and height are relative to the texture size, between 0-1
-  static std::unique_ptr<Texture2D> AddImageFooter(const std::string& footerText, Texture2D* texture);
-  static std::unique_ptr<Texture2D> ReplaceImageFooter(const std::string& footerText, Texture2D* texture);
-  static std::unique_ptr<Texture2D> RemoveFooter(Texture2D* texture);
+  static std::unique_ptr<Image2D> AddImageFooter(const std::string& footerText, Image2D& image);
+  static std::unique_ptr<Image2D> ReplaceImageFooter(const std::string& footerText, Image2D& image);
+  static std::unique_ptr<Image2D> RemoveFooter(Image2D& texture);
 
-  static void Begin(Texture2D* texture);
-  static void End(Texture2D* texture);
+  static void Begin(std::unique_ptr<Image2D> image);
+  static std::unique_ptr<Image2D> End();
   static void DrawCircle(glm::vec2 center, float radius, glm::vec4 color, float thickness, bool filled);
   static void DrawRectangle(glm::vec2 topleft, glm::vec2 bottomright, glm::vec4 color, float thickness, bool filled);
   static void DrawArrow(glm::vec2 begin, glm::vec2 end, glm::vec4 color, float thickness, double tipLengith);
@@ -36,14 +32,14 @@ public:
   static void DrawSpline(glm::vec2 begin, glm::vec2 middle, glm::vec2 end, int lineCount, glm::vec4 color, float thickness);
   static glm::vec2 GetTextBoundingBox(const std::string& text, int fontSize, float thickness);
 private:
-  static cv::UMat AddFooter(cv::UMat image, const std::string& footerText);
+  static Image2D AddFooter(Image2D& image, const std::string& footerText);
   static constexpr int s_sideBorder = 10;
   static constexpr int s_topBorder = 10;
   static constexpr int s_bottomBorder = 50;
   static constexpr auto s_defaultFont = cv::FONT_HERSHEY_SIMPLEX;
   // TODO: move this into a better place
-  static cv::UMat s_image;
-  cv::ocl::Context m_context;
+  static std::unique_ptr<Image2D> s_image;
+  static std::unique_ptr<wxMemoryDC> s_dc;
 };
 
 } // namespace medicimage

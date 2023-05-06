@@ -1,6 +1,6 @@
+#if 0
 #include "renderer/renderer.h"
 #include "renderer/window.h"
-
 #include <iostream>
 #include <SDL_syswm.h>
 
@@ -44,3 +44,4 @@ void Window::ShutDown()
 
 
 } // namespace medicimage
+#endif
