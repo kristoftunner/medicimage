@@ -6,10 +6,12 @@
 #include <wx/scrolwin.h>
 
 using namespace medicimage;
+namespace app
+{
 class Canvas : public wxScrolledWindow
 {
 public:
-  Canvas( wxWindow *parent, wxWindowID, const wxPoint &pos, const wxSize &size );
+  Canvas( wxWindow *parent, wxWindowID, const wxPoint &pos=wxDefaultPosition, const wxSize &size=wxDefaultSize);
   ~Canvas();
 
   void OnMouseEvent(wxMouseEvent &event);
@@ -20,3 +22,4 @@ private:
   wxDECLARE_EVENT_TABLE();
 };
 
+}
