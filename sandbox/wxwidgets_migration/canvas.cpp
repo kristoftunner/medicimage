@@ -9,7 +9,8 @@
 #include <wx/dcmemory.h>
 
 using namespace medicimage;
-
+namespace app
+{
 wxBEGIN_EVENT_TABLE(Canvas, wxScrolledWindow)
   EVT_PAINT(Canvas::OnPaint)
   EVT_MOUSE_EVENTS(Canvas::OnMouseEvent)
@@ -69,14 +70,6 @@ void Canvas::OnPaint(wxPaintEvent &event)
   if(image.IsOk())
   {
     ;
-    //wxBitmap::Rescale(image2d->GetBitmap(), {600, 500});
-    //ImageEditor::Begin(std::move(image2d));
-    //ImageEditor::DrawLine({ 0.2,0.2 }, { 0.8, 0.8 }, { 0.5,0.5,0.5,1.0 }, 2, 1);
-    //ImageEditor::DrawRectangle({ 0.0,0.1 }, { 0.3, 0.4 }, { 0.5,0.5,0.5,1.0 }, 2, false);
-    //ImageEditor::DrawCircle({ 0.5,0.5 }, 0.2, { 0.5,0.5,0.5,1.0 }, 2, false);
-    //image2d = ImageEditor::End();
-
-    //dc.DrawBitmap(image2d->GetBitmap(), 0, 0);
   }
   else
   {
@@ -86,4 +79,6 @@ void Canvas::OnPaint(wxPaintEvent &event)
   m_drawingSheet.SetDrawCommand(DrawCommand::DRAW_LINE); 
   //dc.DrawRectangle(100, 100, 100, 100);
   //dc.DrawText("Hello World", 0, 0);
+}
+
 }
