@@ -8,6 +8,7 @@
 
 #include "frame.h"
 #include "thumbnails.h"
+#include "toolbox.h"
 #include "canvas.h"
 namespace app
 {
@@ -37,7 +38,7 @@ MyFrame::MyFrame()
   SetMenuBar( menuBar );
 
   const auto margin = FromDIP(5);
-  auto* toolbox = new wxPanel(this, wxID_ANY);
+  auto toolbox = new Toolbox(this, wxID_ANY);
   toolbox->SetBackgroundColour(wxColour(100, 200, 100));
 
   auto gridBagLayout = new Thumbnails(this, wxID_ANY);
