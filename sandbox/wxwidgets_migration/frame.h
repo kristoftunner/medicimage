@@ -4,6 +4,7 @@
 #include <wx/frame.h>
 #include <wx/panel.h>
 #include <wx/log.h>
+#include <string>
 
 namespace app
 {
@@ -21,6 +22,10 @@ private:
   wxGridBagSizer* m_gbs;
   wxGBPosition m_lastPos;
   wxLog* m_logger;
+
+  const std::string m_lightBackground = "#f4f3f3";
+  const std::string m_darkBackground = "#2c2828";
+
 };
 
 }

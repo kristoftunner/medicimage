@@ -21,7 +21,6 @@ Canvas::Canvas( wxWindow *parent, wxWindowID id, const wxPoint &pos, const wxSiz
 {
   SetBackgroundColour( *wxWHITE );
   SetCursor(wxCursor(wxCURSOR_ARROW));
-  wxInitAllImageHandlers();  
   auto image = std::make_unique <Image2D>("Checkerboard.png");
   wxBitmap::Rescale(image->GetBitmap(), {600, 500});
   m_drawingSheet.SetDrawingSheetSize({image->GetWidth(), image->GetHeight()});
@@ -54,7 +53,7 @@ void Canvas::OnMouseEvent(wxMouseEvent &event)
   }
   m_drawingSheet.OnUpdate();
 
-  dc.DrawBitmap(image->GetBitmap(), 0, 0); 
+  dc.DrawBitmap(image->GetBitmap(), 0, 0);
 }
 
 void Canvas::OnPaint(wxPaintEvent &event)

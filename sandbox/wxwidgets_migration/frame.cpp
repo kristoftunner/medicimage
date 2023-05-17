@@ -8,7 +8,7 @@
 
 #include "frame.h"
 #include "thumbnails.h"
-#include "toolbox.h"
+#include "toolbox/toolbox.h"
 #include "canvas.h"
 namespace app
 {
@@ -36,14 +36,18 @@ MyFrame::MyFrame()
   menuBar->Append(menuFile, "&File");
   menuBar->Append(menuHelp, "&Help");
   SetMenuBar( menuBar );
+  
+  bool isDark = wxSystemSettings::GetAppearance().IsDark();
 
   const auto margin = FromDIP(5);
   auto toolbox = new Toolbox(this, wxID_ANY);
-  toolbox->SetBackgroundColour(wxColour(100, 200, 100));
+  toolbox->SetBackgroundColour(wxColour(isDark ? m_darkBackground : m_lightBackground));
 
   auto gridBagLayout = new Thumbnails(this, wxID_ANY);
+  gridBagLayout->SetBackgroundColour(wxColour(isDark ? m_darkBackground : m_lightBackground));
   auto canvas = new Canvas(this, wxID_ANY);
-  
+  canvas->SetBackgroundColour(wxColour(isDark ? m_darkBackground : m_lightBackground));
+
   wxBoxSizer *topsizer = new wxBoxSizer( wxHORIZONTAL );
   topsizer->Add(toolbox, 1, wxEXPAND | wxLEFT | wxTOP | wxRIGHT, margin);
   topsizer->Add(canvas,1, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, margin);
