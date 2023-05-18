@@ -3,6 +3,7 @@
 #include <string>
 #include <filesystem>
 #include <wx/bitmap.h>
+#include <wx/image.h>
 
 using path = std::filesystem::path;
 
@@ -17,6 +18,7 @@ public:
   Image2D() = default;
 	Image2D(const std::string& filename); // TODO: make the filename std::filesystem::path
   Image2D(Image2D& image);
+  Image2D(unsigned char* data, int width, int height, int depth = 3);
   Image2D& operator=(Image2D& image);
 	~Image2D();
 

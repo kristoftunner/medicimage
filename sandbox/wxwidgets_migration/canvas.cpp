@@ -4,6 +4,7 @@
 
 #include <wx/wxprec.h>
 #include <wx/dcclient.h>
+#include <wx/dcbuffer.h>
 #include <wx/wx.h>
 #include <wx/image.h>
 #include <wx/dcmemory.h>
@@ -11,73 +12,82 @@
 using namespace medicimage;
 namespace app
 {
-wxBEGIN_EVENT_TABLE(Canvas, wxScrolledWindow)
-  EVT_PAINT(Canvas::OnPaint)
-  EVT_MOUSE_EVENTS(Canvas::OnMouseEvent)
-wxEND_EVENT_TABLE()
-
 Canvas::Canvas( wxWindow *parent, wxWindowID id, const wxPoint &pos, const wxSize &size )
   : wxScrolledWindow( parent, id, pos, size )
 {
+  SetBackgroundStyle(wxBG_STYLE_PAINT);
   SetBackgroundColour( *wxWHITE );
   SetCursor(wxCursor(wxCURSOR_ARROW));
   auto image = std::make_unique <Image2D>("Checkerboard.png");
   wxBitmap::Rescale(image->GetBitmap(), {600, 500});
   m_drawingSheet.SetDrawingSheetSize({image->GetWidth(), image->GetHeight()});
   m_drawingSheet.SetDocument(std::make_unique<ImageDocument>(std::move(image)), {600, 500});
+  m_drawingSheet.SetDrawCommand(DrawCommand::DRAW_LINE); 
+
+  Bind(wxEVT_PAINT, &Canvas::OnPaint, this);
+  Bind(wxEVT_LEFT_DOWN, &Canvas::OnMousePressed, this);
+  Bind(wxEVT_LEFT_UP, &Canvas::OnMouseReleased, this);
+  Bind(wxEVT_MOTION, &Canvas::OnMouseMoved, this);
 }
 
 Canvas::~Canvas()
 {
 }
 
-void Canvas::OnMouseEvent(wxMouseEvent &event)
+void Canvas::OnMouseMoved(wxMouseEvent &event)
+{
+  if(m_mouseDown)
+  {
+    wxClientDC dc(this);
+    PrepareDC(dc);
+
+    const wxPoint pt(event.GetLogicalPosition(dc));
+    m_drawingSheet.OnMouseButtonDown({pt.x, pt.y});
+    m_drawingSheet.OnUpdate();
+    Refresh();
+  }
+}
+
+void Canvas::OnMousePressed(wxMouseEvent &event)
 {
   wxClientDC dc(this);
   PrepareDC(dc);
 
-  auto image = m_drawingSheet.Draw();
-
   const wxPoint pt(event.GetLogicalPosition(dc));
-  if(event.LeftDown())
-  {
-    m_drawingSheet.OnMouseButtonPressed({pt.x, pt.y});
-  }
-  else if(event.LeftIsDown())
-  {
-    m_drawingSheet.OnMouseButtonDown({pt.x, pt.y});
-  }
-  else if(event.LeftUp())
-  {
-    m_drawingSheet.OnMouseButtonReleased({pt.x, pt.y});
-  }
-  m_drawingSheet.OnUpdate();
+  m_drawingSheet.OnMouseButtonPressed({pt.x, pt.y});
 
-  dc.DrawBitmap(image->GetBitmap(), 0, 0);
+  m_mouseDown = true;
+  Refresh();
+}
+
+void Canvas::OnMouseReleased(wxMouseEvent &event)
+{
+  if(m_mouseDown)
+  {
+    wxClientDC dc(this);
+    PrepareDC(dc);
+
+    const wxPoint pt(event.GetLogicalPosition(dc));
+    m_drawingSheet.OnMouseButtonReleased({pt.x, pt.y});
+  
+    m_mouseDown = false;
+    Refresh();
+  }
 }
 
 void Canvas::OnPaint(wxPaintEvent &event)
 {
-  wxPaintDC dc(this);
+  wxLogDebug("Paint event");
+  wxAutoBufferedPaintDC dc(this);
   PrepareDC(dc);
   dc.SetBackground(*wxWHITE_BRUSH);
   dc.Clear();
   dc.SetPen(*wxBLACK_PEN);
   dc.SetBrush(*wxTRANSPARENT_BRUSH);
-  
-  wxImage image("Checkerboard.png");
-  if(image.IsOk())
-  {
-    ;
-  }
-  else
-  {
-    wxMessageBox("Image not found");
-  }
 
-  m_drawingSheet.SetDrawCommand(DrawCommand::DRAW_LINE); 
-  //dc.DrawRectangle(100, 100, 100, 100);
-  //dc.DrawText("Hello World", 0, 0);
+  auto image = m_drawingSheet.Draw();
+  dc.DrawBitmap(image->GetBitmap(), 0, 0);
+  
 }
 
 }

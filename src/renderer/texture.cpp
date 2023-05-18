@@ -6,6 +6,7 @@
 #include <iostream>
 #include <assert.h>
 #include <wx/log.h> 
+#include "texture.h"
 
 namespace medicimage
 {
@@ -24,7 +25,18 @@ namespace medicimage
     m_bitmap = image.GetBitmap();
   }
 
-  Image2D& Image2D::operator=(Image2D& image)
+  Image2D::Image2D(unsigned char *data, int width, int height, int depth)
+  {
+    auto image = wxImage(width, height, (unsigned char*)data, false);
+    m_bitmap = wxBitmap(image);
+    if (!m_bitmap.IsOk())
+    {
+      wxLogError("Could not create bitmap");
+      assert(false);
+    }
+  }
+
+  Image2D &Image2D::operator=(Image2D &image)
   {
     m_bitmap = wxBitmap(image.GetBitmap());
     return *this;

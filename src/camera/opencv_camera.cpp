@@ -59,16 +59,16 @@ CameraAPI::Frame OpenCvCamera::CaptureFrame()
     return CameraAPI::Frame();
   }
 
-  constexpr int width = 1920;
-  constexpr int height = 1080; 
-  cv::UMat frame;
+  int width = 1920;
+  int height = 1080; 
+  cv::Mat frame;
   m_cap.read(frame);
   cv::resize(frame, frame, cv::Size(width, height));
-  cv::cvtColor(frame, frame, cv::COLOR_BGR2RGBA);
+  cv::cvtColor(frame, frame, cv::COLOR_BGR2RGB);
   
-  Frame frameTexture = std::make_unique<Image2D>();
-  //cv::directx::convertToD3D11Texture2D(frame, frameTexture.value()->GetTexturePtr());
-  //frame.release();
+  //Frame frameTexture = std::make_unique<Image2D>("asd.png");
+  Frame frameTexture = std::make_unique<Image2D>(static_cast<unsigned char*>(frame.data), width, height, 3);
+  
   return std::move(frameTexture);
 }
 
