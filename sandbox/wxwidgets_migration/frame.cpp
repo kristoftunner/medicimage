@@ -57,6 +57,7 @@ MyFrame::MyFrame()
   Bind(wxEVT_MENU, &MyFrame::OnHello, this, ID_Hello);
   Bind(wxEVT_MENU, &MyFrame::OnAbout, this, wxID_ABOUT);
   Bind(wxEVT_MENU, &MyFrame::OnExit, this, wxID_EXIT);
+  Bind(TOOLBOX_SCREENSHOT, [this](wxCommandEvent &event){wxLogDebug("TOOLBOX_SCREENSHOT");});
 }
  
 void MyFrame::OnExit(wxCommandEvent& event)

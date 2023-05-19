@@ -11,6 +11,20 @@
 namespace app
 {
 
+wxDEFINE_EVENT(TOOLBOX_SCREENSHOT, wxCommandEvent);
+wxDEFINE_EVENT(TOOLBOX_SAVE, wxCommandEvent);
+wxDEFINE_EVENT(TOOLBOX_DELETE, wxCommandEvent);
+wxDEFINE_EVENT(TOOLBOX_UNDO, wxCommandEvent);
+
+wxDEFINE_EVENT(TOOLBOX_DRAW_TEXT, wxCommandEvent);
+wxDEFINE_EVENT(TOOLBOX_DRAW_LETTERS, wxCommandEvent);
+wxDEFINE_EVENT(TOOLBOX_DRAW_ARROW, wxCommandEvent);
+wxDEFINE_EVENT(TOOLBOX_DRAW_CIRCLE, wxCommandEvent);
+wxDEFINE_EVENT(TOOLBOX_DRAW_LINE, wxCommandEvent);
+wxDEFINE_EVENT(TOOLBOX_DRAW_MULTILINE, wxCommandEvent);
+wxDEFINE_EVENT(TOOLBOX_DRAW_RECTANGLE, wxCommandEvent);
+wxDEFINE_EVENT(TOOLBOX_DRAW_SKIN_TEMPLATE, wxCommandEvent);
+
 Toolbox::Toolbox(wxWindow *parent, wxWindowID id, const wxPoint &pos, const wxSize &size)
   : wxPanel(parent, id, pos, size)
 {
@@ -56,14 +70,17 @@ void Toolbox::SelectPane(BitmapPane* pane)
   for (auto colorPane : m_colorPanes)
   {
     colorPane->selected = (colorPane == pane);
-    if(colorPane->selected)
-      wxLogDebug("Colorpane selected");
     colorPane->Refresh();
   }
 }
 
 void Toolbox::OnScreenshot()
 {
+  wxCommandEvent event(TOOLBOX_SCREENSHOT, GetId());
+  event.SetEventObject(this);
+  event.SetString("Hello from Toolbox");
+
+  ProcessWindowEvent(event);
   wxLogDebug("OnxScreenshot");
 }
 

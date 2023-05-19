@@ -18,6 +18,8 @@ public:
   void OnMousePressed(wxMouseEvent &event);
   void OnMouseReleased(wxMouseEvent &event);
 
+  void OnScreenshot(wxCommandEvent &event);
+
   void OnPaint( wxPaintEvent &event );
 private:
   std::unique_ptr<Image2D> m_image; 

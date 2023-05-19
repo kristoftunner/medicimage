@@ -1,6 +1,7 @@
 #include "canvas.h"
 #include <image_handling/image_editor.h>
 #include <renderer/texture.h>
+#include "toolbox/toolbox.h"
 
 #include <wx/wxprec.h>
 #include <wx/dcclient.h>
@@ -28,6 +29,7 @@ Canvas::Canvas( wxWindow *parent, wxWindowID id, const wxPoint &pos, const wxSiz
   Bind(wxEVT_LEFT_DOWN, &Canvas::OnMousePressed, this);
   Bind(wxEVT_LEFT_UP, &Canvas::OnMouseReleased, this);
   Bind(wxEVT_MOTION, &Canvas::OnMouseMoved, this);
+  Bind(TOOLBOX_SCREENSHOT, &Canvas::OnScreenshot, this);
 }
 
 Canvas::~Canvas()
@@ -73,6 +75,11 @@ void Canvas::OnMouseReleased(wxMouseEvent &event)
     m_mouseDown = false;
     Refresh();
   }
+}
+
+void Canvas::OnScreenshot(wxCommandEvent &event)
+{
+  wxLogDebug("Screenshot event");
 }
 
 void Canvas::OnPaint(wxPaintEvent &event)
