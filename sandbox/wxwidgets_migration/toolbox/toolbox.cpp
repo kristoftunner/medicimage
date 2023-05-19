@@ -63,7 +63,6 @@ Toolbox::Toolbox(wxWindow *parent, wxWindowID id, const wxPoint &pos, const wxSi
   topSizer->Add(toolboxPaneSizer, 0, wxALL, FromDIP(5));
 
   SetSizer(topSizer);
-  Bind(TOOLBOX_UNDO, [this](wxCommandEvent &event) { OnUndo(); });
 }
 
 void Toolbox::SelectPane(BitmapPane* pane)
@@ -79,64 +78,95 @@ void Toolbox::OnScreenshot()
 {
   wxCommandEvent event(TOOLBOX_SCREENSHOT, GetId());
   event.SetEventObject(this);
-  event.SetString("Hello from Toolbox");
-
   ProcessWindowEvent(event);
   wxLogDebug("OnxScreenshot");
 }
 
 void Toolbox::OnSave()
 {
+  wxCommandEvent event(TOOLBOX_SAVE, GetId());
+  event.SetEventObject(this);
+  ProcessWindowEvent(event);
   wxLogDebug("OnSave");
 }
 
 void Toolbox::OnDelete()
 {
+  wxCommandEvent event(TOOLBOX_DELETE, GetId());
+  event.SetEventObject(this);
+  ProcessWindowEvent(event);
   wxLogDebug("OnDelete");
 }
 
 void Toolbox::OnUndo()
 {
+  wxCommandEvent event(TOOLBOX_UNDO, GetId());
+  event.SetEventObject(this);
+  ProcessWindowEvent(event);
   wxLogDebug("OnUndo");
 }
 
 void Toolbox::OnDrawText()
 {
+  wxCommandEvent event(TOOLBOX_DRAW_TEXT, GetId());
+  event.SetEventObject(this);
+  ProcessWindowEvent(event);
   wxLogDebug("OnDrawText");
 }
 
 void Toolbox::OnDrawIncrementalLetters()
 {
+  wxCommandEvent event(TOOLBOX_DRAW_LETTERS, GetId());
+  event.SetEventObject(this);
+  ProcessWindowEvent(event);
   wxLogDebug("OnDrawIncrementalLetters");
 }
 
 void Toolbox::OnDrawArrow()
 {
+  wxCommandEvent event(TOOLBOX_DRAW_ARROW, GetId());
+  event.SetEventObject(this);
+  ProcessWindowEvent(event);
   wxLogDebug("OnDrawArrow");
 }
 
 void Toolbox::OnDrawCircle()
 {
+  wxCommandEvent event(TOOLBOX_DRAW_CIRCLE, GetId());
+  event.SetEventObject(this);
+  ProcessWindowEvent(event);
   wxLogDebug("OnDrawCircle");
 }
 
 void Toolbox::OnDrawLine()
 {
+  wxCommandEvent event(TOOLBOX_DRAW_LINE, GetId());
+  event.SetEventObject(this);
+  ProcessWindowEvent(event);
   wxLogDebug("OnDrawLine");
 }
 
 void Toolbox::OnDrawMultiline()
 {
+  wxCommandEvent event(TOOLBOX_DRAW_MULTILINE, GetId());
+  event.SetEventObject(this);
+  ProcessWindowEvent(event);
   wxLogDebug("OnDrawMultiline");
 }
 
 void Toolbox::OnDrawRectangle()
 {
+  wxCommandEvent event(TOOLBOX_DRAW_RECTANGLE, GetId());
+  event.SetEventObject(this);
+  ProcessWindowEvent(event);
   wxLogDebug("OnDrawRectangle");
 }
 
 void Toolbox::OnDrawSkinTemplate()
 {
+  wxCommandEvent event(TOOLBOX_DRAW_SKIN_TEMPLATE, GetId());
+  event.SetEventObject(this);
+  ProcessWindowEvent(event);
   wxLogDebug("OnDrawSkinTemplate");
 }
 

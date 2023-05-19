@@ -29,7 +29,20 @@ Canvas::Canvas( wxWindow *parent, wxWindowID id, const wxPoint &pos, const wxSiz
   Bind(wxEVT_LEFT_DOWN, &Canvas::OnMousePressed, this);
   Bind(wxEVT_LEFT_UP, &Canvas::OnMouseReleased, this);
   Bind(wxEVT_MOTION, &Canvas::OnMouseMoved, this);
+
   Bind(TOOLBOX_SCREENSHOT, &Canvas::OnScreenshot, this);
+  Bind(TOOLBOX_SAVE, &Canvas::OnSave, this);
+  Bind(TOOLBOX_DELETE, &Canvas::OnDelete, this);
+  Bind(TOOLBOX_UNDO, &Canvas::OnUndo, this);
+
+  Bind(TOOLBOX_DRAW_TEXT, &Canvas::OnDrawText, this);
+  Bind(TOOLBOX_DRAW_LETTERS, &Canvas::OnDrawIncrementalLetters, this);
+  Bind(TOOLBOX_DRAW_ARROW, &Canvas::OnDrawArrow, this);
+  Bind(TOOLBOX_DRAW_CIRCLE, &Canvas::OnDrawCircle, this);
+  Bind(TOOLBOX_DRAW_LINE, &Canvas::OnDrawLine, this);
+  Bind(TOOLBOX_DRAW_MULTILINE, &Canvas::OnDrawMultiline, this);
+  Bind(TOOLBOX_DRAW_RECTANGLE, &Canvas::OnDrawRectangle, this);
+  Bind(TOOLBOX_DRAW_SKIN_TEMPLATE, &Canvas::OnDrawSkinTemplate, this);
 }
 
 Canvas::~Canvas()
@@ -77,11 +90,6 @@ void Canvas::OnMouseReleased(wxMouseEvent &event)
   }
 }
 
-void Canvas::OnScreenshot(wxCommandEvent &event)
-{
-  wxLogDebug("Screenshot event");
-}
-
 void Canvas::OnPaint(wxPaintEvent &event)
 {
   wxLogDebug("Paint event");
@@ -97,4 +105,56 @@ void Canvas::OnPaint(wxPaintEvent &event)
   
 }
 
+void Canvas::OnScreenshot(wxCommandEvent &event)
+{
+  wxLogDebug("Canvas: OnScreenshot");
+}
+
+void Canvas::OnSave(wxCommandEvent &event)
+{ 
+  wxLogDebug("Canvas: OnSave");
+}
+
+void Canvas::OnDelete(wxCommandEvent &event)
+{
+  wxLogDebug("Canvas: OnDelete");
+}
+
+void Canvas::OnUndo(wxCommandEvent &event)
+{
+  wxLogDebug("Canvas: OnUndo");
+}
+
+void Canvas::OnDrawText(wxCommandEvent &event)
+{
+  wxLogDebug("Canvas: OnDrawText");
+}
+void Canvas::OnDrawIncrementalLetters(wxCommandEvent &event)
+{
+  wxLogDebug("Canvas: OnDrawIncrementalLetters");
+}
+void Canvas::OnDrawArrow(wxCommandEvent &event)
+{
+  wxLogDebug("Canvas: OnDrawArrow");
+}
+void Canvas::OnDrawCircle(wxCommandEvent &event)
+{
+  wxLogDebug("Canvas: OnDrawCircle");
+}
+void Canvas::OnDrawLine(wxCommandEvent &event)
+{
+  wxLogDebug("Canvas: OnDrawLine");
+}
+void Canvas::OnDrawMultiline(wxCommandEvent &event)
+{
+  wxLogDebug("Canvas: OnDrawMultiline");
+}
+void Canvas::OnDrawRectangle(wxCommandEvent &event)
+{
+  wxLogDebug("Canvas: OnDrawRectangle");
+}
+void Canvas::OnDrawSkinTemplate(wxCommandEvent &event)
+{ 
+  wxLogDebug("Canvas: OnDrawSkinTemplate");
+}
 }

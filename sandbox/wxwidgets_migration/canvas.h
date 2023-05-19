@@ -18,9 +18,22 @@ public:
   void OnMousePressed(wxMouseEvent &event);
   void OnMouseReleased(wxMouseEvent &event);
 
-  void OnScreenshot(wxCommandEvent &event);
-
   void OnPaint( wxPaintEvent &event );
+
+  void OnScreenshot(wxCommandEvent &event);
+  void OnSave(wxCommandEvent &event);
+  void OnDelete(wxCommandEvent &event);
+  void OnUndo(wxCommandEvent &event);
+
+  void OnDrawText(wxCommandEvent &event);
+  void OnDrawIncrementalLetters(wxCommandEvent &event);
+  void OnDrawArrow(wxCommandEvent &event);
+  void OnDrawCircle(wxCommandEvent &event);
+  void OnDrawLine(wxCommandEvent &event);
+  void OnDrawMultiline(wxCommandEvent &event);
+  void OnDrawRectangle(wxCommandEvent &event);
+  void OnDrawSkinTemplate(wxCommandEvent &event);
+
 private:
   std::unique_ptr<Image2D> m_image; 
   medicimage::DrawingSheet m_drawingSheet;  
