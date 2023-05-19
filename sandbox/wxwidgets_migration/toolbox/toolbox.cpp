@@ -63,6 +63,7 @@ Toolbox::Toolbox(wxWindow *parent, wxWindowID id, const wxPoint &pos, const wxSi
   topSizer->Add(toolboxPaneSizer, 0, wxALL, FromDIP(5));
 
   SetSizer(topSizer);
+  Bind(TOOLBOX_UNDO, [this](wxCommandEvent &event) { OnUndo(); });
 }
 
 void Toolbox::SelectPane(BitmapPane* pane)
