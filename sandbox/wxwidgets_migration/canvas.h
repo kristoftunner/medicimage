@@ -13,13 +13,17 @@ class Canvas : public wxScrolledWindow
 public:
   Canvas( wxWindow *parent, wxWindowID, const wxPoint &pos=wxDefaultPosition, const wxSize &size=wxDefaultSize);
   ~Canvas();
-
+  
+  // Event handlers coming from this window
   void OnMouseMoved(wxMouseEvent &event);
   void OnMousePressed(wxMouseEvent &event);
   void OnMouseReleased(wxMouseEvent &event);
 
+  void OnCharInput(wxKeyEvent &event);
+  void OnKeyPressed(wxKeyEvent &event);
   void OnPaint( wxPaintEvent &event );
 
+  // Event handlers coming from the parent toolbox window
   void OnScreenshot(wxCommandEvent &event);
   void OnSave(wxCommandEvent &event);
   void OnDelete(wxCommandEvent &event);

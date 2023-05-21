@@ -23,3 +23,8 @@ add_executable(layout WIN32 layout/example.cpp layout/example.h)
 target_link_libraries(layout PUBLIC wx::core wx::base wx::wxgl OpenGL::GL medicimage)
 target_include_directories(layout PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 set_property(TARGET layout PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+
+add_executable(keyboard WIN32 keyboard/keyboard.cpp)
+target_link_libraries(keyboard PUBLIC wx::core wx::base wx::wxgl OpenGL::GL medicimage)
+set_property(TARGET keyboard PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+

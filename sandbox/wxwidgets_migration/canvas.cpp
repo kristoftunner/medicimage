@@ -9,6 +9,7 @@
 #include <wx/wx.h>
 #include <wx/image.h>
 #include <wx/dcmemory.h>
+#include <string>
 
 using namespace medicimage;
 namespace app
@@ -23,12 +24,14 @@ Canvas::Canvas( wxWindow *parent, wxWindowID id, const wxPoint &pos, const wxSiz
   wxBitmap::Rescale(image->GetBitmap(), {600, 500});
   m_drawingSheet.SetDrawingSheetSize({image->GetWidth(), image->GetHeight()});
   m_drawingSheet.SetDocument(std::make_unique<ImageDocument>(std::move(image)), {600, 500});
-  m_drawingSheet.SetDrawCommand(DrawCommand::DRAW_LINE); 
+  m_drawingSheet.SetDrawCommand(DrawCommand::DRAW_TEXT); 
 
   Bind(wxEVT_PAINT, &Canvas::OnPaint, this);
   Bind(wxEVT_LEFT_DOWN, &Canvas::OnMousePressed, this);
   Bind(wxEVT_LEFT_UP, &Canvas::OnMouseReleased, this);
   Bind(wxEVT_MOTION, &Canvas::OnMouseMoved, this);
+
+  Bind(wxEVT_CHAR_HOOK, &Canvas::OnCharInput, this);
 
   Bind(TOOLBOX_SCREENSHOT, &Canvas::OnScreenshot, this);
   Bind(TOOLBOX_SAVE, &Canvas::OnSave, this);
@@ -90,9 +93,31 @@ void Canvas::OnMouseReleased(wxMouseEvent &event)
   }
 }
 
+void Canvas::OnCharInput(wxKeyEvent &event)
+{
+  auto character  = event.GetUnicodeKey();
+  std::string str(1, static_cast<char>(character));
+  int keycode = event.GetKeyCode();
+  if(keycode == WXK_BACK)
+    m_drawingSheet.OnKeyPressed(Key::MDIK_BACKSPACE);
+  else if(keycode == WXK_RETURN || keycode == WXK_NUMPAD_ENTER)
+    m_drawingSheet.OnKeyPressed(Key::MDIK_RETURN);
+  else
+    m_drawingSheet.OnTextInput(str);
+  Refresh();
+}
+
+void Canvas::OnKeyPressed(wxKeyEvent &event)
+{
+  int keycode = event.GetKeyCode();
+  if(keycode == WXK_BACK)
+    m_drawingSheet.OnKeyPressed(Key::MDIK_BACKSPACE);
+  else if(keycode == WXK_RETURN || keycode == WXK_NUMPAD_ENTER)
+    m_drawingSheet.OnKeyPressed(Key::MDIK_RETURN);
+}
+
 void Canvas::OnPaint(wxPaintEvent &event)
 {
-  wxLogDebug("Paint event");
   wxAutoBufferedPaintDC dc(this);
   PrepareDC(dc);
   dc.SetBackground(*wxWHITE_BRUSH);
