@@ -274,5 +274,32 @@ void InfoDialog::OnUpdate()
   m_drawState->SetLabel(drawStateText);
   m_drawCommand->SetLabel(drawCommandText);
   m_editorState->SetLabel(editorStateText);
+  //auto drawState = new wxStaticText(this, wxID_ANY, drawStateText);
+  //auto drawCommand = new wxStaticText(this, wxID_ANY, drawCommandText);
+  //auto editorState = new wxStaticText(this, wxID_ANY, editorStateText);
+  
+  //auto replaceText = [this](wxStaticText* text, wxStaticText* newText)
+  //{
+  //  m_sizer->Add(newText, wxSizerFlags().Align(wxALIGN_TOP).Border(wxALL, FromDIP(1)));
+  //  delete text;
+  //  text = newText;
+  //};
+  //m_sizer->Remove(2);
+  //m_sizer->Remove(1);
+  //m_sizer->Remove(0);
+  //m_sizer->Add(drawState, wxSizerFlags().Align(wxALIGN_TOP).Border(wxALL, FromDIP(1)));  // TODO: properly align this
+  //m_sizer->Add(drawCommand, wxSizerFlags().Align(wxALIGN_TOP).Border(wxALL, FromDIP(1)));
+  //m_sizer->Add(editorState, wxSizerFlags().Align(wxALIGN_TOP).Border(wxALL, FromDIP(1)));
+  //delete m_drawCommand;
+  //delete m_drawState;
+  //delete m_editorState;
+  //m_drawCommand = drawCommand;
+  //m_drawState = drawState;
+  //m_editorState = editorState;
+  //replaceText(m_drawState, new wxStaticText(this, wxID_ANY, drawStateText));
+  //replaceText(m_drawCommand, new wxStaticText(this, wxID_ANY, drawCommandText));
+  //replaceText(m_editorState, new wxStaticText(this, wxID_ANY, editorStateText));
+  
+  Layout();
 }
 }

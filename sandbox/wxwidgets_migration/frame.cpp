@@ -5,6 +5,7 @@
 #include <wx/textctrl.h>
 #include <wx/sizer.h>
 #include <wx/button.h>
+#include <wx/splitter.h>
 
 #include "frame.h"
 #include "thumbnails.h"
@@ -38,20 +39,29 @@ MyFrame::MyFrame()
   SetMenuBar( menuBar );
   
   bool isDark = wxSystemSettings::GetAppearance().IsDark();
-
   const auto margin = FromDIP(5);
-  auto toolbox = new Toolbox(this, wxID_ANY);
+  
+  auto mainSplitter = new wxSplitterWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxSP_LIVE_UPDATE);
+  auto nestedSplitter = new wxSplitterWindow(mainSplitter, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxSP_LIVE_UPDATE);
+  
+  auto toolbox = new Toolbox(nestedSplitter, wxID_ANY);
   toolbox->SetBackgroundColour(wxColour(isDark ? m_darkBackground : m_lightBackground));
-
-  auto gridBagLayout = new Thumbnails(this, wxID_ANY);
-  gridBagLayout->SetBackgroundColour(wxColour(isDark ? m_darkBackground : m_lightBackground));
-  auto canvas = new Canvas(this, wxID_ANY);
+  auto canvas = new Canvas(nestedSplitter, wxID_ANY);
   canvas->SetBackgroundColour(wxColour(isDark ? m_darkBackground : m_lightBackground));
+  
+  nestedSplitter->SplitVertically(toolbox, canvas, 200);
+  nestedSplitter->SetMinimumPaneSize(200);
+  nestedSplitter->SetDoubleBuffered(true);
+  
+  auto gridBagLayout = new Thumbnails(mainSplitter, wxID_ANY);
+  gridBagLayout->SetBackgroundColour(wxColour(isDark ? m_darkBackground : m_lightBackground));
+  
+  mainSplitter->SplitVertically(nestedSplitter, gridBagLayout, 400);
+  mainSplitter->SetMinimumPaneSize(200);
+  mainSplitter->SetDoubleBuffered(true);
 
   wxBoxSizer *topsizer = new wxBoxSizer( wxHORIZONTAL );
-  topsizer->Add(toolbox, 1, wxEXPAND | wxLEFT | wxTOP | wxRIGHT, margin);
-  topsizer->Add(canvas,1, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, margin);
-  topsizer->Add(gridBagLayout,1, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, margin);
+  topsizer->Add(mainSplitter, 1, wxEXPAND );
   
   this->SetSizerAndFit(topsizer);
   Bind(wxEVT_MENU, &MyFrame::OnHello, this, ID_Hello);

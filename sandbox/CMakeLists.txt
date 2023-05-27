@@ -28,3 +28,6 @@ add_executable(keyboard WIN32 keyboard/keyboard.cpp)
 target_link_libraries(keyboard PUBLIC wx::core wx::base wx::wxgl OpenGL::GL medicimage)
 set_property(TARGET keyboard PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
 
+add_executable(splitter WIN32 splitter/splitter.cpp)
+target_link_libraries(splitter PUBLIC wx::core wx::base wx::wxgl OpenGL::GL medicimage)
+set_property(TARGET splitter PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
