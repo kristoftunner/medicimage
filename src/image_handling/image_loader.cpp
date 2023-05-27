@@ -9,10 +9,10 @@ namespace medicimage
 
 Image::Image(const std::string& path)
 {
-  LoadImage(path);
+  ImageLoad(path);
 }
 
-void Image::LoadImage(const std::string& path)
+void Image::ImageLoad(const std::string& path)
 {
   constexpr int outputChannels = 4;
   int width, heigth, channels;

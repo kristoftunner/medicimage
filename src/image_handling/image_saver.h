@@ -76,7 +76,7 @@ public:
   void ClearSavedImages();
   void LoadPatientsFolder();
   void CreatePatientDir();
-  void LoadImage(std::string imageName, const std::filesystem::path& filePath, const std::time_t timestamp);
+  void ImageLoad(std::string imageName, const std::filesystem::path& filePath, const std::time_t timestamp);
   void DeleteImage(std::vector<ImageDocument>::const_iterator it);
   std::string GetUuid() const {return m_uuid;}
   const std::filesystem::path& GetPatientFolder() { return m_dirPath; }

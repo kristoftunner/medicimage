@@ -2,6 +2,7 @@
 #include <image_handling/image_editor.h>
 #include <renderer/texture.h>
 #include "toolbox/toolbox.h"
+#include "editor.h"
 
 #include <wx/wxprec.h>
 #include <wx/dcclient.h>
@@ -17,14 +18,10 @@ namespace app
 Canvas::Canvas( wxWindow *parent, wxWindowID id, const wxPoint &pos, const wxSize &size )
   : wxScrolledWindow( parent, id, pos, size )
 {
+  m_frameUpdateTimer.SetOwner(this);
   SetBackgroundStyle(wxBG_STYLE_PAINT);
   SetBackgroundColour( *wxWHITE );
   SetCursor(wxCursor(wxCURSOR_ARROW));
-  auto image = std::make_unique <Image2D>("Checkerboard.png");
-  wxBitmap::Rescale(image->GetBitmap(), {600, 500});
-  m_drawingSheet.SetDrawingSheetSize({image->GetWidth(), image->GetHeight()});
-  m_drawingSheet.SetDocument(std::make_unique<ImageDocument>(std::move(image)), {600, 500});
-  m_drawingSheet.SetDrawCommand(DrawCommand::DRAW_TEXT); 
 
   Bind(wxEVT_PAINT, &Canvas::OnPaint, this);
   Bind(wxEVT_LEFT_DOWN, &Canvas::OnMousePressed, this);
@@ -46,6 +43,12 @@ Canvas::Canvas( wxWindow *parent, wxWindowID id, const wxPoint &pos, const wxSiz
   Bind(TOOLBOX_DRAW_MULTILINE, &Canvas::OnDrawMultiline, this);
   Bind(TOOLBOX_DRAW_RECTANGLE, &Canvas::OnDrawRectangle, this);
   Bind(TOOLBOX_DRAW_SKIN_TEMPLATE, &Canvas::OnDrawSkinTemplate, this);
+  Bind(wxEVT_TIMER, &Canvas::OnCameraFrameUpdate, this);  
+  m_editor.Init();
+
+  m_dialog = new InfoDialog(this, "Info", m_editor.GetDrawingSheet(), m_editor);
+  m_dialog->Show();
+  m_frameUpdateTimer.Start(1000 / 30, wxTIMER_CONTINUOUS);
 }
 
 Canvas::~Canvas()
@@ -54,16 +57,18 @@ Canvas::~Canvas()
 
 void Canvas::OnMouseMoved(wxMouseEvent &event)
 {
-  if(m_mouseDown)
-  {
-    wxClientDC dc(this);
-    PrepareDC(dc);
+  wxClientDC dc(this);
+  PrepareDC(dc);
 
-    const wxPoint pt(event.GetLogicalPosition(dc));
-    m_drawingSheet.OnMouseButtonDown({pt.x, pt.y});
-    m_drawingSheet.OnUpdate();
+  const wxPoint pt(event.GetLogicalPosition(dc));
+  m_editor.OnMouseMoved({pt.x, pt.y});
+  if(m_editor.IsDrawingUpdated())
+  {
     Refresh();
+    m_editor.UpdatedDrawing();
   }
+  
+  m_dialog->OnUpdate();
 }
 
 void Canvas::OnMousePressed(wxMouseEvent &event)
@@ -72,25 +77,30 @@ void Canvas::OnMousePressed(wxMouseEvent &event)
   PrepareDC(dc);
 
   const wxPoint pt(event.GetLogicalPosition(dc));
-  m_drawingSheet.OnMouseButtonPressed({pt.x, pt.y});
-
-  m_mouseDown = true;
-  Refresh();
+  m_editor.OnMousePressed({pt.x, pt.y});
+  if(m_editor.IsDrawingUpdated())
+  {
+    m_editor.UpdatedDrawing();
+    Refresh();
+  }
+  
+  m_dialog->OnUpdate();
 }
 
 void Canvas::OnMouseReleased(wxMouseEvent &event)
 {
-  if(m_mouseDown)
-  {
-    wxClientDC dc(this);
-    PrepareDC(dc);
+  wxClientDC dc(this);
+  PrepareDC(dc);
 
-    const wxPoint pt(event.GetLogicalPosition(dc));
-    m_drawingSheet.OnMouseButtonReleased({pt.x, pt.y});
-  
-    m_mouseDown = false;
+  const wxPoint pt(event.GetLogicalPosition(dc));
+  m_editor.OnMouseReleased({pt.x, pt.y});
+  if(m_editor.IsDrawingUpdated())
+  {
+    m_editor.UpdatedDrawing();
     Refresh();
   }
+  
+  m_dialog->OnUpdate();
 }
 
 void Canvas::OnCharInput(wxKeyEvent &event)
@@ -99,21 +109,36 @@ void Canvas::OnCharInput(wxKeyEvent &event)
   std::string str(1, static_cast<char>(character));
   int keycode = event.GetKeyCode();
   if(keycode == WXK_BACK)
-    m_drawingSheet.OnKeyPressed(Key::MDIK_BACKSPACE);
+    m_editor.OnKeyPressed(Key::MDIK_BACKSPACE);
   else if(keycode == WXK_RETURN || keycode == WXK_NUMPAD_ENTER)
-    m_drawingSheet.OnKeyPressed(Key::MDIK_RETURN);
+    m_editor.OnKeyPressed(Key::MDIK_RETURN);
   else
-    m_drawingSheet.OnTextInput(str);
-  Refresh();
+    m_editor.OnCharInput(str);
+
+  if(m_editor.IsDrawingUpdated())
+  {
+    Refresh();
+    m_editor.UpdatedDrawing();
+  }
+  
+  m_dialog->OnUpdate();
 }
 
 void Canvas::OnKeyPressed(wxKeyEvent &event)
 {
   int keycode = event.GetKeyCode();
   if(keycode == WXK_BACK)
-    m_drawingSheet.OnKeyPressed(Key::MDIK_BACKSPACE);
+    m_editor.OnKeyPressed(Key::MDIK_BACKSPACE);
   else if(keycode == WXK_RETURN || keycode == WXK_NUMPAD_ENTER)
-    m_drawingSheet.OnKeyPressed(Key::MDIK_RETURN);
+    m_editor.OnKeyPressed(Key::MDIK_RETURN);
+
+  if(m_editor.IsDrawingUpdated())
+  {
+    Refresh();
+    m_editor.UpdatedDrawing();
+  }
+  
+  m_dialog->OnUpdate();
 }
 
 void Canvas::OnPaint(wxPaintEvent &event)
@@ -125,61 +150,129 @@ void Canvas::OnPaint(wxPaintEvent &event)
   dc.SetPen(*wxBLACK_PEN);
   dc.SetBrush(*wxTRANSPARENT_BRUSH);
 
-  auto image = m_drawingSheet.Draw();
+  auto image = m_editor.Draw();
   dc.DrawBitmap(image->GetBitmap(), 0, 0);
   
 }
 
+void Canvas::OnCameraFrameUpdate(wxTimerEvent &event)
+{
+  if(m_editor.IsCameraFrameUpdated())
+  {
+    Refresh();
+    m_editor.UpdatedFrame();
+    m_dialog->OnUpdate();
+  }
+}
+
 void Canvas::OnScreenshot(wxCommandEvent &event)
 {
-  wxLogDebug("Canvas: OnScreenshot");
+  m_editor.OnScreenshot();
+  
+  m_dialog->OnUpdate();
 }
 
 void Canvas::OnSave(wxCommandEvent &event)
 { 
-  wxLogDebug("Canvas: OnSave");
+  m_editor.OnSave();
+  
+  m_dialog->OnUpdate();
 }
 
 void Canvas::OnDelete(wxCommandEvent &event)
 {
-  wxLogDebug("Canvas: OnDelete");
+  m_editor.OnDelete();
+  
+  m_dialog->OnUpdate();
 }
 
 void Canvas::OnUndo(wxCommandEvent &event)
 {
-  wxLogDebug("Canvas: OnUndo");
+  m_editor.OnUndo();
+  
+  m_dialog->OnUpdate();
 }
 
 void Canvas::OnDrawText(wxCommandEvent &event)
 {
-  wxLogDebug("Canvas: OnDrawText");
+  m_editor.OnDrawText();
+  
+  m_dialog->OnUpdate();
 }
+
 void Canvas::OnDrawIncrementalLetters(wxCommandEvent &event)
 {
-  wxLogDebug("Canvas: OnDrawIncrementalLetters");
+  m_editor.OnDrawIncrementalLetters();
+  
+  m_dialog->OnUpdate();
 }
+
 void Canvas::OnDrawArrow(wxCommandEvent &event)
 {
-  wxLogDebug("Canvas: OnDrawArrow");
+  m_editor.OnDrawArrow();
+  
+  m_dialog->OnUpdate();
 }
+
 void Canvas::OnDrawCircle(wxCommandEvent &event)
 {
-  wxLogDebug("Canvas: OnDrawCircle");
+  m_editor.OnDrawCircle();
+  
+  m_dialog->OnUpdate();
 }
+
 void Canvas::OnDrawLine(wxCommandEvent &event)
 {
-  wxLogDebug("Canvas: OnDrawLine");
+  m_editor.OnDrawLine();
+  
+  m_dialog->OnUpdate();
 }
+
 void Canvas::OnDrawMultiline(wxCommandEvent &event)
 {
-  wxLogDebug("Canvas: OnDrawMultiline");
+  m_editor.OnDrawMultiline();
+  
+  m_dialog->OnUpdate();
 }
+
 void Canvas::OnDrawRectangle(wxCommandEvent &event)
 {
-  wxLogDebug("Canvas: OnDrawRectangle");
+  m_editor.OnDrawRectangle();
+  
+  m_dialog->OnUpdate();
 }
+
 void Canvas::OnDrawSkinTemplate(wxCommandEvent &event)
 { 
-  wxLogDebug("Canvas: OnDrawSkinTemplate");
+  m_editor.OnDrawSkinTemplate();
+  
+  m_dialog->OnUpdate();
+}
+
+InfoDialog::InfoDialog(wxWindow* parent, const wxString& title, DrawingSheet& sheet, Editor& editor)
+  : wxFrame(parent, wxID_ANY, title), m_sheet(sheet), m_editor(editor)
+{
+  // Create dialog content
+  m_sizer = new wxBoxSizer(wxVERTICAL);
+  auto drawStateText = std::format("DrawState:{}", m_sheet.GetDrawState()->GetName());
+  auto drawCommandText = std::format("DrawCommand:{}", m_sheet.GetDrawCommandName());
+  auto editorState = std::format("EditorState:{}", m_editor.GetStateName());
+  m_drawState = new wxStaticText(this, wxID_ANY, drawStateText);
+  m_drawCommand = new wxStaticText(this, wxID_ANY, drawCommandText);
+  m_editorState = new wxStaticText(this, wxID_ANY, editorState);
+  m_sizer->Add(m_drawState, wxSizerFlags().Align(wxALIGN_TOP).Border(wxALL, FromDIP(1)));  // TODO: properly align this
+  m_sizer->Add(m_drawCommand, wxSizerFlags().Align(wxALIGN_TOP).Border(wxALL, FromDIP(1)));
+  m_sizer->Add(m_editorState, wxSizerFlags().Align(wxALIGN_TOP).Border(wxALL, FromDIP(1)));
+  SetSizerAndFit(m_sizer);
+}
+
+void InfoDialog::OnUpdate()
+{
+  auto drawStateText = std::format("DrawState:{}", m_sheet.GetDrawState()->GetName());
+  auto drawCommandText = std::format("DrawCommand:{}", m_sheet.GetDrawCommandName());
+  auto editorStateText = std::format("EditorState:{}", m_editor.GetStateName());
+  m_drawState->SetLabel(drawStateText);
+  m_drawCommand->SetLabel(drawCommandText);
+  m_editorState->SetLabel(editorStateText);
 }
 }

@@ -2,12 +2,34 @@
 
 #include "drawing/drawing_sheet.h"
 #include "renderer/texture.h"
+#include "editor.h"
 
 #include <wx/scrolwin.h>
+#include <wx/frame.h>
+#include <wx/button.h>
+#include <wx/sizer.h>
+#include <wx/stattext.h>
+#include <wx/textctrl.h>
+#include <wx/timer.h>
+#include <format>
 
 using namespace medicimage;
 namespace app
 {
+class InfoDialog : public wxFrame
+{
+public:
+  InfoDialog(wxWindow* parent, const wxString& title, DrawingSheet& sheet, Editor& editor);
+  void OnUpdate();
+private:
+  wxBoxSizer* m_sizer;
+  wxStaticText* m_drawState;
+  wxStaticText* m_drawCommand;
+  wxStaticText* m_editorState;
+  DrawingSheet& m_sheet;
+  Editor& m_editor;
+};
+
 class Canvas : public wxScrolledWindow
 {
 public:
@@ -22,6 +44,7 @@ public:
   void OnCharInput(wxKeyEvent &event);
   void OnKeyPressed(wxKeyEvent &event);
   void OnPaint( wxPaintEvent &event );
+  void OnCameraFrameUpdate(wxTimerEvent& event);
 
   // Event handlers coming from the parent toolbox window
   void OnScreenshot(wxCommandEvent &event);
@@ -40,8 +63,11 @@ public:
 
 private:
   std::unique_ptr<Image2D> m_image; 
-  medicimage::DrawingSheet m_drawingSheet;  
   bool m_mouseDown = false;
+  InfoDialog* m_dialog;
+  Editor m_editor;
+  wxTimer m_frameUpdateTimer;
 };
+
 
 }

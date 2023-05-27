@@ -26,7 +26,6 @@ public:
 
 	inline unsigned int GetWidth() const { return m_bitmap.GetLogicalWidth(); }
 	inline unsigned int GetHeight() const { return m_bitmap.GetLogicalHeight(); }
-
 private:
 	void Load();
 };

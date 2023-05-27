@@ -109,7 +109,7 @@ void ImageDocContainer::LoadPatientsFolder()
           std::istringstream ss(timestampStr);
           ss >> std::get_time(&t, "%d-%b-%Y %X");
           std::time_t timestamp = mktime(&t);
-          LoadImage(name, dirEntry.path(), timestamp);
+          ImageLoad(name, dirEntry.path(), timestamp);
           APP_CORE_TRACE("Picture {} is loaded", dirEntry.path().string());
         }
       }
@@ -126,7 +126,7 @@ void ImageDocContainer::CreatePatientDir()
 
 }
 
-void ImageDocContainer::LoadImage(std::string imageName, const std::filesystem::path& filePath, const std::time_t timestamp)
+void ImageDocContainer::ImageLoad(std::string imageName, const std::filesystem::path& filePath, const std::time_t timestamp)
 {
   // TODO: load correctly the document metadata from a meta file
   auto findByName = [&](const ImageDocument& image){return image.documentId == imageName;};

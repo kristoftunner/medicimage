@@ -27,7 +27,7 @@ namespace medicimage
 
   Image2D::Image2D(unsigned char *data, int width, int height, int depth)
   {
-    auto image = wxImage(width, height, (unsigned char*)data, false);
+    auto image = wxImage(width, height, (unsigned char*)data, true);
     m_bitmap = wxBitmap(image);
     if (!m_bitmap.IsOk())
     {

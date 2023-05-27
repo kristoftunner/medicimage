@@ -62,14 +62,18 @@ CameraAPI::Frame OpenCvCamera::CaptureFrame()
   int width = 1920;
   int height = 1080; 
   cv::Mat frame;
-  m_cap.read(frame);
-  cv::resize(frame, frame, cv::Size(width, height));
-  cv::cvtColor(frame, frame, cv::COLOR_BGR2RGB);
   
-  //Frame frameTexture = std::make_unique<Image2D>("asd.png");
-  Frame frameTexture = std::make_unique<Image2D>(static_cast<unsigned char*>(frame.data), width, height, 3);
+  if(m_cap.read(frame))
+  {
+    cv::resize(frame, frame, cv::Size(width, height));
+    cv::cvtColor(frame, frame, cv::COLOR_BGR2RGB);
   
-  return std::move(frameTexture);
+    Frame frameTexture = std::make_unique<Image2D>(static_cast<unsigned char*>(frame.data), width, height, 3);
+  
+    return std::move(frameTexture);
+  }
+  else
+    return CameraAPI::Frame();
 }
 
 void OpenCvCamera::Close()

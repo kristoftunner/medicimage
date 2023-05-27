@@ -17,7 +17,7 @@ class Image
 public:
   Image() = default;
   Image(const std::string& path);
-  void LoadImage(const std::string& path);
+  void ImageLoad(const std::string& path);
   void Resize(int width, int height);
   const std::vector<uint8_t>& GetImage(){return m_image;}
   const ImageDescriptor& GetImageDescriptor(){return m_desc;}
