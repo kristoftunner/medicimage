@@ -1,9 +1,3 @@
-#include "canvas.h"
-#include <image_handling/image_editor.h>
-#include <renderer/texture.h>
-#include "toolbox/toolbox.h"
-#include "editor.h"
-
 #include <wx/wxprec.h>
 #include <wx/dcclient.h>
 #include <wx/dcbuffer.h>
@@ -12,11 +6,17 @@
 #include <wx/dcmemory.h>
 #include <string>
 
+#include <image_handling/image_editor.h>
+#include <renderer/texture.h>
+#include "editor.h"
+#include "canvas.h"
+#include "toolbox/toolbox_events.h"
+
 using namespace medicimage;
 namespace app
 {
 Canvas::Canvas( wxWindow *parent, wxWindowID id, const wxPoint &pos, const wxSize &size )
-  : wxScrolledWindow( parent, id, pos, size )
+  : wxScrolled<wxWindow>( parent, id, pos, size )
 {
   m_frameUpdateTimer.SetOwner(this);
   SetBackgroundStyle(wxBG_STYLE_PAINT);
@@ -49,6 +49,9 @@ Canvas::Canvas( wxWindow *parent, wxWindowID id, const wxPoint &pos, const wxSiz
   m_dialog = new InfoDialog(this, "Info", m_editor.GetDrawingSheet(), m_editor);
   m_dialog->Show();
   m_frameUpdateTimer.Start(1000 / 30, wxTIMER_CONTINUOUS);
+  
+  SetScrollRate(FromDIP(5), FromDIP(5));
+  SetVirtualSize(FromDIP(600), FromDIP(400));
 }
 
 Canvas::~Canvas()
@@ -152,7 +155,7 @@ void Canvas::OnPaint(wxPaintEvent &event)
 
   auto image = m_editor.Draw();
   dc.DrawBitmap(image->GetBitmap(), 0, 0);
-  
+  SetVirtualSize(image->GetWidth(), image->GetHeight()); 
 }
 
 void Canvas::OnCameraFrameUpdate(wxTimerEvent &event)

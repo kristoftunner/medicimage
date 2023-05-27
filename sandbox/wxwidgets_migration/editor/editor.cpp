@@ -1,7 +1,7 @@
+#include <wx/log.h>
+
 #include "editor.h"
 #include "camera/opencv_camera.h"
-
-#include <wx/log.h>
 
 namespace app
 {
@@ -21,7 +21,7 @@ void Editor::Init()
     std::chrono::system_clock::time_point lastUpdate = std::chrono::system_clock::now();
     while(true)
     {
-      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+      std::this_thread::sleep_for(std::chrono::milliseconds(33));
       {
         if(this->m_state == EditorState::SHOW_CAMERA)
         {

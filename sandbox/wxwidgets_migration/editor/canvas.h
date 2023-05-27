@@ -1,9 +1,4 @@
 #pragma once
-
-#include "drawing/drawing_sheet.h"
-#include "renderer/texture.h"
-#include "editor.h"
-
 #include <wx/scrolwin.h>
 #include <wx/frame.h>
 #include <wx/button.h>
@@ -12,6 +7,11 @@
 #include <wx/textctrl.h>
 #include <wx/timer.h>
 #include <format>
+
+#include "drawing/drawing_sheet.h"
+#include "renderer/texture.h"
+#include "editor.h"
+
 
 using namespace medicimage;
 namespace app
@@ -30,7 +30,7 @@ private:
   Editor& m_editor;
 };
 
-class Canvas : public wxScrolledWindow
+class Canvas : public wxScrolled<wxWindow>
 {
 public:
   Canvas( wxWindow *parent, wxWindowID, const wxPoint &pos=wxDefaultPosition, const wxSize &size=wxDefaultSize);

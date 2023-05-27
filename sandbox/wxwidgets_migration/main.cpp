@@ -2,7 +2,7 @@
  
 // For compilers that support precompilation, includes "wx/wx.h".
 
-#include "canvas.h"
+#include "editor/canvas.h"
 #include "frame.h"
 #include <wx/wxprec.h>
 #include "core/log.h"

@@ -10,7 +10,7 @@
 #include "frame.h"
 #include "thumbnails.h"
 #include "toolbox/toolbox.h"
-#include "canvas.h"
+#include "editor/canvas.h"
 namespace app
 {
 
@@ -41,9 +41,11 @@ MyFrame::MyFrame()
   bool isDark = wxSystemSettings::GetAppearance().IsDark();
   const auto margin = FromDIP(5);
   
-  auto mainSplitter = new wxSplitterWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxSP_LIVE_UPDATE);
-  auto nestedSplitter = new wxSplitterWindow(mainSplitter, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxSP_LIVE_UPDATE);
-  
+  auto mainSplitter = new wxSplitterWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxSP_LIVE_UPDATE | wxSP_3DSASH);
+  auto nestedSplitter = new wxSplitterWindow(mainSplitter, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxSP_LIVE_UPDATE | wxSP_3DSASH);
+  mainSplitter->SetSashSize(FromDIP(10));
+  nestedSplitter->SetSashSize(FromDIP(10));
+
   auto toolbox = new Toolbox(nestedSplitter, wxID_ANY);
   toolbox->SetBackgroundColour(wxColour(isDark ? m_darkBackground : m_lightBackground));
   auto canvas = new Canvas(nestedSplitter, wxID_ANY);

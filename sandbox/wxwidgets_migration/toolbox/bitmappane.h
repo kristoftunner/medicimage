@@ -6,8 +6,6 @@
 #include <wx/dcbuffer.h>
 #include <wx/bitmap.h>
 
-#include "selectablepane.h"
-
 namespace app
 {
 class SelectablePane : public wxWindow

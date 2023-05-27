@@ -1,17 +1,17 @@
 #pragma once
-#include "input/key_codes.h"
-#include "renderer/texture.h"
-#include "drawing/drawing_sheet.h"
-#include "image_handling/image_saver.h"
-#include "core/utils.h"
-#include "camera/opencv_camera.h"
-
 #include <glm/glm.hpp>
 #include <string>
 #include <filesystem>
 #include <mutex>
 #include <thread>
 #include <atomic>
+
+#include "input/key_codes.h"
+#include "renderer/texture.h"
+#include "drawing/drawing_sheet.h"
+#include "image_handling/image_saver.h"
+#include "core/utils.h"
+#include "camera/opencv_camera.h"
 
 namespace app
 {
