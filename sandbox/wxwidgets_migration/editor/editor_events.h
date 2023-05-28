@@ -19,7 +19,7 @@ public:
 
     // Getter and setter for the custom data
     void SetData(const ImageDocument& data) { m_data = data; }
-    ImageDocument GetData() const { return m_data; }
+    ImageDocument& GetData() { return m_data; }
 
     // Required for event cloning
     wxEvent* Clone() const override { return new ImageDocumentEvent(*this); }
@@ -28,6 +28,7 @@ private:
     ImageDocument m_data;
 };
 
+wxDECLARE_EVENT(EVT_EDITOR_ADD_DOCUMENT, ImageDocumentEvent);
 wxDECLARE_EVENT(EVT_EDITOR_SAVE_DOCUMENT, ImageDocumentEvent);
 wxDECLARE_EVENT(EVT_EDITOR_DELETE_DOCUMENT, ImageDocumentEvent);
   

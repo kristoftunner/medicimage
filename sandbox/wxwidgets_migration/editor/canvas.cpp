@@ -91,6 +91,7 @@ void Canvas::OnMousePressed(wxMouseEvent &event)
   }
   
   m_dialog->OnUpdate();
+  SetFocus();
 }
 
 void Canvas::OnMouseReleased(wxMouseEvent &event)
@@ -173,8 +174,11 @@ void Canvas::OnCameraFrameUpdate(wxTimerEvent &event)
 
 void Canvas::OnScreenshot(wxCommandEvent &event)
 {
-  m_editor.OnScreenshot();
-  
+  auto documentAddEvent = m_editor.OnScreenshot();
+  if(documentAddEvent)
+  {
+    ProcessWindowEvent(documentAddEvent.value());
+  }
   m_dialog->OnUpdate();
 }
 
@@ -201,6 +205,11 @@ void Canvas::OnUndo(wxCommandEvent &event)
   m_editor.OnUndo();
   
   m_dialog->OnUpdate();
+}
+
+void Canvas::OnDocumentPicked(ImageDocumentEvent &event)
+{
+  wxLogDebug("Canvas::OnDocumentPicked");
 }
 
 void Canvas::OnDrawText(wxCommandEvent &event)
@@ -306,6 +315,21 @@ EditorPanel::EditorPanel(wxWindow *parent, wxWindowID id, const wxPoint &pos, co
   sizer->Add(m_canvas, wxSizerFlags(1).Expand().Border(wxALL, FromDIP(5)));
   sizer->Add(patientIdInput, wxSizerFlags(0).Expand().Border(wxALL, FromDIP(5)));
   SetSizerAndFit(sizer);
+
+  //relay the events from frame to canvas
+  Bind(TOOLBOX_SCREENSHOT, [this](wxCommandEvent& event){this->m_canvas->OnScreenshot(event);});
+  Bind(TOOLBOX_SAVE, [this](wxCommandEvent& event){this->m_canvas->OnSave(event);});
+  Bind(TOOLBOX_DELETE, [this](wxCommandEvent& event){this->m_canvas->OnDelete(event);});
+  Bind(TOOLBOX_UNDO, [this](wxCommandEvent& event){this->m_canvas->OnUndo(event);});
+  Bind(TOOLBOX_DRAW_TEXT, [this](wxCommandEvent& event){this->m_canvas->OnDrawText(event);});
+  Bind(TOOLBOX_DRAW_LETTERS, [this](wxCommandEvent& event){this->m_canvas->OnDrawIncrementalLetters(event);});
+  Bind(TOOLBOX_DRAW_ARROW, [this](wxCommandEvent& event){this->m_canvas->OnDrawArrow(event);});
+  Bind(TOOLBOX_DRAW_CIRCLE, [this](wxCommandEvent& event){this->m_canvas->OnDrawCircle(event);});
+  Bind(TOOLBOX_DRAW_LINE, [this](wxCommandEvent& event){this->m_canvas->OnDrawLine(event);});
+  Bind(TOOLBOX_DRAW_MULTILINE, [this](wxCommandEvent& event){this->m_canvas->OnDrawMultiline(event);});
+  Bind(TOOLBOX_DRAW_RECTANGLE, [this](wxCommandEvent& event){this->m_canvas->OnDrawRectangle(event);});
+  Bind(TOOLBOX_DRAW_SKIN_TEMPLATE, [this](wxCommandEvent& event){this->m_canvas->OnDrawSkinTemplate(event);});
+  Bind(EVT_THUMBNAILS_DOCUMENT_PICK, [this](ImageDocumentEvent& event){this->m_canvas->OnDocumentPicked(event);});
 
 }
 }

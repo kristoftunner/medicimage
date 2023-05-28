@@ -18,9 +18,11 @@ public:
   DocumentController();
   void UpdateAppFolder(const std::filesystem::path& appFolder);
   std::optional<const std::vector<ImageDocument>*> GetSavedImages();
+  void SelectPatient(const std::string& patientId);
   std::vector<std::string> GetPatientIds() const; 
   std::string GetSelectedPatientId() const { return m_imageSavers->GetSelectedUuid(); }
   void AddPatient(const std::string& patientId);
+  void AddDocument(const ImageDocument& document);
 
   void OnSaveDocument(const ImageDocument& document);
   void OnDeleteDocument(const ImageDocument& document);

@@ -22,13 +22,15 @@ Thumbnails::Thumbnails( wxWindow *parent, wxWindowID, const wxPoint &pos, const 
   m_sizer->Add(m_panelName, 0, wxALL, FromDIP(5));
   m_sizer->Add(m_patientList, wxSizerFlags(0).Expand().Border(wxALL, FromDIP(5)));
 
+  //Bind(wxEVT_PAINT, &Thumbnails::OnPaint, this);
   Bind(EVT_THUMBNAILS_ADD_PATIENT, &Thumbnails::OnAddPatient, this);
   Bind(EVT_EDITOR_SAVE_DOCUMENT, &Thumbnails::OnSaveDocument, this);
   Bind(EVT_EDITOR_DELETE_DOCUMENT, &Thumbnails::OnDeleteDocument, this);
+  Bind(EVT_EDITOR_ADD_DOCUMENT, &Thumbnails::OnAddDocument, this);
 
   SetSizer(m_sizer);
   SetScrollRate(FromDIP(5), FromDIP(5));
-  //SetVirtualSize(FromDIP(600), FromDIP(400)); // TODO: work out the scrolling here
+  SetVirtualSize(FromDIP(600), FromDIP(400)); // TODO: work out the scrolling here
 }
 
 void Thumbnails::SelectPane(BitmapPane* pane)
@@ -44,6 +46,7 @@ void Thumbnails::OnSaveDocument(ImageDocumentEvent &event)
 {
   // TODO: Implement
   wxLogDebug("Thumbnails::OnSaveDocument");
+  UpdateLayout();
   Refresh();
 }
 
@@ -51,10 +54,19 @@ void Thumbnails::OnDeleteDocument(ImageDocumentEvent &event)
 {
   // TODO: Implement
   wxLogDebug("Thumbnails::OnDeleteDocument");
+  UpdateLayout();
   Refresh();
 }
 
-void Thumbnails::OnPaint(wxPaintEvent &event)
+void Thumbnails::OnAddDocument(ImageDocumentEvent &event)
+{
+  wxLogDebug("Thumbnails:OnAddDocument");
+  m_documentController.AddDocument(event.GetData());
+  UpdateLayout();
+  Refresh();
+}
+
+void Thumbnails::UpdateLayout()
 {
   m_buttonHandlers.clear();
   m_sizer->Clear();
@@ -78,27 +90,29 @@ void Thumbnails::OnPaint(wxPaintEvent &event)
       }});
     }
 
+    int panelWidth = GetSize().GetWidth();
     for(auto& buttonHandler : m_buttonHandlers)
     {
-      auto pane = new BitmapPane(buttonHandler.first, this, wxID_ANY, wxColour(m_lightBackground));
+      auto pane = new BitmapPane(buttonHandler.first, this, wxID_ANY, wxColour(m_lightBackground), wxDefaultPosition, {panelWidth, panelWidth});
       pane->Bind(wxEVT_LEFT_DOWN, [this, pane, buttonHandler](wxMouseEvent &event)
       {
         SelectPane(pane);
         buttonHandler.second();
       });
       m_colorPanes.push_back(pane);
-      m_sizer->Add(pane, 0, wxALL, FromDIP(5));
+      m_sizer->Add(pane, 1, wxALL, FromDIP(5));
     }
   }
-  m_sizer->Add(m_patientList, 0, wxALL, FromDIP(5));
-  
+  m_sizer->Add(m_patientList, wxSizerFlags(0).Expand().Border(wxALL, FromDIP(5)));
   Layout();
-
 }
+
 void Thumbnails::OnAddPatient(PatientEvent &event)
 {
+  wxLogDebug("Thumbnails::OnAddPatient: %s", event.GetPatientId());
   m_documentController.AddPatient(event.GetPatientId());
   UpdatePatientListCtrl();
+  UpdateLayout();
   Refresh();
 }
 
@@ -106,12 +120,16 @@ void Thumbnails::OnPatientSelected(wxListEvent &event)
 {
   auto selectedIndex = event.GetIndex();
   std::string selectedItem = m_patientList->GetItemText(selectedIndex).ToStdString();
+  m_documentController.SelectPatient(selectedItem);
   wxLogDebug("Thumbnails::OnPatientSelected: %s", selectedItem);
+  UpdateLayout();
+  Refresh();
 }
 
 void Thumbnails::UpdatePatientListCtrl()
 {
   auto patientsIds = m_documentController.GetPatientIds(); 
+  m_patientList->DeleteAllItems();
   int index = 0;
   for (auto patientId : patientsIds)
   {

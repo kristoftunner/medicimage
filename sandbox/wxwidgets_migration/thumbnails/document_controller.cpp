@@ -28,6 +28,12 @@ std::optional<const std::vector<ImageDocument>*> DocumentController::GetSavedIma
     return std::nullopt;
 }
 
+void DocumentController::SelectPatient(const std::string &patientId)
+{
+  m_imageSavers->SelectImageSaver(patientId);
+  m_imageSavers->GetSelectedSaver().LoadPatientsFolder();
+}
+
 std::vector<std::string> DocumentController::GetPatientIds() const
 {
   std::vector<std::string> patientIds;
@@ -52,5 +58,10 @@ void DocumentController::AddPatient(const std::string &patientId)
   {
     APP_CORE_WARN("Please add a number smaller for uuid!"); 
   }
+}
+void DocumentController::AddDocument(const ImageDocument &document)
+{
+  if(m_imageSavers->HasSelectedSaver())
+    m_imageSavers->GetSelectedSaver().AddImage(*(document.image.get()), false);
 }
 } // namespace app

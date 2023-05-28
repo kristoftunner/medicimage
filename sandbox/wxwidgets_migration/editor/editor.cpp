@@ -78,7 +78,7 @@ void Editor::OnKeyPressed(KeyCode key)
     m_drawingSheet.OnKeyPressed(key);
 }
 
-void Editor::OnScreenshot()
+std::optional<ImageDocumentEvent> Editor::OnScreenshot()
 {
   if(m_state == EditorState::SHOW_CAMERA)
   {
@@ -89,7 +89,15 @@ void Editor::OnScreenshot()
       this->OnScreenshotDone();
     });
     t.detach();
+    ImageDocumentEvent event(EVT_EDITOR_ADD_DOCUMENT, wxID_ANY);
+    {
+      std::lock_guard<std::mutex> lock(m_cameraFrameMutex);
+      event.SetData(ImageDocument(std::make_unique<Image2D>(*(m_cameraFrame.get()))));
+    }
+    return event;
   }
+  else
+    return std::nullopt;
 }
 
 void Editor::OnScreenshotDone()

@@ -179,6 +179,9 @@ std::vector<ImageDocument>::iterator ImageDocContainer::AddImage(Image2D& image,
   //cv::imwrite(imagePath.string(), ocvImage);
   //cv::resize(ocvImage, ocvImage, cv::Size(640,360) );
   //cv::imwrite(thumbImagePath.string(), ocvImage);
+  image.GetBitmap().SaveFile(imagePath.string(), wxBITMAP_TYPE_PNG);
+  auto resizedBitmap = image.GetBitmap().ConvertToImage().Rescale(640, 360);
+  resizedBitmap.SaveFile(thumbImagePath.string(), wxBITMAP_TYPE_PNG);
   m_fileLogger->LogFileOperation(name, FileLogger::FileOperation::FILE_SAVE);
   UpdateDocListFile();
   return m_savedImages.end();

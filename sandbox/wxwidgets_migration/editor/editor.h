@@ -44,7 +44,7 @@ public:
   void OnKeyPressed(KeyCode key);
 
   // Event handlers coming from the parent toolbox window
-  void OnScreenshot();
+  std::optional<ImageDocumentEvent> OnScreenshot();
   void OnScreenshotDone();
   std::optional<ImageDocumentEvent> OnSave();
   // delete is for deleting image during IMAGE_SELECTION

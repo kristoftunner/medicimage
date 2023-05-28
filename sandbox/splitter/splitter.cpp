@@ -10,11 +10,17 @@ public:
     wxBoxSizer* sizer = new wxBoxSizer(wxVERTICAL);
     
     SetSizer(sizer);
-    for(int i = 0; i < 20; ++i)
+    for(int i = 0; i < 7; ++i)
       sizer->Add(new wxButton(this, wxID_ANY, "Button" + std::to_string(i)), 0, wxEXPAND);
     SetScrollRate(FromDIP(5), FromDIP(5));
     SetVirtualSize(FromDIP(600), FromDIP(400));
+    Bind(wxEVT_CHAR_HOOK, &MyPanel::OnCharInput, this);
   }
+  void OnCharInput(wxKeyEvent& event)
+  {
+    wxLogDebug("MyPanel::OnCharInput");
+    event.Skip();
+  };
 };
 
 
@@ -41,7 +47,13 @@ public:
         // Set the splitter window as the main window
         SetSizer(new wxBoxSizer(wxVERTICAL));
         GetSizer()->Add(splitter, 1, wxEXPAND);
+        //Bind(wxEVT_CHAR_HOOK, &MyFrame::OnCharInput, this);
     }
+  void OnCharInput(wxKeyEvent& event)
+  {
+    wxLogDebug("MyPanel::OnCharInput");
+    event.Skip();
+  };
 };
 
 class MyApp : public wxApp

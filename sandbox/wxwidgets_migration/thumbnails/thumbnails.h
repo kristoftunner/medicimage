@@ -24,11 +24,13 @@ public:
 private:
   void OnSaveDocument(ImageDocumentEvent& event);
   void OnDeleteDocument(ImageDocumentEvent& event);
+  void OnAddDocument(ImageDocumentEvent& event);
   void OnPaint( wxPaintEvent &event );
   void OnAddPatient(PatientEvent& event);
   void OnPatientSelected(wxListEvent& event);
 
   void UpdatePatientListCtrl();
+  void UpdateLayout();
 
   void SelectPane(BitmapPane* pane);
 
