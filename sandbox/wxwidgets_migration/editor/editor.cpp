@@ -164,12 +164,27 @@ void Editor::OnDrawButtonPushed(DrawCommand command)
   m_drawingSheet.SetDrawCommand(command);
 }
 
+void Editor::OnDocumentPicked(const ImageDocument &document)
+{
+  if(m_state == EditorState::SHOW_CAMERA || m_state == EditorState::IMAGE_SELECTION)
+  {
+    m_activeDocument = document;
+    m_state = EditorState::IMAGE_SELECTION;
+  }
+}
+
 std::unique_ptr<Image2D> Editor::Draw()
 {
   if(m_state == EditorState::SHOW_CAMERA || m_state == EditorState::SCREENSHOT)
   {
     std::lock_guard<std::mutex> lock(m_cameraFrameMutex);
     auto image = std::make_unique<Image2D>(*(m_cameraFrame.get()));
+    wxBitmap::Rescale(image->GetBitmap(), {800,600});
+    return std::move(image);
+  }
+  else if(m_state == EditorState::IMAGE_SELECTION)
+  {
+    auto image = std::make_unique<Image2D>(*(m_activeDocument.image.get()));
     wxBitmap::Rescale(image->GetBitmap(), {800,600});
     return std::move(image);
   }

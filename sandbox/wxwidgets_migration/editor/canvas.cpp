@@ -209,7 +209,9 @@ void Canvas::OnUndo(wxCommandEvent &event)
 
 void Canvas::OnDocumentPicked(ImageDocumentEvent &event)
 {
-  wxLogDebug("Canvas::OnDocumentPicked");
+  m_editor.OnDocumentPicked(event.GetData());
+  m_dialog->OnUpdate();
+  Refresh();
 }
 
 void Canvas::OnDrawText(wxCommandEvent &event)

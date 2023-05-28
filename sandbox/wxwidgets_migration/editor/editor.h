@@ -52,6 +52,7 @@ public:
   // undo is undoing changes during EDITING and revert IMAGE_SELECTION
   void OnUndo();
   void OnImageSelected(int index);
+  void OnDocumentPicked(const ImageDocument& document);
 
   void OnDrawText();
   void OnDrawIncrementalLetters();
