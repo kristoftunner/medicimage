@@ -1,6 +1,23 @@
 #include <wx/wx.h>
 #include <wx/splitter.h>
 
+class MyPanel : public wxScrolled<wxWindow>
+{
+public:
+  MyPanel(wxWindow* parent)
+    : wxScrolled<wxWindow>(parent, wxID_ANY)
+  {
+    wxBoxSizer* sizer = new wxBoxSizer(wxVERTICAL);
+    
+    SetSizer(sizer);
+    for(int i = 0; i < 20; ++i)
+      sizer->Add(new wxButton(this, wxID_ANY, "Button" + std::to_string(i)), 0, wxEXPAND);
+    SetScrollRate(FromDIP(5), FromDIP(5));
+    SetVirtualSize(FromDIP(600), FromDIP(400));
+  }
+};
+
+
 class MyFrame : public wxFrame
 {
 public:
@@ -11,8 +28,8 @@ public:
         wxSplitterWindow* splitter = new wxSplitterWindow(this, wxID_ANY, wxPoint(-1,-1) ,wxSize(-1,-1),wxSP_LIVE_UPDATE);
 
         // Create panels for the splitter panes
-        wxPanel* panel1 = new wxPanel(splitter, wxID_ANY);
-        wxPanel* panel2 = new wxPanel(splitter, wxID_ANY);
+        auto panel1 = new MyPanel(splitter);
+        wxPanel* panel2 = new wxPanel(splitter);
         panel1->SetBackgroundColour(*wxRED);
         panel2->SetBackgroundColour(*wxBLUE);
         // Set the splitter window's panes

@@ -4,6 +4,7 @@
 #include <wx/wx.h>
 #include <wx/image.h>
 #include <wx/dcmemory.h>
+#include <wx/textctrl.h>
 #include <string>
 
 #include <image_handling/image_editor.h>
@@ -11,6 +12,7 @@
 #include "editor.h"
 #include "canvas.h"
 #include "toolbox/toolbox_events.h"
+#include "thumbnails/thumbnail_events.h"
 
 using namespace medicimage;
 namespace app
@@ -22,6 +24,10 @@ Canvas::Canvas( wxWindow *parent, wxWindowID id, const wxPoint &pos, const wxSiz
   SetBackgroundStyle(wxBG_STYLE_PAINT);
   SetBackgroundColour( *wxWHITE );
   SetCursor(wxCursor(wxCURSOR_ARROW));
+
+  m_editor.Init();
+  m_dialog = new InfoDialog(this, "Info", m_editor.GetDrawingSheet(), m_editor);
+  m_dialog->Show();
 
   Bind(wxEVT_PAINT, &Canvas::OnPaint, this);
   Bind(wxEVT_LEFT_DOWN, &Canvas::OnMousePressed, this);
@@ -44,14 +50,11 @@ Canvas::Canvas( wxWindow *parent, wxWindowID id, const wxPoint &pos, const wxSiz
   Bind(TOOLBOX_DRAW_RECTANGLE, &Canvas::OnDrawRectangle, this);
   Bind(TOOLBOX_DRAW_SKIN_TEMPLATE, &Canvas::OnDrawSkinTemplate, this);
   Bind(wxEVT_TIMER, &Canvas::OnCameraFrameUpdate, this);  
-  m_editor.Init();
-
-  m_dialog = new InfoDialog(this, "Info", m_editor.GetDrawingSheet(), m_editor);
-  m_dialog->Show();
-  m_frameUpdateTimer.Start(1000 / 30, wxTIMER_CONTINUOUS);
   
   SetScrollRate(FromDIP(5), FromDIP(5));
   SetVirtualSize(FromDIP(600), FromDIP(400));
+
+  m_frameUpdateTimer.Start(1000 / 30, wxTIMER_CONTINUOUS);
 }
 
 Canvas::~Canvas()
@@ -281,32 +284,28 @@ void InfoDialog::OnUpdate()
   m_drawState->SetLabel(drawStateText);
   m_drawCommand->SetLabel(drawCommandText);
   m_editorState->SetLabel(editorStateText);
-  //auto drawState = new wxStaticText(this, wxID_ANY, drawStateText);
-  //auto drawCommand = new wxStaticText(this, wxID_ANY, drawCommandText);
-  //auto editorState = new wxStaticText(this, wxID_ANY, editorStateText);
-  
-  //auto replaceText = [this](wxStaticText* text, wxStaticText* newText)
-  //{
-  //  m_sizer->Add(newText, wxSizerFlags().Align(wxALIGN_TOP).Border(wxALL, FromDIP(1)));
-  //  delete text;
-  //  text = newText;
-  //};
-  //m_sizer->Remove(2);
-  //m_sizer->Remove(1);
-  //m_sizer->Remove(0);
-  //m_sizer->Add(drawState, wxSizerFlags().Align(wxALIGN_TOP).Border(wxALL, FromDIP(1)));  // TODO: properly align this
-  //m_sizer->Add(drawCommand, wxSizerFlags().Align(wxALIGN_TOP).Border(wxALL, FromDIP(1)));
-  //m_sizer->Add(editorState, wxSizerFlags().Align(wxALIGN_TOP).Border(wxALL, FromDIP(1)));
-  //delete m_drawCommand;
-  //delete m_drawState;
-  //delete m_editorState;
-  //m_drawCommand = drawCommand;
-  //m_drawState = drawState;
-  //m_editorState = editorState;
-  //replaceText(m_drawState, new wxStaticText(this, wxID_ANY, drawStateText));
-  //replaceText(m_drawCommand, new wxStaticText(this, wxID_ANY, drawCommandText));
-  //replaceText(m_editorState, new wxStaticText(this, wxID_ANY, editorStateText));
-  
   Layout();
+}
+
+EditorPanel::EditorPanel(wxWindow *parent, wxWindowID id, const wxPoint &pos, const wxSize &size)
+  : wxPanel(parent, id, pos, size)
+{
+  auto sizer = new wxBoxSizer(wxVERTICAL);
+  m_canvas = new Canvas(this, wxID_ANY, wxDefaultPosition, wxDefaultSize);
+  
+  auto patientIdInput = new wxTextCtrl(this, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER);
+  patientIdInput->Bind(wxEVT_TEXT_ENTER, [this, patientIdInput](wxCommandEvent& event)
+  {
+    auto id = patientIdInput->GetValue().ToStdString();
+    PatientEvent patientEvent(EVT_THUMBNAILS_ADD_PATIENT, wxID_ANY);
+    patientEvent.SetData(id);
+    ProcessWindowEvent(patientEvent);
+    patientIdInput->Clear();
+  });
+
+  sizer->Add(m_canvas, wxSizerFlags(1).Expand().Border(wxALL, FromDIP(5)));
+  sizer->Add(patientIdInput, wxSizerFlags(0).Expand().Border(wxALL, FromDIP(5)));
+  SetSizerAndFit(sizer);
+
 }
 }

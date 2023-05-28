@@ -27,6 +27,15 @@ std::optional<const std::vector<ImageDocument>*> DocumentController::GetSavedIma
   else
     return std::nullopt;
 }
+
+std::vector<std::string> DocumentController::GetPatientIds() const
+{
+  std::vector<std::string> patientIds;
+  for (const auto& saver : m_imageSavers->GetImageSavers())
+    patientIds.push_back(saver.first);
+  return patientIds;
+}
+
 void DocumentController::AddPatient(const std::string &patientId)
 {
   // TODO REFACTOR: get rid of these try-catch blocks

@@ -18,7 +18,8 @@ public:
   DocumentController();
   void UpdateAppFolder(const std::filesystem::path& appFolder);
   std::optional<const std::vector<ImageDocument>*> GetSavedImages();
-  const std::unordered_map<std::string, ImageDocContainer>& GetImageSavers(){return m_imageSavers->GetImageSavers();} // TODO: this is a bit hacky   
+  std::vector<std::string> GetPatientIds() const; 
+  std::string GetSelectedPatientId() const { return m_imageSavers->GetSelectedUuid(); }
   void AddPatient(const std::string& patientId);
 
   void OnSaveDocument(const ImageDocument& document);

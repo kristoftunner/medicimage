@@ -69,5 +69,13 @@ private:
   wxTimer m_frameUpdateTimer;
 };
 
+class EditorPanel : public wxPanel
+{
+public:
+  EditorPanel(wxWindow* parent, wxWindowID id, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize);
+  ~EditorPanel() = default;
 
-}
+private:
+  Canvas* m_canvas;
+};
+};

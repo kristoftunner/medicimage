@@ -4,6 +4,7 @@
 #include <wx/frame.h>
 #include <wx/panel.h>
 #include <wx/event.h>
+#include <wx/listctrl.h>
 #include <vector>
 
 #include "editor/editor_events.h"
@@ -15,20 +16,26 @@ namespace app
 {
 
 using namespace medicimage;
-class Thumbnails : public wxPanel
+class Thumbnails : public wxScrolled<wxPanel>
 {
 public:
   Thumbnails( wxWindow *parent, wxWindowID, const wxPoint &pos=wxDefaultPosition, const wxSize &size=wxDefaultSize );
 
+private:
   void OnSaveDocument(ImageDocumentEvent& event);
   void OnDeleteDocument(ImageDocumentEvent& event);
   void OnPaint( wxPaintEvent &event );
   void OnAddPatient(PatientEvent& event);
-private:
+  void OnPatientSelected(wxListEvent& event);
+
+  void UpdatePatientListCtrl();
+
   void SelectPane(BitmapPane* pane);
 
 private:
   wxBoxSizer* m_sizer;
+  wxListCtrl* m_patientList;
+  wxStaticText* m_panelName;
   DocumentController m_documentController;
   std::vector<BitmapPane*> m_colorPanes;
   std::vector<BitmapButtonHandler> m_buttonHandlers;
