@@ -1,8 +1,10 @@
 #pragma once
 
 #include <filesystem>
-#include "renderer/texture.h"
+#include <optional>
 #include <unordered_map>
+
+#include "renderer/texture.h"
 
 namespace medicimage
 {
@@ -36,12 +38,14 @@ public:
   ImageDocument(std::unique_ptr<Image2D> im) : image(std::move(im)){} // TODO REFACTOR: these ctors should be refactored in the future
   ImageDocument(std::unique_ptr<Image2D> im, const std::string& id) : image(std::move(im)), documentId(id){}
   ImageDocument(std::unique_ptr<Image2D> im, const std::string& id, const std::time_t& time) : image(std::move(im)), documentId(id), timestamp(time){}
+
   ImageDocument(const ImageDocument& doc)
   {
     timestamp = doc.timestamp;
     documentId = doc.documentId;
     image = std::make_unique<Image2D>(*doc.image.get());
   }
+
   ImageDocument& operator=(const ImageDocument& doc)
   {
     timestamp = doc.timestamp;
@@ -49,6 +53,7 @@ public:
     image = std::make_unique<Image2D>(*doc.image.get());
     return *this;
   }
+
   std::unique_ptr<Image2D> DrawFooter();
   std::string GenerateFooterText()
   {

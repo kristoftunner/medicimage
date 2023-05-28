@@ -11,26 +11,10 @@
 namespace app
 {
 
-wxDEFINE_EVENT(TOOLBOX_SCREENSHOT, wxCommandEvent);
-wxDEFINE_EVENT(TOOLBOX_SAVE, wxCommandEvent);
-wxDEFINE_EVENT(TOOLBOX_DELETE, wxCommandEvent);
-wxDEFINE_EVENT(TOOLBOX_UNDO, wxCommandEvent);
-
-wxDEFINE_EVENT(TOOLBOX_DRAW_TEXT, wxCommandEvent);
-wxDEFINE_EVENT(TOOLBOX_DRAW_LETTERS, wxCommandEvent);
-wxDEFINE_EVENT(TOOLBOX_DRAW_ARROW, wxCommandEvent);
-wxDEFINE_EVENT(TOOLBOX_DRAW_CIRCLE, wxCommandEvent);
-wxDEFINE_EVENT(TOOLBOX_DRAW_LINE, wxCommandEvent);
-wxDEFINE_EVENT(TOOLBOX_DRAW_MULTILINE, wxCommandEvent);
-wxDEFINE_EVENT(TOOLBOX_DRAW_RECTANGLE, wxCommandEvent);
-wxDEFINE_EVENT(TOOLBOX_DRAW_SKIN_TEMPLATE, wxCommandEvent);
 
 Toolbox::Toolbox(wxWindow *parent, wxWindowID id, const wxPoint &pos, const wxSize &size)
   : wxPanel(parent, id, pos, size)
 {
-  const std::vector<std::string> niceColors = {"#000000", "#ffffff", "#fd7f6f",
-                                             "#ffb55a", "#ffee65", "#beb9db",
-                                               "#fdcce5", "#8bd3c7"};
   m_buttonHandlers.emplace_back(wxBitmap("screenshot.png", wxBITMAP_TYPE_ANY), [this]() { OnScreenshot(); });
   m_buttonHandlers.emplace_back(wxBitmap("save.png", wxBITMAP_TYPE_ANY), [this]() { OnSave(); });
   m_buttonHandlers.emplace_back(wxBitmap("delete.png", wxBITMAP_TYPE_ANY), [this]() { OnDelete(); });
@@ -51,7 +35,7 @@ Toolbox::Toolbox(wxWindow *parent, wxWindowID id, const wxPoint &pos, const wxSi
   auto toolboxPaneSizer = new wxWrapSizer(wxHORIZONTAL);
   for(auto& buttonHandler : m_buttonHandlers)
   {
-    auto pane = new BitmapPane(buttonHandler.first, this, wxID_ANY, wxColour(lightBackground));
+    auto pane = new BitmapPane(buttonHandler.first, this, wxID_ANY, wxColour(m_lightBackground));
     pane->Bind(wxEVT_LEFT_DOWN, [this, pane, buttonHandler](wxMouseEvent &event)
     {
       SelectPane(pane);

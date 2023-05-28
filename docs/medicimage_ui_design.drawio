@@ -1,0 +1,83 @@
+<mxfile host="app.diagrams.net" modified="2023-05-27T21:29:19.051Z" agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:109.0) Gecko/20100101 Firefox/113.0" etag="YpAkWFBTKf7sdJsR10LT" version="21.3.4" type="device">
+  <diagram name="Page-1" id="BqvuQ5qjDKjCsGIcTswL">
+    <mxGraphModel dx="1062" dy="564" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="KDeXpiZMlPiKUNcBfG0S-18" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" parent="1" source="KDeXpiZMlPiKUNcBfG0S-1" target="KDeXpiZMlPiKUNcBfG0S-17" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="KDeXpiZMlPiKUNcBfG0S-19" value="button events" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" parent="KDeXpiZMlPiKUNcBfG0S-18" vertex="1" connectable="0">
+          <mxGeometry x="0.1224" y="-2" relative="1" as="geometry">
+            <mxPoint x="27" y="-2" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="KDeXpiZMlPiKUNcBfG0S-1" value="Toolbox" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="55" y="420" width="120" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="KDeXpiZMlPiKUNcBfG0S-26" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.75;exitY=0;exitDx=0;exitDy=0;entryX=1;entryY=0.25;entryDx=0;entryDy=0;" parent="1" source="KDeXpiZMlPiKUNcBfG0S-6" target="KDeXpiZMlPiKUNcBfG0S-17" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="KDeXpiZMlPiKUNcBfG0S-27" value="pick thumbnail" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" parent="KDeXpiZMlPiKUNcBfG0S-26" vertex="1" connectable="0">
+          <mxGeometry x="-0.7656" y="-2" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="KDeXpiZMlPiKUNcBfG0S-6" value="" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="575" y="390" width="220" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="KDeXpiZMlPiKUNcBfG0S-8" value="Thumbnails" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="1" vertex="1">
+          <mxGeometry x="579" y="390" width="60" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="KDeXpiZMlPiKUNcBfG0S-9" value="ImageContainer" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="635" y="437.5" width="120" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="KDeXpiZMlPiKUNcBfG0S-12" value="" style="group" parent="1" vertex="1" connectable="0">
+          <mxGeometry x="245" y="390" width="250" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="KDeXpiZMlPiKUNcBfG0S-2" value="" style="rounded=0;whiteSpace=wrap;html=1;" parent="KDeXpiZMlPiKUNcBfG0S-12" vertex="1">
+          <mxGeometry x="10" width="240" height="150" as="geometry" />
+        </mxCell>
+        <mxCell id="KDeXpiZMlPiKUNcBfG0S-4" value="Canvas" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="KDeXpiZMlPiKUNcBfG0S-12" vertex="1">
+          <mxGeometry x="10" width="60" height="30" as="geometry" />
+        </mxCell>
+        <mxCell id="KDeXpiZMlPiKUNcBfG0S-5" value="Editor" style="rounded=0;whiteSpace=wrap;html=1;" parent="KDeXpiZMlPiKUNcBfG0S-12" vertex="1">
+          <mxGeometry x="50" y="47.5" width="120" height="55" as="geometry" />
+        </mxCell>
+        <mxCell id="KDeXpiZMlPiKUNcBfG0S-21" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.25;exitY=1;exitDx=0;exitDy=0;entryX=1;entryY=0;entryDx=0;entryDy=0;" parent="1" source="KDeXpiZMlPiKUNcBfG0S-17" target="KDeXpiZMlPiKUNcBfG0S-4" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="KDeXpiZMlPiKUNcBfG0S-22" value="&lt;div&gt;Button events&lt;/div&gt;&lt;div&gt;thumbnail pick&lt;br&gt;&lt;/div&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" parent="KDeXpiZMlPiKUNcBfG0S-21" vertex="1" connectable="0">
+          <mxGeometry x="-0.25" y="-4" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="KDeXpiZMlPiKUNcBfG0S-24" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.75;exitDx=0;exitDy=0;entryX=0.25;entryY=0;entryDx=0;entryDy=0;" parent="1" source="KDeXpiZMlPiKUNcBfG0S-17" target="KDeXpiZMlPiKUNcBfG0S-6" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="KDeXpiZMlPiKUNcBfG0S-25" value="&lt;div&gt;save&lt;/div&gt;&lt;div&gt;delete&lt;br&gt;&lt;/div&gt;" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" parent="KDeXpiZMlPiKUNcBfG0S-24" vertex="1" connectable="0">
+          <mxGeometry x="0.7231" y="3" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="LlUZCx_Dhlog2KVusIZO-1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="KDeXpiZMlPiKUNcBfG0S-17" target="KDeXpiZMlPiKUNcBfG0S-6">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="LlUZCx_Dhlog2KVusIZO-2" value="add patient" style="edgeLabel;html=1;align=center;verticalAlign=middle;resizable=0;points=[];" vertex="1" connectable="0" parent="LlUZCx_Dhlog2KVusIZO-1">
+          <mxGeometry x="0.5249" y="-2" relative="1" as="geometry">
+            <mxPoint as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="KDeXpiZMlPiKUNcBfG0S-17" value="Frame" style="rounded=0;whiteSpace=wrap;html=1;" parent="1" vertex="1">
+          <mxGeometry x="255" y="220" width="240" height="90" as="geometry" />
+        </mxCell>
+        <mxCell id="KDeXpiZMlPiKUNcBfG0S-23" value="&lt;div&gt;save&lt;/div&gt;&lt;div&gt;delete&lt;br&gt;&lt;/div&gt;" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0.5;entryY=1;entryDx=0;entryDy=0;" parent="1" source="KDeXpiZMlPiKUNcBfG0S-2" target="KDeXpiZMlPiKUNcBfG0S-17" edge="1">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="KDeXpiZMlPiKUNcBfG0S-28" value="UI MVC architecture design" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=25;" parent="1" vertex="1">
+          <mxGeometry x="235" y="120" width="380" height="50" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

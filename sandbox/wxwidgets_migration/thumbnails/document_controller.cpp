@@ -1,0 +1,47 @@
+#include "document_controller.h"
+
+namespace app
+{
+
+wxDEFINE_EVENT(EVT_DOCUMENT_PICKED, ImageDocumentEvent);
+
+DocumentController::DocumentController()
+{
+  m_imageSavers = std::make_unique<ImageSaverContainer>(m_appConfig.GetAppFolder());
+  for (const auto &patientFolder : m_appConfig.GetSavedPatientFolders())
+    m_imageSavers->AddSaver(patientFolder.stem().string());
+}
+
+void DocumentController::UpdateAppFolder(const std::filesystem::path &appFolder)
+{
+  m_appConfig.UpdateAppFolder(appFolder);
+  m_imageSavers = std::make_unique<ImageSaverContainer>(m_appConfig.GetAppFolder());
+  for(const auto& patientFolder : m_appConfig.GetSavedPatientFolders())
+    m_imageSavers->AddSaver(patientFolder.stem().string());
+}
+
+std::optional<const std::vector<ImageDocument>*> DocumentController::GetSavedImages()
+{
+  if (m_imageSavers->HasSelectedSaver())
+    return &(m_imageSavers->GetSelectedSaver().GetSavedImages());
+  else
+    return std::nullopt;
+}
+void DocumentController::AddPatient(const std::string &patientId)
+{
+  // TODO REFACTOR: get rid of these try-catch blocks
+  try
+  {
+    m_imageSavers->SelectImageSaver(patientId);
+    m_appConfig.PushPatientFolder(m_imageSavers->GetSelectedSaver().GetPatientFolder());
+  }
+  catch (std::invalid_argument const& ex)
+  {
+    APP_CORE_WARN("Please write only numbers for a viable uuid!"); 
+  }
+  catch (std::out_of_range const& ex)
+  {
+    APP_CORE_WARN("Please add a number smaller for uuid!"); 
+  }
+}
+} // namespace app

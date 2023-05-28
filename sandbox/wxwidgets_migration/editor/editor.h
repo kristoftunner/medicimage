@@ -4,6 +4,7 @@
 #include <filesystem>
 #include <mutex>
 #include <thread>
+#include <optional>
 #include <atomic>
 
 #include "input/key_codes.h"
@@ -12,6 +13,7 @@
 #include "image_handling/image_saver.h"
 #include "core/utils.h"
 #include "camera/opencv_camera.h"
+#include "editor_events.h"
 
 namespace app
 {
@@ -44,7 +46,7 @@ public:
   // Event handlers coming from the parent toolbox window
   void OnScreenshot();
   void OnScreenshotDone();
-  void OnSave();
+  std::optional<ImageDocumentEvent> OnSave();
   // delete is for deleting image during IMAGE_SELECTION
   void OnDelete();
   // undo is undoing changes during EDITING and revert IMAGE_SELECTION
@@ -77,9 +79,8 @@ private:
   bool m_mouseDown = false;
   EditorState m_state = EditorState::SHOW_CAMERA; // default state is showing the camrea
   DrawingSheet m_drawingSheet;
-  std::unique_ptr<ImageSaverContainer> m_imageSavers;
-  AppConfig m_appConfig;
   bool m_newDrawingAvailable = false;
+  ImageDocument m_activeDocument;
   
   OpenCvCamera m_camera;
   std::unique_ptr<Image2D> m_cameraFrame;

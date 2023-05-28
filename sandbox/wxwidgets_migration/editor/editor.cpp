@@ -1,6 +1,7 @@
 #include <wx/log.h>
 
 #include "editor.h"
+#include "editor_events.h"
 #include "camera/opencv_camera.h"
 
 namespace app
@@ -9,10 +10,6 @@ namespace app
 
 void Editor::Init()
 {
-  m_imageSavers = std::make_unique<ImageSaverContainer>(m_appConfig.GetAppFolder());
-  for (const auto &patientFolder : m_appConfig.GetSavedPatientFolders())
-    m_imageSavers->AddSaver(patientFolder.stem().string());
-
   m_cameraFrame = std::make_unique<Image2D>("Checkerboard.png");
   m_camera.Init();
   m_camera.Open(0);
@@ -42,13 +39,6 @@ void Editor::Init()
   };
   m_cameraUpdateThread = std::thread(cameraUpdate);
 }
-
-void Editor::UpdateAppFolder(const std::filesystem::path& appFolder)
-{
-  m_appConfig.UpdateAppFolder(appFolder);
-  m_imageSavers = std::make_unique<ImageSaverContainer>(m_appConfig.GetAppFolder());
-  for(const auto& patientFolder : m_appConfig.GetSavedPatientFolders())
-    m_imageSavers->AddSaver(patientFolder.stem().string());}
 
 void Editor::OnMouseMoved(const glm::vec2 &pos)
 {
@@ -111,22 +101,28 @@ void Editor::OnScreenshotDone()
   }
 }
 
-void Editor::OnSave()
+std::optional<ImageDocumentEvent> Editor::OnSave()
 {
   if(m_state == EditorState::EDITING)
   {
-    // TODO: add image to image saver
     wxLogDebug("Changing state EDITING->SHOW_CAMERA");
     m_state = EditorState::SHOW_CAMERA;
     m_drawingSheet.SetDrawCommand(DrawCommand::DO_NOTHING);
+
+    // TODO: send the image to the image saver
+    ImageDocumentEvent event(EVT_EDITOR_SAVE_DOCUMENT, wxID_ANY);
+    event.SetData(m_activeDocument);
+    return event;
   }
+  else
+    return std::nullopt;
 }
 
 void Editor::OnDelete()
 {
   if(m_state == EditorState::IMAGE_SELECTION)
   {
-    // TODO: open a modal popup and delete from the image saver
+    // TODO: open a modal popup and send to the image saver which image to delete
     wxLogDebug("Changing state IMAGE_SELECTION->SHOW_CAMERA");
     m_state = EditorState::SHOW_CAMERA;
   }

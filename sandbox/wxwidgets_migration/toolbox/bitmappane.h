@@ -38,4 +38,5 @@ private:
     virtual void DrawContent(wxGraphicsContext *gc, const wxRect &rect, int roundness) const override;
 };
 
+using BitmapButtonHandler = std::pair<wxBitmap, std::function<void()>>;
 }

@@ -177,14 +177,18 @@ void Canvas::OnScreenshot(wxCommandEvent &event)
 
 void Canvas::OnSave(wxCommandEvent &event)
 { 
-  m_editor.OnSave();
-  
+  auto imageSaveEvent = m_editor.OnSave();
+  if(imageSaveEvent)
+  {
+    ProcessWindowEvent(imageSaveEvent.value());
+  } 
   m_dialog->OnUpdate();
 }
 
 void Canvas::OnDelete(wxCommandEvent &event)
 {
   m_editor.OnDelete();
+  // TODO: implement this
   
   m_dialog->OnUpdate();
 }
