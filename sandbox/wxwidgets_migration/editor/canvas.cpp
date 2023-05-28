@@ -18,7 +18,7 @@ using namespace medicimage;
 namespace app
 {
 Canvas::Canvas( wxWindow *parent, wxWindowID id, const wxPoint &pos, const wxSize &size )
-  : wxScrolled<wxWindow>( parent, id, pos, size )
+  : wxWindow( parent, id, pos, size )
 {
   m_frameUpdateTimer.SetOwner(this);
   SetBackgroundStyle(wxBG_STYLE_PAINT);
@@ -51,8 +51,8 @@ Canvas::Canvas( wxWindow *parent, wxWindowID id, const wxPoint &pos, const wxSiz
   Bind(TOOLBOX_DRAW_SKIN_TEMPLATE, &Canvas::OnDrawSkinTemplate, this);
   Bind(wxEVT_TIMER, &Canvas::OnCameraFrameUpdate, this);  
   
-  SetScrollRate(FromDIP(5), FromDIP(5));
-  SetVirtualSize(FromDIP(600), FromDIP(400));
+  //SetScrollRate(FromDIP(5), FromDIP(5));
+  //SetVirtualSize(FromDIP(600), FromDIP(400));
 
   m_frameUpdateTimer.Start(1000 / 30, wxTIMER_CONTINUOUS);
 }

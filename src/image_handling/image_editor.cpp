@@ -43,8 +43,10 @@ void ImageEditor::DrawCircle(glm::vec2 center, float radius, glm::vec4 color, fl
   }
   else
   {
-    wxPen pen(wxColor(static_cast<int>(color.r), static_cast<int>(color.g), static_cast<int>(color.b)), static_cast<int>(thickness));  
+    wxPen pen = wxPen(wxColor(static_cast<int>(color.r), static_cast<int>(color.g), static_cast<int>(color.b)), static_cast<int>(thickness));
+    wxBrush bush = wxBrush(wxColor(static_cast<int>(color.r), static_cast<int>(color.g), static_cast<int>(color.b)), wxBRUSHSTYLE_TRANSPARENT);
     s_dc->SetPen(pen);
+    s_dc->SetBrush(bush);
     s_dc->DrawCircle(wxPoint{static_cast<int>(center.x), static_cast<int>(center.y)}, static_cast<int>(radius));
   }
 
@@ -69,8 +71,10 @@ void ImageEditor::DrawRectangle(glm::vec2 topleft, glm::vec2 bottomright, glm::v
     }
     else
     {
-      wxPen pen(wxColor(static_cast<int>(color.r), static_cast<int>(color.g), static_cast<int>(color.b)), static_cast<int>(thickness));  // Red color with 2-pixel width
+      wxPen pen = wxPen(wxColor(static_cast<int>(color.r), static_cast<int>(color.g), static_cast<int>(color.b)), static_cast<int>(thickness));
+      wxBrush bush = wxBrush(wxColor(static_cast<int>(color.r), static_cast<int>(color.g), static_cast<int>(color.b)), wxBRUSHSTYLE_TRANSPARENT);
       s_dc->SetPen(pen);
+      s_dc->SetBrush(bush);
       s_dc->DrawRectangle(wxRect(wxPoint{static_cast<int>(topleft.x), static_cast<int>(topleft.y)}, wxPoint{static_cast<int>(bottomright.x), static_cast<int>(bottomright.y)}));
     }
   }
@@ -95,7 +99,10 @@ void ImageEditor::DrawArrow(glm::vec2 begin, glm::vec2 end, glm::vec4 color, flo
   
   // Draw the arrowhead
   wxPoint arrowPoints[3] = { {static_cast<int>(end.x), static_cast<int>(end.y)}, {static_cast<int>(arrowPoint1.x), static_cast<int>(arrowPoint1.y)}, {static_cast<int>(arrowPoint2.x), static_cast<int>(arrowPoint2.y)} };
-  s_dc->SetBrush(*wxBLACK_BRUSH);
+  wxPen pen = wxPen(wxColor(static_cast<int>(color.r), static_cast<int>(color.g), static_cast<int>(color.b)), static_cast<int>(thickness));
+  wxBrush bush = wxBrush(wxColor(static_cast<int>(color.r), static_cast<int>(color.g), static_cast<int>(color.b)), wxBRUSHSTYLE_TRANSPARENT);
+  s_dc->SetPen(pen);
+  s_dc->SetBrush(bush);
   s_dc->DrawLine(wxPoint{static_cast<int>(begin.x), static_cast<int>(begin.y)}, wxPoint{static_cast<int>(end.x), static_cast<int>(end.y)}); 
   s_dc->DrawPolygon(3, arrowPoints);
   //TODO: add rotation 
@@ -118,16 +125,6 @@ void ImageEditor::DrawText(glm::vec2 bottomLeft, const std::string &text, int fo
   s_dc->SetFont(font);
   s_dc->SetTextForeground(wxColour(0, 0, 0));
   s_dc->DrawText(text, wxPoint{static_cast<int>(bottomLeft.x), static_cast<int>(bottomLeft.y)});
-  
-  //int baseline = 0;
-  //glm::vec2 imageSize = {s_image->GetWidht(), s_image->GetHeight()};
-  //cv::Point scaledBottomLeft{ static_cast<int>(bottomLeft.x * imageSize.x), static_cast<int>(bottomLeft.y * imageSize.y) };
-  //constexpr auto backgroundScaler = 1.0;
-  //auto textSize = cv::getTextSize(text, s_defaultFont, fontSize * backgroundScaler, thickness, &baseline);
-  //auto bgTopRight = scaledBottomLeft + cv::Point{ textSize.width, -textSize.height };
-  //auto bgBottomLeft = scaledBottomLeft + cv::Point(0, baseline * backgroundScaler);
-  //cv::rectangle(s_image, cv::Rect(bgBottomLeft, bgTopRight), cv::Scalar::all(255), -1); // white rectangle behind the text
-  //cv::putText(s_image, text, scaledBottomLeft, s_defaultFont, fontSize, cv::Scalar::all(0), thickness);
 }
 
 
@@ -137,10 +134,12 @@ void ImageEditor::DrawSpline(glm::vec2 begin, glm::vec2 middle, glm::vec2 end, i
   begin *= imageSize;
   middle *= imageSize;
   end *= imageSize;
-  auto scaledColor = color * glm::vec4(255.0);
+  color = color * glm::vec4(255.0);
 
-  wxPen pen = wxPen(wxColor(static_cast<int>(scaledColor.r), static_cast<int>(scaledColor.g), static_cast<int>(scaledColor.b)), static_cast<int>(thickness));
+  wxPen pen = wxPen(wxColor(static_cast<int>(color.r), static_cast<int>(color.g), static_cast<int>(color.b)), static_cast<int>(thickness));
+  wxBrush bush = wxBrush(wxColor(static_cast<int>(color.r), static_cast<int>(color.g), static_cast<int>(color.b)), wxBRUSHSTYLE_TRANSPARENT);
   s_dc->SetPen(pen);
+  s_dc->SetBrush(bush);
 
   wxPoint splinePoints[3] = { {static_cast<int>(begin.x), static_cast<int>(begin.y)}, {static_cast<int>(middle.x), static_cast<int>(middle.y)}, {static_cast<int>(end.x), static_cast<int>(end.y)} };
   s_dc->DrawSpline(3, splinePoints);

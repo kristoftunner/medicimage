@@ -27,6 +27,7 @@ void Editor::Init()
           {
             std::lock_guard<std::mutex> lock(this->m_cameraFrameMutex);
             this->m_cameraFrame = std::move(frame.value());
+            wxBitmap::Rescale(this->m_cameraFrame->GetBitmap(), {800, 600});
             this->m_newFrameAvailable = true;
           }
           frame.reset();
@@ -45,6 +46,7 @@ void Editor::OnMouseMoved(const glm::vec2 &pos)
   if((m_state == EditorState::EDITING || m_state == EditorState::IMAGE_SELECTION) && m_mouseDown)
   {
     m_drawingSheet.OnMouseButtonDown(pos);
+    m_newDrawingAvailable = true;
   }
 }
 
@@ -53,7 +55,8 @@ void Editor::OnMousePressed(const glm::vec2 &pos)
   if(m_state == EditorState::EDITING || m_state == EditorState::IMAGE_SELECTION)
   {
     m_mouseDown = true;
-    m_drawingSheet.OnMouseButtonDown(pos);
+    m_drawingSheet.OnMouseButtonPressed(pos);
+    m_newDrawingAvailable = true;
   }
 }
 
@@ -63,6 +66,7 @@ void Editor::OnMouseReleased(const glm::vec2 &pos)
   {
     m_mouseDown = false;
     m_drawingSheet.OnMouseButtonReleased(pos);
+    m_newDrawingAvailable = true;
   }
 }
 
@@ -75,7 +79,10 @@ void Editor::OnCharInput(const std::string &character)
 void Editor::OnKeyPressed(KeyCode key)
 {
   if(m_state == EditorState::EDITING)
+  {
     m_drawingSheet.OnKeyPressed(key);
+    m_newDrawingAvailable = true;
+  }
 }
 
 std::optional<ImageDocumentEvent> Editor::OnScreenshot()
@@ -160,6 +167,8 @@ void Editor::OnDrawButtonPushed(DrawCommand command)
     wxLogDebug("Changing state to IMAGE_SELECTION->EDITING");
     m_state = EditorState::EDITING;
     m_drawingSheet.StartAnnotation();
+    m_drawingSheet.SetDocument(std::make_unique<ImageDocument>(m_activeDocument), {m_activeDocument.image->GetWidth(), m_activeDocument.image->GetHeight()});   
+    m_drawingSheet.ChangeDrawState(std::make_unique<BaseDrawState>(&m_drawingSheet));
   }
   m_drawingSheet.SetDrawCommand(command);
 }
@@ -175,24 +184,25 @@ void Editor::OnDocumentPicked(const ImageDocument &document)
 
 std::unique_ptr<Image2D> Editor::Draw()
 {
-  if(m_state == EditorState::SHOW_CAMERA || m_state == EditorState::SCREENSHOT)
+  switch(m_state)
   {
-    std::lock_guard<std::mutex> lock(m_cameraFrameMutex);
-    auto image = std::make_unique<Image2D>(*(m_cameraFrame.get()));
-    wxBitmap::Rescale(image->GetBitmap(), {800,600});
-    return std::move(image);
-  }
-  else if(m_state == EditorState::IMAGE_SELECTION)
-  {
-    auto image = std::make_unique<Image2D>(*(m_activeDocument.image.get()));
-    wxBitmap::Rescale(image->GetBitmap(), {800,600});
-    return std::move(image);
-  }
-  else
-  {
-    auto image = std::make_unique <Image2D>("Checkerboard.png");
-    wxBitmap::Rescale(image->GetBitmap(), {800,600});
-    return std::move(image);
+    case EditorState::SHOW_CAMERA:
+    case EditorState::SCREENSHOT:
+    {
+      std::lock_guard<std::mutex> lock(m_cameraFrameMutex);
+      auto image = std::make_unique<Image2D>(*(m_cameraFrame.get()));
+      return std::move(image);
+    }
+    case EditorState::IMAGE_SELECTION:
+    {
+      auto image = std::make_unique<Image2D>(*(m_activeDocument.image.get()));
+      return std::move(image);
+    }
+    case EditorState::EDITING:
+    {
+      auto image = m_drawingSheet.Draw();
+      return std::move(image);
+    }
   }
 }
 

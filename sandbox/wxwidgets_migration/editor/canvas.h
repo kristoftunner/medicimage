@@ -30,7 +30,7 @@ private:
   Editor& m_editor;
 };
 
-class Canvas : public wxScrolled<wxWindow>
+class Canvas : public wxWindow
 {
 public:
   Canvas( wxWindow *parent, wxWindowID, const wxPoint &pos=wxDefaultPosition, const wxSize &size=wxDefaultSize);

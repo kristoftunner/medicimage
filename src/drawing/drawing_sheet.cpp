@@ -164,7 +164,7 @@ namespace medicimage
     std::for_each(skinTemplates.begin(), skinTemplates.end(), m_drawState->DeleteTemporaries());
     std::for_each(splines.begin(), splines.end(), m_drawState->DeleteTemporaries());
 
-    return std::move(std::make_unique<Image2D>(*m_drawing.get()));
+    return std::make_unique<Image2D>(*m_drawing.get());
   }
 
   void DrawingSheet::ChangeDrawState(std::unique_ptr<BaseDrawState> newState)
