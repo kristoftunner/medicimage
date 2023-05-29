@@ -64,7 +64,6 @@ public:
 
 private:
   void UpdateAttributeEditor();
-  std::unique_ptr<Image2D> m_image; 
   bool m_mouseDown = false;
   InfoDialog* m_dialog;
   Editor m_editor;

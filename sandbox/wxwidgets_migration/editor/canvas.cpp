@@ -98,7 +98,7 @@ void Canvas::OnMousePressed(wxMouseEvent &event)
     UpdateAttributeEditor();
   }
   
-  m_dialog->OnUpdate();
+  m_dialog->OnUpdate(); // TODO: check these OnUpdate calls if it is really necessary
   SetFocus();
 }
 
@@ -205,17 +205,36 @@ void Canvas::OnSave(wxCommandEvent &event)
 
 void Canvas::OnDelete(wxCommandEvent &event)
 {
-  m_editor.OnDelete();
+  if(m_editor.CanDelete())
+  {
+    wxMessageDialog dialog(this, "Are you sure you want to delete the selected document?", "Delete document", wxYES_NO | wxICON_QUESTION);
+    if(dialog.ShowModal() == wxID_YES)
+    {
+      auto imageDeleteEvent = m_editor.OnDelete();
+      if(imageDeleteEvent)
+      {
+        ProcessWindowEvent(imageDeleteEvent.value());
+      }
+      m_dialog->OnUpdate();
+      Refresh();
+    }
+  }
   // TODO: implement this
   
-  m_dialog->OnUpdate();
 }
 
 void Canvas::OnUndo(wxCommandEvent &event)
 {
-  m_editor.OnUndo();
-  
-  m_dialog->OnUpdate();
+  if(m_editor.CanUndo())
+  {
+    wxMessageDialog dialog(this, "Are you sure you want to go back?", "Undo", wxYES_NO | wxICON_QUESTION);
+    if(dialog.ShowModal() == wxID_YES)
+    {
+      m_editor.OnUndo();
+      m_dialog->OnUpdate();
+      Refresh();
+    }
+  }
 }
 
 void Canvas::OnDocumentPicked(ImageDocumentEvent &event)

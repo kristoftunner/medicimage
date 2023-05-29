@@ -121,11 +121,27 @@ std::optional<ImageDocumentEvent> Editor::OnSave()
   if(m_state == EditorState::EDITING)
   {
     wxLogDebug("Changing state EDITING->SHOW_CAMERA");
-    m_state = EditorState::SHOW_CAMERA;
     m_drawingSheet.SetDrawCommand(DrawCommand::DO_NOTHING);
 
     // TODO: send the image to the image saver
     ImageDocumentEvent event(EVT_EDITOR_SAVE_DOCUMENT, wxID_ANY);
+    event.SetData(ImageDocument(Draw()));
+    m_state = EditorState::SHOW_CAMERA;
+    return event;
+  }
+  else
+    return std::nullopt;
+}
+
+std::optional<ImageDocumentEvent> Editor::OnDelete()
+{
+  if(m_state == EditorState::IMAGE_SELECTION)
+  {
+    // TODO: send an event to the image saver to delete this image
+    m_state = EditorState::SHOW_CAMERA;
+    m_drawingSheet.SetDrawCommand(DrawCommand::DO_NOTHING);
+
+    ImageDocumentEvent event(EVT_EDITOR_DELETE_DOCUMENT, wxID_ANY);
     event.SetData(m_activeDocument);
     return event;
   }
@@ -133,31 +149,23 @@ std::optional<ImageDocumentEvent> Editor::OnSave()
     return std::nullopt;
 }
 
-void Editor::OnDelete()
+bool Editor::CanDelete() 
 {
-  if(m_state == EditorState::IMAGE_SELECTION)
-  {
-    // TODO: open a modal popup and send to the image saver which image to delete
-    wxLogDebug("Changing state IMAGE_SELECTION->SHOW_CAMERA");
-    m_state = EditorState::SHOW_CAMERA;
-  }
+  return m_state == EditorState::IMAGE_SELECTION;
 }
 
 void Editor::OnUndo()
 {
   if(m_state == EditorState::EDITING || m_state == EditorState::IMAGE_SELECTION)
   {
-    // TODO: open a modal popup, come back when cancel, set drawcommand to DO_NOTHING and change to SHOW_CAMERA state
+    m_state = EditorState::SHOW_CAMERA;
+    m_drawingSheet.SetDrawCommand(DrawCommand::DO_NOTHING);
   }
 }
 
-void Editor::OnImageSelected(int index)
+bool Editor::CanUndo() 
 {
-  if(m_state == EditorState::SHOW_CAMERA)
-  {
-    wxLogDebug("Changing state SHOW_CAMERA->IMAGE_SELECTION");
-    m_state = EditorState::IMAGE_SELECTION;
-  }
+  return (m_state == EditorState::EDITING || m_state == EditorState::IMAGE_SELECTION) && m_drawingSheet.HasAnnotated();
 }
 
 void Editor::OnDrawButtonPushed(DrawCommand command)

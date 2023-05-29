@@ -181,8 +181,9 @@ std::vector<ImageDocument>::iterator ImageDocContainer::AddImage(Image2D& image,
   return m_savedImages.end();
 }
 
-void ImageDocContainer::DeleteImage(std::vector<ImageDocument>::const_iterator it)
+void ImageDocContainer::DeleteImage(const ImageDocument& document)
 {
+  auto it = std::find_if(m_savedImages.begin(), m_savedImages.end(), [&document](const ImageDocument& doc){return doc.documentId == document.documentId;});
   if(it != m_savedImages.end())
   {
     std::filesystem::path imagePath = m_dirPath / (it->documentId + ".png");;

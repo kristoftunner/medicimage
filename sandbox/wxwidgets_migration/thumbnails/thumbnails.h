@@ -23,7 +23,6 @@ public:
   Thumbnails( wxWindow *parent, wxWindowID, const wxPoint &pos=wxDefaultPosition, const wxSize &size=wxDefaultSize );
 
 private:
-  void OnSaveDocument(ImageDocumentEvent& event);
   void OnDeleteDocument(ImageDocumentEvent& event);
   void OnAddDocument(ImageDocumentEvent& event);
   void OnPaint( wxPaintEvent &event );

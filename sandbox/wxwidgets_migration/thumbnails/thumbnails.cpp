@@ -24,7 +24,7 @@ Thumbnails::Thumbnails( wxWindow *parent, wxWindowID, const wxPoint &pos, const 
 
   Bind(wxEVT_PAINT, &Thumbnails::OnPaint, this);
   Bind(EVT_THUMBNAILS_ADD_PATIENT, &Thumbnails::OnAddPatient, this);
-  Bind(EVT_EDITOR_SAVE_DOCUMENT, &Thumbnails::OnSaveDocument, this);
+  Bind(EVT_EDITOR_SAVE_DOCUMENT, &Thumbnails::OnAddDocument, this);
   Bind(EVT_EDITOR_DELETE_DOCUMENT, &Thumbnails::OnDeleteDocument, this);
   Bind(EVT_EDITOR_ADD_DOCUMENT, &Thumbnails::OnAddDocument, this);
 
@@ -42,23 +42,14 @@ void Thumbnails::SelectPane(BitmapPane* pane)
   }
 }
 
-void Thumbnails::OnSaveDocument(ImageDocumentEvent &event)
-{
-  // TODO: Implement
-  wxLogDebug("Thumbnails::OnSaveDocument");
-  UpdateLayout();
-}
-
 void Thumbnails::OnDeleteDocument(ImageDocumentEvent &event)
 {
-  // TODO: Implement
-  wxLogDebug("Thumbnails::OnDeleteDocument");
+  m_documentController.OnDeleteDocument(event.GetData());
   UpdateLayout();
 }
 
 void Thumbnails::OnAddDocument(ImageDocumentEvent &event)
 {
-  wxLogDebug("Thumbnails:OnAddDocument");
   m_documentController.AddDocument(event.GetData());
   UpdateLayout();
 }

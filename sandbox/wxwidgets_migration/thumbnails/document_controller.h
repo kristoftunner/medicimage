@@ -24,7 +24,6 @@ public:
   void AddPatient(const std::string& patientId);
   void AddDocument(const ImageDocument& document);
 
-  void OnSaveDocument(const ImageDocument& document);
   void OnDeleteDocument(const ImageDocument& document);
 private:
   std::unique_ptr<ImageSaverContainer> m_imageSavers;

@@ -47,11 +47,11 @@ public:
   std::optional<ImageDocumentEvent> OnScreenshot();
   void OnScreenshotDone();
   std::optional<ImageDocumentEvent> OnSave();
-  // delete is for deleting image during IMAGE_SELECTION
-  void OnDelete();
-  // undo is undoing changes during EDITING and revert IMAGE_SELECTION
+  
+  std::optional<ImageDocumentEvent> OnDelete();
+  bool CanDelete();
   void OnUndo();
-  void OnImageSelected(int index);
+  bool CanUndo();
   void OnDocumentPicked(const ImageDocument& document);
 
   void OnDrawText();

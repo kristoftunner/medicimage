@@ -64,4 +64,10 @@ void DocumentController::AddDocument(const ImageDocument &document)
   if(m_imageSavers->HasSelectedSaver())
     m_imageSavers->GetSelectedSaver().AddImage(*(document.image.get()), false);
 }
+
+void DocumentController::OnDeleteDocument(const ImageDocument &document)
+{
+  if(m_imageSavers->HasSelectedSaver())
+    m_imageSavers->GetSelectedSaver().DeleteImage(document);
+}
 } // namespace app
