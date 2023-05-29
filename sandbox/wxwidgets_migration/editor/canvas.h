@@ -11,7 +11,7 @@
 #include "drawing/drawing_sheet.h"
 #include "renderer/texture.h"
 #include "editor.h"
-
+#include "toolbox/attribute_editor.h"
 
 using namespace medicimage;
 namespace app
@@ -63,6 +63,7 @@ public:
   void OnDrawSkinTemplate(wxCommandEvent &event);
 
 private:
+  void UpdateAttributeEditor();
   std::unique_ptr<Image2D> m_image; 
   bool m_mouseDown = false;
   InfoDialog* m_dialog;

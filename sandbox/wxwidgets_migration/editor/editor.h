@@ -13,7 +13,7 @@
 #include "image_handling/image_saver.h"
 #include "core/utils.h"
 #include "camera/opencv_camera.h"
-#include "editor_events.h"
+#include "custom_events.h"
 
 namespace app
 {
@@ -72,6 +72,8 @@ public:
   void UpdatedDrawing() { 
     m_newDrawingAvailable = false; 
   }
+
+  std::vector<Entity> GetSelectedEntities() {return m_drawingSheet.GetSelectedEntities();}
 
   std::unique_ptr<Image2D> Draw();
   DrawingSheet& GetDrawingSheet() { return m_drawingSheet; } // Getter for the debug dialog box

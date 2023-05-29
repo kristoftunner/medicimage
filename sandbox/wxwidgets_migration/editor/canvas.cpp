@@ -12,7 +12,9 @@
 #include "editor.h"
 #include "canvas.h"
 #include "toolbox/toolbox_events.h"
+#include "toolbox/attribute_editor_events.h"
 #include "thumbnails/thumbnail_events.h"
+#include "editor/editor_events.h"
 
 using namespace medicimage;
 namespace app
@@ -51,6 +53,10 @@ Canvas::Canvas( wxWindow *parent, wxWindowID id, const wxPoint &pos, const wxSiz
   Bind(TOOLBOX_DRAW_SKIN_TEMPLATE, &Canvas::OnDrawSkinTemplate, this);
   Bind(wxEVT_TIMER, &Canvas::OnCameraFrameUpdate, this);  
   
+  Bind(EVT_ENTITY_ATTRIBUTE_EDITED, [this](EntityEvent& event)
+  {
+    Refresh();
+  });
   //SetScrollRate(FromDIP(5), FromDIP(5));
   //SetVirtualSize(FromDIP(600), FromDIP(400));
 
@@ -68,13 +74,14 @@ void Canvas::OnMouseMoved(wxMouseEvent &event)
 
   const wxPoint pt(event.GetLogicalPosition(dc));
   m_editor.OnMouseMoved({pt.x, pt.y});
+  m_dialog->OnUpdate();
   if(m_editor.IsDrawingUpdated())
   {
-    Refresh();
     m_editor.UpdatedDrawing();
+    Refresh();
+    UpdateAttributeEditor();
   }
   
-  m_dialog->OnUpdate();
 }
 
 void Canvas::OnMousePressed(wxMouseEvent &event)
@@ -88,6 +95,7 @@ void Canvas::OnMousePressed(wxMouseEvent &event)
   {
     m_editor.UpdatedDrawing();
     Refresh();
+    UpdateAttributeEditor();
   }
   
   m_dialog->OnUpdate();
@@ -105,6 +113,7 @@ void Canvas::OnMouseReleased(wxMouseEvent &event)
   {
     m_editor.UpdatedDrawing();
     Refresh();
+    UpdateAttributeEditor();
   }
   
   m_dialog->OnUpdate();
@@ -126,6 +135,7 @@ void Canvas::OnCharInput(wxKeyEvent &event)
   {
     Refresh();
     m_editor.UpdatedDrawing();
+    UpdateAttributeEditor();
   }
   
   m_dialog->OnUpdate();
@@ -143,6 +153,7 @@ void Canvas::OnKeyPressed(wxKeyEvent &event)
   {
     Refresh();
     m_editor.UpdatedDrawing();
+    UpdateAttributeEditor();
   }
   
   m_dialog->OnUpdate();
@@ -218,6 +229,7 @@ void Canvas::OnDrawText(wxCommandEvent &event)
 {
   m_editor.OnDrawText();
   
+  UpdateAttributeEditor();
   m_dialog->OnUpdate();
 }
 
@@ -225,6 +237,7 @@ void Canvas::OnDrawIncrementalLetters(wxCommandEvent &event)
 {
   m_editor.OnDrawIncrementalLetters();
   
+  UpdateAttributeEditor();
   m_dialog->OnUpdate();
 }
 
@@ -232,6 +245,7 @@ void Canvas::OnDrawArrow(wxCommandEvent &event)
 {
   m_editor.OnDrawArrow();
   
+  UpdateAttributeEditor();
   m_dialog->OnUpdate();
 }
 
@@ -239,6 +253,7 @@ void Canvas::OnDrawCircle(wxCommandEvent &event)
 {
   m_editor.OnDrawCircle();
   
+  UpdateAttributeEditor();
   m_dialog->OnUpdate();
 }
 
@@ -246,6 +261,7 @@ void Canvas::OnDrawLine(wxCommandEvent &event)
 {
   m_editor.OnDrawLine();
   
+  UpdateAttributeEditor();
   m_dialog->OnUpdate();
 }
 
@@ -253,6 +269,7 @@ void Canvas::OnDrawMultiline(wxCommandEvent &event)
 {
   m_editor.OnDrawMultiline();
   
+  UpdateAttributeEditor();
   m_dialog->OnUpdate();
 }
 
@@ -260,6 +277,7 @@ void Canvas::OnDrawRectangle(wxCommandEvent &event)
 {
   m_editor.OnDrawRectangle();
   
+  UpdateAttributeEditor();
   m_dialog->OnUpdate();
 }
 
@@ -267,7 +285,19 @@ void Canvas::OnDrawSkinTemplate(wxCommandEvent &event)
 { 
   m_editor.OnDrawSkinTemplate();
   
+  UpdateAttributeEditor();
   m_dialog->OnUpdate();
+}
+
+void Canvas::UpdateAttributeEditor()
+{
+  auto entities = m_editor.GetSelectedEntities();
+  if(!entities.empty())
+  {
+    EntityEvent event(EVT_EDITOR_ENTITY_CHANGED, wxID_ANY);
+    event.SetData(entities[0]);
+    ProcessWindowEvent(event);
+  }
 }
 
 InfoDialog::InfoDialog(wxWindow* parent, const wxString& title, DrawingSheet& sheet, Editor& editor)
@@ -333,5 +363,6 @@ EditorPanel::EditorPanel(wxWindow *parent, wxWindowID id, const wxPoint &pos, co
   Bind(TOOLBOX_DRAW_SKIN_TEMPLATE, [this](wxCommandEvent& event){this->m_canvas->OnDrawSkinTemplate(event);});
   Bind(EVT_THUMBNAILS_DOCUMENT_PICK, [this](ImageDocumentEvent& event){this->m_canvas->OnDocumentPicked(event);});
 
+  Bind(EVT_ENTITY_ATTRIBUTE_EDITED, [this](EntityEvent& event){wxPostEvent(this->m_canvas, event);});
 }
 }

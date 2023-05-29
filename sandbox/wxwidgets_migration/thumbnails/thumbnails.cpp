@@ -22,7 +22,7 @@ Thumbnails::Thumbnails( wxWindow *parent, wxWindowID, const wxPoint &pos, const 
   m_sizer->Add(m_panelName, 0, wxALL, FromDIP(5));
   m_sizer->Add(m_patientList, wxSizerFlags(0).Expand().Border(wxALL, FromDIP(5)));
 
-  //Bind(wxEVT_PAINT, &Thumbnails::OnPaint, this);
+  Bind(wxEVT_PAINT, &Thumbnails::OnPaint, this);
   Bind(EVT_THUMBNAILS_ADD_PATIENT, &Thumbnails::OnAddPatient, this);
   Bind(EVT_EDITOR_SAVE_DOCUMENT, &Thumbnails::OnSaveDocument, this);
   Bind(EVT_EDITOR_DELETE_DOCUMENT, &Thumbnails::OnDeleteDocument, this);
@@ -47,7 +47,6 @@ void Thumbnails::OnSaveDocument(ImageDocumentEvent &event)
   // TODO: Implement
   wxLogDebug("Thumbnails::OnSaveDocument");
   UpdateLayout();
-  Refresh();
 }
 
 void Thumbnails::OnDeleteDocument(ImageDocumentEvent &event)
@@ -55,7 +54,6 @@ void Thumbnails::OnDeleteDocument(ImageDocumentEvent &event)
   // TODO: Implement
   wxLogDebug("Thumbnails::OnDeleteDocument");
   UpdateLayout();
-  Refresh();
 }
 
 void Thumbnails::OnAddDocument(ImageDocumentEvent &event)
@@ -63,7 +61,11 @@ void Thumbnails::OnAddDocument(ImageDocumentEvent &event)
   wxLogDebug("Thumbnails:OnAddDocument");
   m_documentController.AddDocument(event.GetData());
   UpdateLayout();
-  Refresh();
+}
+
+void Thumbnails::OnPaint(wxPaintEvent &event)
+{
+  //m_sizer->Layout();
 }
 
 void Thumbnails::UpdateLayout()
@@ -104,7 +106,8 @@ void Thumbnails::UpdateLayout()
     }
   }
   m_sizer->Add(m_patientList, wxSizerFlags(0).Expand().Border(wxALL, FromDIP(5)));
-  Layout();
+  m_sizer->Layout();
+  Refresh();
 }
 
 void Thumbnails::OnAddPatient(PatientEvent &event)
@@ -113,7 +116,6 @@ void Thumbnails::OnAddPatient(PatientEvent &event)
   m_documentController.AddPatient(event.GetPatientId());
   UpdatePatientListCtrl();
   UpdateLayout();
-  Refresh();
 }
 
 void Thumbnails::OnPatientSelected(wxListEvent &event)
@@ -123,7 +125,6 @@ void Thumbnails::OnPatientSelected(wxListEvent &event)
   m_documentController.SelectPatient(selectedItem);
   wxLogDebug("Thumbnails::OnPatientSelected: %s", selectedItem);
   UpdateLayout();
-  Refresh();
 }
 
 void Thumbnails::UpdatePatientListCtrl()

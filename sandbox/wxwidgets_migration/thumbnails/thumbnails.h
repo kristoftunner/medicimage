@@ -7,9 +7,10 @@
 #include <wx/listctrl.h>
 #include <vector>
 
-#include "editor/editor_events.h"
+#include "editor/editor.h"
 #include "document_controller.h"
 #include "toolbox/bitmappane.h"
+#include "custom_events.h"
 #include "thumbnail_events.h"
 
 namespace app

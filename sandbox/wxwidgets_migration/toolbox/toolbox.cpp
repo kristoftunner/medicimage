@@ -7,10 +7,11 @@
 #include <wx/bitmap.h>
 
 #include "toolbox.h"
+#include "toolbox_events.h"
+#include "editor/editor_events.h"
 
 namespace app
 {
-
 
 Toolbox::Toolbox(wxWindow *parent, wxWindowID id, const wxPoint &pos, const wxSize &size)
   : wxPanel(parent, id, pos, size)
@@ -45,7 +46,12 @@ Toolbox::Toolbox(wxWindow *parent, wxWindowID id, const wxPoint &pos, const wxSi
     toolboxPaneSizer->Add(pane, 0, wxALL, FromDIP(5));
   }
   topSizer->Add(toolboxPaneSizer, 0, wxALL, FromDIP(5));
-
+  m_attributeEditor = new AttributeEditor(this);
+  topSizer->Add(m_attributeEditor, wxSizerFlags(0).Expand().Border(wxALL, FromDIP(5)));
+  Bind(EVT_EDITOR_ENTITY_CHANGED, [this](wxCommandEvent& event)
+  {
+    wxPostEvent(m_attributeEditor, event);
+  });
   SetSizer(topSizer);
 }
 

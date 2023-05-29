@@ -4,7 +4,9 @@
 #include <vector>
 
 #include "bitmappane.h"
-#include "toolbox_events.h"
+#include "toolbox.h"
+#include "attribute_editor.h"
+#include "custom_events.h"
 
 namespace app
 {
@@ -33,6 +35,8 @@ private:
   void SelectPane(BitmapPane* pane);
   std::vector<BitmapPane*> m_colorPanes;
   std::vector<BitmapButtonHandler> m_buttonHandlers;
+  AttributeEditor* m_attributeEditor = nullptr;
+
   const std::string m_lightBackground = "#f4f3f3";
   const std::string m_darkBackground = "#2c2828";
 };

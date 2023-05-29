@@ -93,7 +93,7 @@ void ImageDocContainer::LoadPatientsFolder()
     // iterate trough the files and load the conained images 
     for(auto const& dirEntry : std::filesystem::directory_iterator(m_dirPath))
     {
-      if(dirEntry.path().extension() == ".jpeg")
+      if(dirEntry.path().extension() == ".png")
       {
         std::string name = dirEntry.path().stem().string(); 
         auto it = std::find_if(files.begin(), files.end(), [&](auto fileDesc)
@@ -165,7 +165,7 @@ std::vector<ImageDocument>::iterator ImageDocContainer::AddImage(Image2D& image,
     doc.image = ImageEditor::RemoveFooter(*doc.image.get());
   m_savedImages.push_back(doc);
     
-  name += ".jpeg";
+  name += ".png";
   std::filesystem::path imagePath = m_dirPath / name;
   std::filesystem::path thumbImagePath = m_dirPath / "thumbs" / name;
   
@@ -173,12 +173,6 @@ std::vector<ImageDocument>::iterator ImageDocContainer::AddImage(Image2D& image,
   std::unique_ptr<Image2D> borderedImage;
   borderedImage = ImageEditor::AddImageFooter(footerText, *doc.image.get());
 
-  //cv::UMat ocvImage;
-  ////cv::directx::convertFromD3D11Texture2D(borderedImage->GetTexturePtr(), ocvImage);
-  //cv::cvtColor(ocvImage, ocvImage, cv::COLOR_RGBA2BGR);
-  //cv::imwrite(imagePath.string(), ocvImage);
-  //cv::resize(ocvImage, ocvImage, cv::Size(640,360) );
-  //cv::imwrite(thumbImagePath.string(), ocvImage);
   image.GetBitmap().SaveFile(imagePath.string(), wxBITMAP_TYPE_PNG);
   auto resizedBitmap = image.GetBitmap().ConvertToImage().Rescale(640, 360);
   resizedBitmap.SaveFile(thumbImagePath.string(), wxBITMAP_TYPE_PNG);
@@ -191,13 +185,13 @@ void ImageDocContainer::DeleteImage(std::vector<ImageDocument>::const_iterator i
 {
   if(it != m_savedImages.end())
   {
-    std::filesystem::path imagePath = m_dirPath / (it->documentId + ".jpeg");;
-    std::filesystem::path thumbImagePath = m_dirPath / "thumbs" / (it->documentId + ".jpeg");;
+    std::filesystem::path imagePath = m_dirPath / (it->documentId + ".png");;
+    std::filesystem::path thumbImagePath = m_dirPath / "thumbs" / (it->documentId + ".png");;
     if(!std::filesystem::remove(imagePath) || !(std::filesystem::remove(thumbImagePath)))
       APP_CORE_ERR("Something went wrong deleting this image:{}", imagePath.string());
     else
     {
-      m_fileLogger->LogFileOperation(it->documentId + ".jpeg", FileLogger::FileOperation::FILE_DELETE);
+      m_fileLogger->LogFileOperation(it->documentId + ".png", FileLogger::FileOperation::FILE_DELETE);
       m_savedImages.erase(it);
       UpdateDocListFile();
       APP_CORE_INFO("Image: {} deleted", imagePath.string());

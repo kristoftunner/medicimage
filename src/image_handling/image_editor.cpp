@@ -37,9 +37,13 @@ void ImageEditor::DrawCircle(glm::vec2 center, float radius, glm::vec4 color, fl
   color *= 255.0;
   if(filled)
   { // TODO add transparency support with wxGraphicsContext
-    //s_image.copyTo(overlay);
-    //cv::circle(s_image, cv::Point{static_cast<int>(center.x), static_cast<int>(center.y)}, static_cast<int>(radius), cv::Scalar(color.b, color.g,  color.r), -1); 
-    //cv::addWeighted(overlay, alpha, s_image, 1 - alpha, 0, s_image);
+    s_dc->SetPen(*wxTRANSPARENT_PEN);
+    s_dc->SetBrush(wxBrush(wxColor(0,0,0,0)));
+    s_dc->DrawCircle(wxPoint{static_cast<int>(center.x), static_cast<int>(center.y)}, static_cast<int>(radius));
+
+    s_dc->SetPen(wxPen(wxColor(static_cast<int>(color.r), static_cast<int>(color.g), static_cast<int>(color.b)), static_cast<int>(thickness)));
+    s_dc->SetBrush(wxBrush(wxColor(static_cast<int>(color.r), static_cast<int>(color.g), static_cast<int>(color.b), 128)));
+    s_dc->DrawCircle(wxPoint{static_cast<int>(center.x), static_cast<int>(center.y)}, static_cast<int>(radius));
   }
   else
   {

@@ -6,7 +6,7 @@
 
 namespace app
 {
-  using namespace medicimage;
+using namespace medicimage;
 
 void Editor::Init()
 {
