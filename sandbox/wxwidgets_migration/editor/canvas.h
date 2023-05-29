@@ -62,6 +62,8 @@ public:
   void OnDrawRectangle(wxCommandEvent &event);
   void OnDrawSkinTemplate(wxCommandEvent &event);
 
+  CameraAPI* GetCamera() { return m_editor.GetCamera(); }
+  std::mutex& GetCameraMutex() { return m_editor.GetCameraMutex(); }
 private:
   void UpdateAttributeEditor();
   bool m_mouseDown = false;
@@ -76,6 +78,8 @@ public:
   EditorPanel(wxWindow* parent, wxWindowID id, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize);
   ~EditorPanel() = default;
 
+  CameraAPI* GetCamera() { return m_canvas->GetCamera(); }
+  std::mutex& GetCameraMutex() { return m_canvas->GetCameraMutex(); }
 private:
   Canvas* m_canvas;
 };

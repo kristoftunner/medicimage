@@ -73,6 +73,8 @@ public:
     m_newDrawingAvailable = false; 
   }
 
+  CameraAPI* GetCamera() { return &m_camera; }
+  std::mutex& GetCameraMutex() { return m_cameraMutex; }
   std::vector<Entity> GetSelectedEntities() {return m_drawingSheet.GetSelectedEntities();}
 
   std::unique_ptr<Image2D> Draw();
@@ -86,6 +88,7 @@ private:
   ImageDocument m_activeDocument;
   
   OpenCvCamera m_camera;
+  std::mutex m_cameraMutex;
   std::unique_ptr<Image2D> m_cameraFrame;
   std::mutex m_cameraFrameMutex;
   std::atomic<float> m_cameraFrameRate = 0.0f;

@@ -31,17 +31,6 @@ MyFrame::MyFrame()
   wxLog::SetActiveTarget(m_logger);
 
   
-  wxMenu *menuFile = new wxMenu;
-  menuFile->Append(ID_Hello, "&Hello...\tCtrl-H",
-                   "Help string shown in status bar for this menu item");
-  menuFile->AppendSeparator();
-  menuFile->Append(wxID_EXIT);
-  wxMenu *menuHelp = new wxMenu;
-  menuHelp->Append(wxID_ABOUT);
-  wxMenuBar *menuBar = new wxMenuBar;
-  menuBar->Append(menuFile, "&File");
-  menuBar->Append(menuHelp, "&Help");
-  SetMenuBar( menuBar );
   
   bool isDark = wxSystemSettings::GetAppearance().IsDark();
   const auto margin = FromDIP(5);
@@ -69,8 +58,49 @@ MyFrame::MyFrame()
 
   wxBoxSizer *topsizer = new wxBoxSizer( wxHORIZONTAL );
   topsizer->Add(mainSplitter, 1, wxEXPAND );
+
+  wxMenu *menuFile = new wxMenu;
+  menuFile->Append(ID_Hello, "&Hello...\tCtrl-H",
+                   "Help string shown in status bar for this menu item");
+  menuFile->AppendSeparator();
+  menuFile->Append(wxID_EXIT);
+  wxMenu *menuHelp = new wxMenu;
+  menuHelp->Append(wxID_ABOUT);
+
+  wxMenu* cameraSelectionMenu = new wxMenu;
+  auto camera = editorPanel->GetCamera();
+  auto& mutex = editorPanel->GetCameraMutex();
+  for(int i = 0; i < camera->GetNumberOfDevices(); ++i)
+  {
+    auto item = cameraSelectionMenu->AppendCheckItem(i, camera->GetDeviceName(i));
+    if(camera->GetSelectedDevices() &&  (i == camera->GetSelectedDevices().value()))
+      cameraSelectionMenu->Check(i, true);
+    
+    Bind(wxEVT_MENU, [this, camera, cameraSelectionMenu, &mutex](wxCommandEvent& event) {
+      auto id = event.GetId();
+      {
+        std::lock_guard<std::mutex> lock(mutex);
+        camera->Open(id);
+      }
+      
+      for (int i = 0; i < cameraSelectionMenu->GetMenuItemCount(); i++)
+        cameraSelectionMenu->Check(i, false);
+      cameraSelectionMenu->Check(id, true);
+     }, item->GetId());
+  }
+
+  wxMenu* settings = new wxMenu;
+  wxMenuItem* cameraSelection = new wxMenuItem(settings, wxID_ANY, "Camera selection");
+  cameraSelection->SetSubMenu(cameraSelectionMenu);
+  settings->Append(cameraSelection);
+
+  wxMenuBar *menuBar = new wxMenuBar;
+  menuBar->Append(menuFile, "&File");
+  menuBar->Append(menuHelp, "&Help");
+  menuBar->Append(settings, "&Settings");
+  SetMenuBar( menuBar );
   
-  Bind(wxEVT_MENU, &MyFrame::OnHello, this, ID_Hello);
+  //Bind(wxEVT_MENU, &MyFrame::OnHello, this, ID_Hello);
   Bind(wxEVT_MENU, &MyFrame::OnAbout, this, wxID_ABOUT);
   Bind(wxEVT_MENU, &MyFrame::OnExit, this, wxID_EXIT);
 

@@ -22,7 +22,12 @@ void Editor::Init()
       {
         if(this->m_state == EditorState::SHOW_CAMERA)
         {
-          auto frame = m_camera.CaptureFrame();
+          CameraAPI::Frame frame;
+          {
+            std::lock_guard<std::mutex> lock(this->m_cameraMutex);
+            frame = m_camera.CaptureFrame();
+          }
+
           if (frame)
           {
             std::lock_guard<std::mutex> lock(this->m_cameraFrameMutex);
