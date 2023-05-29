@@ -164,7 +164,7 @@ namespace medicimage
   struct TextComponent
   {
     std::string text = "";
-    int fontSize = 1;
+    int fontSize = 14;
     glm::vec2 boxSize{0.0, 0.0};
     TextComponent() = default;
   };

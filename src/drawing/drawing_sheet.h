@@ -187,7 +187,7 @@ private:
   void DrawFinalText();
   Timer m_timer;
   std::string m_text = " "; // space is needed to have a blank space for indicating the cursor
-  constexpr static int s_defaultFontSize = 2;
+  constexpr static int s_defaultFontSize = 14;
 };
 
 class DrawIncrementalLetters : public BaseDrawState
@@ -200,7 +200,7 @@ private:
   void IncrementLetter();
   void DecrementLetter();
   std::string m_text = "A";
-  constexpr static int s_defaultFontSize = 1;
+  constexpr static int s_defaultFontSize = 10;
 };
 
 // select states

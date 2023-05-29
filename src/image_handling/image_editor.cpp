@@ -125,7 +125,7 @@ void ImageEditor::DrawText(glm::vec2 bottomLeft, const std::string &text, int fo
 {
   glm::vec2 imageSize = {s_image->GetWidth(), s_image->GetHeight()};
   bottomLeft *= imageSize;
-  wxFont font(14, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
+  wxFont font(fontSize, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
   s_dc->SetFont(font);
   s_dc->SetTextForeground(wxColour(0, 0, 0));
   s_dc->DrawText(text, wxPoint{static_cast<int>(bottomLeft.x), static_cast<int>(bottomLeft.y)});
@@ -152,6 +152,7 @@ void ImageEditor::DrawSpline(glm::vec2 begin, glm::vec2 middle, glm::vec2 end, i
 glm::vec2 ImageEditor::GetTextBoundingBox(const std::string &text, int fontSize, float thickness)
 {
   int baseline = 0;
+  // TODO: implement it properly
   auto textSize = cv::getTextSize(text, s_defaultFont, fontSize, thickness, &baseline); 
   return glm::vec2{static_cast<float>(textSize.width) / static_cast<float>(s_image->GetWidth()), static_cast<float>(textSize.height) / static_cast<float>(s_image->GetHeight())};
 }
