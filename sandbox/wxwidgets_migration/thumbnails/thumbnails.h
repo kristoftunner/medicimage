@@ -28,6 +28,7 @@ private:
   void OnPaint( wxPaintEvent &event );
   void OnAddPatient(PatientEvent& event);
   void OnPatientSelected(wxListEvent& event);
+  void OnUpdateAppFolder(AppFolderUpdateEvent& event);
 
   void UpdatePatientListCtrl();
   void UpdateLayout();

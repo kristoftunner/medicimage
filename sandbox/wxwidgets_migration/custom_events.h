@@ -1,6 +1,7 @@
 #pragma once
 
 #include <wx/event.h>
+#include <filesystem>
 
 #include "image_handling/image_saver.h"
 #include "drawing/entity.h"
@@ -67,5 +68,23 @@ private:
     ImageDocument m_data;
 };
 
+class AppFolderUpdateEvent : public wxCommandEvent
+{
+public:
+    AppFolderUpdateEvent(wxEventType eventType, wxWindowID id)
+        : wxCommandEvent(eventType, id)
+    {
+    }
+
+    // Getter and setter for the custom data
+    void SetData(const std::string& data) { m_appFolder = data; }
+    const std::filesystem::path& GetAppFolder() const { return m_appFolder; }
+
+    // Required for event cloning
+    wxEvent* Clone() const override { return new AppFolderUpdateEvent(*this); }
+
+private:
+  std::filesystem::path m_appFolder;
+};
 
 } // namespace app

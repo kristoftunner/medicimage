@@ -16,7 +16,7 @@ class DocumentController
 {
 public:
   DocumentController();
-  void UpdateAppFolder(const std::filesystem::path& appFolder);
+  void UpdateAppFolder(const std::filesystem::path &appFolder);
   std::optional<const std::vector<ImageDocument>*> GetSavedImages();
   void SelectPatient(const std::string& patientId);
   std::vector<std::string> GetPatientIds() const; 

@@ -27,6 +27,7 @@ Thumbnails::Thumbnails( wxWindow *parent, wxWindowID, const wxPoint &pos, const 
   Bind(EVT_EDITOR_SAVE_DOCUMENT, &Thumbnails::OnAddDocument, this);
   Bind(EVT_EDITOR_DELETE_DOCUMENT, &Thumbnails::OnDeleteDocument, this);
   Bind(EVT_EDITOR_ADD_DOCUMENT, &Thumbnails::OnAddDocument, this);
+  Bind(EVT_THUMBNAILS_APP_FOLDER_UPDATE, &Thumbnails::OnUpdateAppFolder, this);
 
   SetSizer(m_sizer);
   SetScrollRate(FromDIP(5), FromDIP(5));
@@ -115,6 +116,13 @@ void Thumbnails::OnPatientSelected(wxListEvent &event)
   std::string selectedItem = m_patientList->GetItemText(selectedIndex).ToStdString();
   m_documentController.SelectPatient(selectedItem);
   wxLogDebug("Thumbnails::OnPatientSelected: %s", selectedItem);
+  UpdateLayout();
+}
+
+void Thumbnails::OnUpdateAppFolder(AppFolderUpdateEvent &event)
+{
+  m_documentController.UpdateAppFolder(event.GetAppFolder());
+  UpdatePatientListCtrl();
   UpdateLayout();
 }
 

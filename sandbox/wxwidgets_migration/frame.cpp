@@ -93,6 +93,19 @@ MyFrame::MyFrame()
   wxMenuItem* cameraSelection = new wxMenuItem(settings, wxID_ANY, "Camera selection");
   cameraSelection->SetSubMenu(cameraSelectionMenu);
   settings->Append(cameraSelection);
+  wxMenuItem* appFolderConfig = new wxMenuItem(settings, wxID_ANY, "Application folder");
+  Bind(wxEVT_MENU, [this, thumbnails](wxCommandEvent& event) {
+    wxDirDialog dlg(this, "Choose application folder", "", wxDD_DEFAULT_STYLE | wxDD_DIR_MUST_EXIST);
+    if (dlg.ShowModal() == wxID_OK)
+    {
+      auto folder = dlg.GetPath().ToStdString();
+      wxLogDebug("Selected path: %s", dlg.GetPath());
+      AppFolderUpdateEvent updateEvent(EVT_THUMBNAILS_APP_FOLDER_UPDATE, wxID_ANY);
+      updateEvent.SetData(folder);
+      wxPostEvent(thumbnails, updateEvent);
+    }
+  }, appFolderConfig->GetId());
+  settings->Append(appFolderConfig);
 
   wxMenuBar *menuBar = new wxMenuBar;
   menuBar->Append(menuFile, "&File");
