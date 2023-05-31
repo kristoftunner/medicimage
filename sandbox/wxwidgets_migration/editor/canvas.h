@@ -62,6 +62,7 @@ public:
   void OnDrawRectangle(wxCommandEvent &event);
   void OnDrawSkinTemplate(wxCommandEvent &event);
 
+  void Draw(wxDC& dc);
   CameraAPI* GetCamera() { return m_editor.GetCamera(); }
   std::mutex& GetCameraMutex() { return m_editor.GetCameraMutex(); }
 private:
@@ -80,6 +81,7 @@ public:
 
   CameraAPI* GetCamera() { return m_canvas->GetCamera(); }
   std::mutex& GetCameraMutex() { return m_canvas->GetCameraMutex(); }
+  Canvas* GetCanvas() { return m_canvas; }
 private:
   Canvas* m_canvas;
 };

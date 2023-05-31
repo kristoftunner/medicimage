@@ -31,3 +31,7 @@ set_property(TARGET keyboard PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CON
 add_executable(splitter WIN32 splitter/splitter.cpp)
 target_link_libraries(splitter PUBLIC wx::core wx::base wx::wxgl OpenGL::GL medicimage)
 set_property(TARGET splitter PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+
+add_executable(printing WIN32 printing/printing.cpp)
+target_link_libraries(printing PUBLIC wx::core wx::base wx::wxgl OpenGL::GL medicimage)
+set_property(TARGET printing PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")

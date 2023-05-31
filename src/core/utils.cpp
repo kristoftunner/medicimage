@@ -6,6 +6,7 @@ namespace medicimage
 {
 
 using json = nlohmann::json;
+// TODO REFACTOR: big big refactor on this file
 
 AppConfig::AppConfig()
 {

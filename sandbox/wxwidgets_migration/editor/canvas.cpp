@@ -159,10 +159,8 @@ void Canvas::OnKeyPressed(wxKeyEvent &event)
   m_dialog->OnUpdate();
 }
 
-void Canvas::OnPaint(wxPaintEvent &event)
+void Canvas::Draw(wxDC &dc)
 {
-  wxAutoBufferedPaintDC dc(this);
-  PrepareDC(dc);
   dc.SetBackground(*wxWHITE_BRUSH);
   dc.Clear();
   dc.SetPen(*wxBLACK_PEN);
@@ -171,6 +169,13 @@ void Canvas::OnPaint(wxPaintEvent &event)
   auto image = m_editor.Draw();
   dc.DrawBitmap(image->GetBitmap(), 0, 0);
   SetVirtualSize(image->GetWidth(), image->GetHeight()); 
+}
+
+void Canvas::OnPaint(wxPaintEvent &event)
+{
+  wxAutoBufferedPaintDC dc(this);
+  PrepareDC(dc);
+  Draw(dc);
 }
 
 void Canvas::OnCameraFrameUpdate(wxTimerEvent &event)
