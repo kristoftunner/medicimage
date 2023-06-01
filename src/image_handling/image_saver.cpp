@@ -172,9 +172,10 @@ std::vector<ImageDocument>::iterator ImageDocContainer::AddImage(Image2D& image,
   std::string footerText = doc.GenerateFooterText();
   std::unique_ptr<Image2D> borderedImage;
   borderedImage = ImageEditor::AddImageFooter(footerText, *doc.image.get());
+  auto width = borderedImage->GetWidth();
 
-  image.GetBitmap().SaveFile(imagePath.string(), wxBITMAP_TYPE_PNG);
-  auto resizedBitmap = image.GetBitmap().ConvertToImage().Rescale(640, 360);
+  borderedImage->GetBitmap().SaveFile(imagePath.string(), wxBITMAP_TYPE_PNG);
+  auto resizedBitmap = borderedImage->GetBitmap().ConvertToImage().Rescale(640, 360);
   resizedBitmap.SaveFile(thumbImagePath.string(), wxBITMAP_TYPE_PNG);
   m_fileLogger->LogFileOperation(name, FileLogger::FileOperation::FILE_SAVE);
   UpdateDocListFile();

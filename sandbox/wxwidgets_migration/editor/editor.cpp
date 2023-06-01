@@ -3,6 +3,7 @@
 #include "editor.h"
 #include "editor_events.h"
 #include "camera/opencv_camera.h"
+#include "image_handling/image_editor.h"
 
 namespace app
 {
@@ -130,7 +131,9 @@ std::optional<ImageDocumentEvent> Editor::OnSave()
 
     // TODO: send the image to the image saver
     ImageDocumentEvent event(EVT_EDITOR_SAVE_DOCUMENT, wxID_ANY);
-    event.SetData(ImageDocument(Draw()));
+    auto imageWithFooter = Draw();
+    auto image = ImageEditor::RemoveFooter(*(imageWithFooter.get()));
+    event.SetData(ImageDocument(std::move(image)));
     m_state = EditorState::SHOW_CAMERA;
     return event;
   }
@@ -191,6 +194,7 @@ void Editor::OnDocumentPicked(const ImageDocument &document)
   if(m_state == EditorState::SHOW_CAMERA || m_state == EditorState::IMAGE_SELECTION)
   {
     m_activeDocument = document;
+    m_drawingSheet.SetDocument(std::make_unique<ImageDocument>(m_activeDocument), {m_activeDocument.image->GetWidth(), m_activeDocument.image->GetHeight()});   
     m_state = EditorState::IMAGE_SELECTION;
   }
 }
@@ -208,7 +212,7 @@ std::unique_ptr<Image2D> Editor::Draw()
     }
     case EditorState::IMAGE_SELECTION:
     {
-      auto image = std::make_unique<Image2D>(*(m_activeDocument.image.get()));
+      auto image = m_drawingSheet.Draw(); // needed because add footer is called in the Draw method
       return std::move(image);
     }
     case EditorState::EDITING:

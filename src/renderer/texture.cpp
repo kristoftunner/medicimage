@@ -20,6 +20,12 @@ namespace medicimage
     }
   }
 
+  Image2D::Image2D(wxBitmap &bitmap)
+  {
+    m_bitmap = bitmap;
+    assert(m_bitmap.IsOk());
+  }
+
   Image2D::Image2D(Image2D& image)
   {
     m_bitmap = image.GetBitmap();

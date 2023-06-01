@@ -1,5 +1,6 @@
 #include <fstream>
 #include <glm/gtx/rotate_vector.hpp>
+#include <wx/bitmap.h>
 #include <wx/log.h>
 
 #include "image_editor.h"
@@ -159,63 +160,64 @@ glm::vec2 ImageEditor::GetTextBoundingBox(const std::string &text, int fontSize,
 
 Image2D ImageEditor::AddFooter(Image2D& image, const std::string& footerText)
 {
-  // add a sticker to the bottom with the image name, date and time
-  // assuming the original texture has 1920x1080 resolution, expanding with 20-20 pixels left/right and 30 bottom, 20 top
-  // TODO: do nothing for now
+  glm::vec2 borderedImageSize = {image.GetWidth(), image.GetHeight()};
+  borderedImageSize = borderedImageSize + glm::vec2{s_sideBorder * 2, s_topBorder + s_bottomBorder};
 
-  //cv::UMat borderedImage;
-  //cv::copyMakeBorder(image, borderedImage, s_topBorder, s_bottomBorder, s_sideBorder, s_sideBorder, cv::BORDER_CONSTANT , cv::Scalar{255,255,255} ); // adding white border
-  //cv::putText(borderedImage, footerText, cv::Point{s_topBorder, borderedImage.rows - s_topBorder}, s_defaultFont, 1, cv::Scalar{0,0,0}, 3);
-  //return borderedImage;
-  return image;
+  wxBitmap borderedBitmap = wxBitmap(borderedImageSize.x, borderedImageSize.y, 32);
+  wxMemoryDC dc(borderedBitmap);
+
+  dc.SetBackground(*wxWHITE_BRUSH);
+  dc.Clear();
+
+  dc.DrawBitmap(image.GetBitmap(), wxPoint{s_sideBorder, s_topBorder});
+
+  wxFont font(20, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
+  dc.SetFont(font);
+  dc.SetTextForeground(wxColour(0, 0, 0));
+  dc.DrawText(footerText, wxPoint{s_sideBorder, borderedBitmap.GetHeight() - s_bottomBorder});
+  dc.SelectObject(wxNullBitmap);
+  return Image2D(borderedBitmap);
 }
 
 std::unique_ptr<Image2D> ImageEditor::ReplaceImageFooter(const std::string& footerText, Image2D& image)
 {
-  //cv::UMat image;
-  //cv::directx::convertFromD3D11Texture2D(texture->GetTexturePtr(), image);
-  //image = image(cv::Range(s_topBorder, image.rows - s_bottomBorder), cv::Range(s_sideBorder, image.cols - s_sideBorder));
-  //cv::cvtColor(image, image, cv::COLOR_RGBA2BGR);
+  glm::vec2 croppedImageSize = {image.GetWidth(), image.GetHeight()};
+  croppedImageSize = croppedImageSize - glm::vec2{s_sideBorder * 2, s_topBorder + s_bottomBorder};
+
+  wxBitmap destBitmap(image.GetWidth(), image.GetHeight(), 32);
+  wxMemoryDC sourceDC(image.GetBitmap());
+  wxMemoryDC destDC(destBitmap);
+
+  destDC.Blit(0, 0, static_cast<int>(croppedImageSize.x), static_cast<int>(croppedImageSize.y), &sourceDC, s_sideBorder, s_topBorder);
+  sourceDC.SelectObject(wxNullBitmap);
+  destDC.SelectObject(wxNullBitmap);
+  auto imageWithoutBorder = Image2D(destBitmap);
   
-  //cv::UMat borderedImage = AddFooter(image, footerText);
-  
-  //std::unique_ptr<Image2D> dstTexture = std::make_unique<Image2D>(texture->GetName(), borderedImage.cols, borderedImage.rows);
-  //dstTexture->SetName(texture->GetName());
-  //cv::cvtColor(borderedImage, borderedImage, cv::COLOR_BGR2RGBA);
-  //cv::directx::convertToD3D11Texture2D(borderedImage, dstTexture->GetTexturePtr());
-  //return std::move(dstTexture);
-  return std::make_unique<Image2D>(image);
+  auto imageWithFooter = AddFooter(imageWithoutBorder, footerText);
+
+  return std::make_unique<Image2D>(imageWithFooter);
 }
 
 std::unique_ptr<Image2D> ImageEditor::RemoveFooter(Image2D& image)
 {
-  //cv::UMat image;
-  //cv::directx::convertFromD3D11Texture2D(texture->GetTexturePtr(), image);
-  //image = image(cv::Range(s_topBorder, image.rows - s_bottomBorder), cv::Range(s_sideBorder, image.cols - s_sideBorder));
-  //cv::cvtColor(image, image, cv::COLOR_RGBA2BGR);
-  //cv::cvtColor(image, image, cv::COLOR_BGR2RGBA);
+  glm::vec2 imageSize = {image.GetWidth(), image.GetHeight()};
+  imageSize = imageSize - glm::vec2{s_sideBorder * 2, s_topBorder + s_bottomBorder};
+
+  wxBitmap destBitmap(imageSize.x, imageSize.y, 32);
+  wxMemoryDC sourceDC(image.GetBitmap());
+  wxMemoryDC destDC(destBitmap);
+
+  destDC.Blit(0, 0, static_cast<int>(imageSize.x), static_cast<int>(imageSize.y), &sourceDC, s_sideBorder, s_topBorder);
+  sourceDC.SelectObject(wxNullBitmap);
+  destDC.SelectObject(wxNullBitmap);
   
-  //std::unique_ptr<Image2D> dstTexture = std::make_unique<Image2D>(texture->GetName(), image.cols, image.rows);
-  //dstTexture->SetName(texture->GetName());
-  //cv::directx::convertToD3D11Texture2D(image, dstTexture->GetTexturePtr());
-  //return std::move(dstTexture);
-  return std::make_unique<Image2D>(image);
+  return std::make_unique<Image2D>(destBitmap);
 }
 
 std::unique_ptr<Image2D> ImageEditor::AddImageFooter(const std::string& footerText, Image2D& image)
 {
-  //cv::UMat image;
-  //cv::directx::convertFromD3D11Texture2D(texture->GetTexturePtr(), image);
-  //cv::cvtColor(image, image, cv::COLOR_RGBA2BGR);
-  
-  //cv::UMat borderedImage = AddFooter(image, footerText);
-  
-  //std::unique_ptr<Image2D> dstTexture = std::make_unique<Image2D>(texture->GetName(), borderedImage.cols, borderedImage.rows);
-  //dstTexture->SetName(texture->GetName());
-  //cv::cvtColor(borderedImage, borderedImage, cv::COLOR_BGR2RGBA);
-  //cv::directx::convertToD3D11Texture2D(borderedImage, dstTexture->GetTexturePtr());
-  //return std::move(dstTexture);
-  return std::make_unique<Image2D>(image);
+  auto imageWithFooter = AddFooter(image, footerText);
+  return std::make_unique<Image2D>(imageWithFooter);
 }
 
 } // namespace medicimage
