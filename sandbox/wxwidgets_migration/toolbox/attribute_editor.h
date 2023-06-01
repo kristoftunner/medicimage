@@ -22,7 +22,8 @@ public:
 private:
   void OnEntityAttributeChange(EntityEvent& event);
 private:
-  wxGridSizer* m_sizer;
+  wxGridSizer* m_gridSizer;
+  wxBoxSizer* m_topSizer;
 
 };
   

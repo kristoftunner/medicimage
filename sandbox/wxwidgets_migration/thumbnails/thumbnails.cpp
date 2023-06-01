@@ -98,6 +98,8 @@ void Thumbnails::UpdateLayout()
     }
   }
   m_sizer->Add(m_patientList, wxSizerFlags(0).Expand().Border(wxALL, FromDIP(5)));
+  auto size = m_sizer->CalcMin();
+  SetVirtualSize(FromDIP(size.GetWidth()), FromDIP(size.GetHeight()));
   m_sizer->Layout();
   Refresh();
 }
