@@ -59,18 +59,21 @@ public:
     {
         // Create a splitter window
         wxSplitterWindow* splitter = new wxSplitterWindow(this, wxID_ANY, wxPoint(-1,-1) ,wxSize(-1,-1),wxSP_LIVE_UPDATE);
+        auto leftSplitter = new wxSplitterWindow(splitter, wxID_ANY, wxPoint(-1,-1) ,wxSize(-1,-1),wxSP_LIVE_UPDATE);
+
 
         // Create panels for the splitter panes
-        auto leftPanel = new LeftPanel(splitter);
-        auto rightPanel = new RightPanel(splitter);
+        auto leftPanel = new LeftPanel(leftSplitter);
+        auto rightPanel = new RightPanel(leftSplitter);
         leftPanel->SetBackgroundColour(*wxRED);
         rightPanel->SetBackgroundColour(*wxBLUE);
         // Set the splitter window's panes
-        splitter->SplitVertically(leftPanel, rightPanel);
-
-        // Set the minimum pane sizes
+        auto panel = new  wxPanel(splitter);
+        panel->SetBackgroundColour(*wxGREEN);
+        splitter->SplitVertically(leftSplitter, panel, 200);
         splitter->SetMinimumPaneSize(200);
 
+        leftSplitter->SplitVertically(leftPanel, rightPanel, 200);
         // Set the splitter window as the main window
         SetSizer(new wxBoxSizer(wxVERTICAL));
         GetSizer()->Add(splitter, 1, wxEXPAND);

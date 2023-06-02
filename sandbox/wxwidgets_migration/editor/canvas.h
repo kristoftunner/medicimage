@@ -16,18 +16,22 @@
 using namespace medicimage;
 namespace app
 {
+
+class Canvas;
 class InfoDialog : public wxFrame
 {
 public:
-  InfoDialog(wxWindow* parent, const wxString& title, DrawingSheet& sheet, Editor& editor);
+  InfoDialog(Canvas* parent, const wxString& title, DrawingSheet& sheet, Editor& editor);
   void OnUpdate();
 private:
   wxBoxSizer* m_sizer;
   wxStaticText* m_drawState;
   wxStaticText* m_drawCommand;
   wxStaticText* m_editorState;
+  wxStaticText* m_mousePos;
   DrawingSheet& m_sheet;
   Editor& m_editor;
+  Canvas* m_canvas;
 };
 
 class Canvas : public wxWindow
@@ -65,12 +69,14 @@ public:
   void Draw(wxDC& dc);
   CameraAPI* GetCamera() { return m_editor.GetCamera(); }
   std::mutex& GetCameraMutex() { return m_editor.GetCameraMutex(); }
+  wxPoint GetMousePoint() { return m_mousePoint; }
 private:
   void UpdateAttributeEditor();
   bool m_mouseDown = false;
   InfoDialog* m_dialog;
   Editor m_editor;
   wxTimer m_frameUpdateTimer;
+  wxPoint m_mousePoint;
 };
 
 class EditorPanel : public wxPanel

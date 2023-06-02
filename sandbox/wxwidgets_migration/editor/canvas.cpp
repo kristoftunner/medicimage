@@ -24,7 +24,7 @@ Canvas::Canvas( wxWindow *parent, wxWindowID id, const wxPoint &pos, const wxSiz
 {
   m_frameUpdateTimer.SetOwner(this);
   SetBackgroundStyle(wxBG_STYLE_PAINT);
-  SetBackgroundColour( *wxWHITE );
+  SetBackgroundColour( {128, 128, 128} );
   SetCursor(wxCursor(wxCURSOR_ARROW));
 
   m_editor.Init();
@@ -67,13 +67,18 @@ Canvas::~Canvas()
 {
 }
 
+glm::vec2 OffsetCoordsWithBorder(const glm::vec2& coords, const glm::vec2& border)
+{
+  return {coords.x - border.x, coords.y - border.y};
+}
+
 void Canvas::OnMouseMoved(wxMouseEvent &event)
 {
   wxClientDC dc(this);
   PrepareDC(dc);
 
-  const wxPoint pt(event.GetLogicalPosition(dc));
-  m_editor.OnMouseMoved({pt.x, pt.y});
+  m_mousePoint = wxPoint(event.GetLogicalPosition(dc));
+  m_editor.OnMouseMoved({m_mousePoint.x, m_mousePoint.y});
   m_dialog->OnUpdate();
   if(m_editor.IsDrawingUpdated())
   {
@@ -89,8 +94,8 @@ void Canvas::OnMousePressed(wxMouseEvent &event)
   wxClientDC dc(this);
   PrepareDC(dc);
 
-  const wxPoint pt(event.GetLogicalPosition(dc));
-  m_editor.OnMousePressed({pt.x, pt.y});
+  m_mousePoint = wxPoint(event.GetLogicalPosition(dc));
+  m_editor.OnMousePressed({m_mousePoint.x, m_mousePoint.y});
   if(m_editor.IsDrawingUpdated())
   {
     m_editor.UpdatedDrawing();
@@ -107,8 +112,9 @@ void Canvas::OnMouseReleased(wxMouseEvent &event)
   wxClientDC dc(this);
   PrepareDC(dc);
 
-  const wxPoint pt(event.GetLogicalPosition(dc));
-  m_editor.OnMouseReleased({pt.x, pt.y});
+  m_mousePoint = wxPoint(event.GetLogicalPosition(dc));
+
+  m_editor.OnMouseReleased({m_mousePoint.x, m_mousePoint.y});
   if(m_editor.IsDrawingUpdated())
   {
     m_editor.UpdatedDrawing();
@@ -161,7 +167,7 @@ void Canvas::OnKeyPressed(wxKeyEvent &event)
 
 void Canvas::Draw(wxDC &dc)
 {
-  dc.SetBackground(*wxWHITE_BRUSH);
+  dc.SetBackground(*wxGREY_BRUSH);
   dc.Clear();
   dc.SetPen(*wxBLACK_PEN);
   dc.SetBrush(*wxTRANSPARENT_BRUSH);
@@ -324,20 +330,25 @@ void Canvas::UpdateAttributeEditor()
   }
 }
 
-InfoDialog::InfoDialog(wxWindow* parent, const wxString& title, DrawingSheet& sheet, Editor& editor)
-  : wxFrame(parent, wxID_ANY, title), m_sheet(sheet), m_editor(editor)
+InfoDialog::InfoDialog(Canvas* parent, const wxString& title, DrawingSheet& sheet, Editor& editor)
+  : wxFrame(parent, wxID_ANY, title), m_sheet(sheet), m_editor(editor), m_canvas(parent)
 {
   // Create dialog content
   m_sizer = new wxBoxSizer(wxVERTICAL);
   auto drawStateText = std::format("DrawState:{}", m_sheet.GetDrawState()->GetName());
   auto drawCommandText = std::format("DrawCommand:{}", m_sheet.GetDrawCommandName());
   auto editorState = std::format("EditorState:{}", m_editor.GetStateName());
+  auto mousePosition = std::format("MousePosition:{}:{}", m_canvas->GetMousePoint().x, m_canvas->GetMousePoint().y);
+
   m_drawState = new wxStaticText(this, wxID_ANY, drawStateText);
   m_drawCommand = new wxStaticText(this, wxID_ANY, drawCommandText);
   m_editorState = new wxStaticText(this, wxID_ANY, editorState);
+  m_mousePos = new wxStaticText(this, wxID_ANY, mousePosition);
+
   m_sizer->Add(m_drawState, wxSizerFlags().Align(wxALIGN_TOP).Border(wxALL, FromDIP(1)));  // TODO: properly align this
   m_sizer->Add(m_drawCommand, wxSizerFlags().Align(wxALIGN_TOP).Border(wxALL, FromDIP(1)));
   m_sizer->Add(m_editorState, wxSizerFlags().Align(wxALIGN_TOP).Border(wxALL, FromDIP(1)));
+  m_sizer->Add(m_mousePos, wxSizerFlags().Align(wxALIGN_TOP).Border(wxALL, FromDIP(1)));
   SetSizerAndFit(m_sizer);
 }
 
@@ -346,9 +357,11 @@ void InfoDialog::OnUpdate()
   auto drawStateText = std::format("DrawState:{}", m_sheet.GetDrawState()->GetName());
   auto drawCommandText = std::format("DrawCommand:{}", m_sheet.GetDrawCommandName());
   auto editorStateText = std::format("EditorState:{}", m_editor.GetStateName());
+  auto mousePosition = std::format("MousePosition:{}:{}", m_canvas->GetMousePoint().x, m_canvas->GetMousePoint().y);
   m_drawState->SetLabel(drawStateText);
   m_drawCommand->SetLabel(drawCommandText);
   m_editorState->SetLabel(editorStateText);
+  m_mousePos->SetLabel(mousePosition);
   Layout();
 }
 

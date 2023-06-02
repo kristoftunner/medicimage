@@ -79,7 +79,10 @@ void Editor::OnMouseReleased(const glm::vec2 &pos)
 void Editor::OnCharInput(const std::string &character)
 {
   if(m_state == EditorState::EDITING)
+  {
     m_drawingSheet.OnTextInput(character);
+    m_newDrawingAvailable = true;
+  }
 }
 
 void Editor::OnKeyPressed(KeyCode key)
@@ -183,7 +186,8 @@ void Editor::OnDrawButtonPushed(DrawCommand command)
     wxLogDebug("Changing state to IMAGE_SELECTION->EDITING");
     m_state = EditorState::EDITING;
     m_drawingSheet.StartAnnotation();
-    m_drawingSheet.SetDocument(std::make_unique<ImageDocument>(m_activeDocument), {m_activeDocument.image->GetWidth(), m_activeDocument.image->GetHeight()});   
+    auto size = ImageEditor::GetTopleftBorderSize();
+    m_drawingSheet.SetDocument(std::make_unique<ImageDocument>(m_activeDocument), {m_activeDocument.image->GetWidth() + 2*size.x, m_activeDocument.image->GetHeight() + 60}); // TODO REFACTOR: this is just a bad hack, do something with it
     m_drawingSheet.ChangeDrawState(std::make_unique<BaseDrawState>(&m_drawingSheet));
   }
   m_drawingSheet.SetDrawCommand(command);

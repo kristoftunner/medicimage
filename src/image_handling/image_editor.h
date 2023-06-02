@@ -31,6 +31,8 @@ public:
   static void DrawText(glm::vec2 bottomLeft, const std::string& text, int fontSize, float thickness);
   static void DrawSpline(glm::vec2 begin, glm::vec2 middle, glm::vec2 end, int lineCount, glm::vec4 color, float thickness);
   static glm::vec2 GetTextBoundingBox(const std::string& text, int fontSize, float thickness);
+
+  static glm::vec2 GetTopleftBorderSize() {return {s_sideBorder, s_topBorder};}
 private:
   static Image2D AddFooter(Image2D& image, const std::string& footerText);
   static constexpr int s_sideBorder = 10;
