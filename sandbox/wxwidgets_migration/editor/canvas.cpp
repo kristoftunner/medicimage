@@ -57,8 +57,6 @@ Canvas::Canvas( wxWindow *parent, wxWindowID id, const wxPoint &pos, const wxSiz
   {
     Refresh();
   });
-  //SetScrollRate(FromDIP(5), FromDIP(5));
-  //SetVirtualSize(FromDIP(600), FromDIP(400));
 
   m_frameUpdateTimer.Start(1000 / 30, wxTIMER_CONTINUOUS);
 }
@@ -67,9 +65,11 @@ Canvas::~Canvas()
 {
 }
 
-glm::vec2 OffsetCoordsWithBorder(const glm::vec2& coords, const glm::vec2& border)
+glm::vec2 Canvas::CalcCorrectedMousePos(glm::vec2 pos)
 {
-  return {coords.x - border.x, coords.y - border.y};
+  auto maxSize = glm::vec2(m_canvasSize.x, m_canvasSize.y) - m_imageBorder * 2.0f;
+  glm::vec2 correctedPos = clamp(pos - m_imageBorder, glm::vec2(0.0f), maxSize);
+  return correctedPos / m_canvasScale;
 }
 
 void Canvas::OnMouseMoved(wxMouseEvent &event)
@@ -78,7 +78,7 @@ void Canvas::OnMouseMoved(wxMouseEvent &event)
   PrepareDC(dc);
 
   m_mousePoint = wxPoint(event.GetLogicalPosition(dc));
-  m_editor.OnMouseMoved({m_mousePoint.x, m_mousePoint.y});
+  m_editor.OnMouseMoved(CalcCorrectedMousePos({m_mousePoint.x, m_mousePoint.y}));
   m_dialog->OnUpdate();
   if(m_editor.IsDrawingUpdated())
   {
@@ -95,7 +95,7 @@ void Canvas::OnMousePressed(wxMouseEvent &event)
   PrepareDC(dc);
 
   m_mousePoint = wxPoint(event.GetLogicalPosition(dc));
-  m_editor.OnMousePressed({m_mousePoint.x, m_mousePoint.y});
+  m_editor.OnMousePressed(CalcCorrectedMousePos({m_mousePoint.x, m_mousePoint.y}));
   if(m_editor.IsDrawingUpdated())
   {
     m_editor.UpdatedDrawing();
@@ -114,7 +114,7 @@ void Canvas::OnMouseReleased(wxMouseEvent &event)
 
   m_mousePoint = wxPoint(event.GetLogicalPosition(dc));
 
-  m_editor.OnMouseReleased({m_mousePoint.x, m_mousePoint.y});
+  m_editor.OnMouseReleased(CalcCorrectedMousePos({m_mousePoint.x, m_mousePoint.y}));
   if(m_editor.IsDrawingUpdated())
   {
     m_editor.UpdatedDrawing();
@@ -173,6 +173,16 @@ void Canvas::Draw(wxDC &dc)
   dc.SetBrush(*wxTRANSPARENT_BRUSH);
 
   auto image = m_editor.Draw();
+  // calculate new size of the image, so that it will fit into the window
+  auto size = GetSize();
+  auto imageSize = glm::vec2{ image->GetWidth(), image->GetHeight() };
+  m_canvasScale = std::min((float)size.x / image->GetWidth(), (float)size.y / image->GetHeight());
+  auto newWidth = image->GetWidth() * m_canvasScale;
+  auto newHeight = image->GetHeight() * m_canvasScale;
+  m_imageBorder = (glm::vec2{size.x, size.y} - glm::vec2(newWidth, newHeight)) / 2.0f;
+
+  dc.SetUserScale(m_canvasScale, m_canvasScale);
+  dc.SetDeviceOrigin(static_cast<int>(m_imageBorder.x), static_cast<int>(m_imageBorder.y)); 
   dc.DrawBitmap(image->GetBitmap(), 0, 0);
   SetVirtualSize(image->GetWidth(), image->GetHeight()); 
 }
@@ -182,6 +192,7 @@ void Canvas::OnPaint(wxPaintEvent &event)
   wxAutoBufferedPaintDC dc(this);
   PrepareDC(dc);
   Draw(dc);
+  m_canvasSize = GetSize();
 }
 
 void Canvas::OnCameraFrameUpdate(wxTimerEvent &event)
@@ -339,16 +350,19 @@ InfoDialog::InfoDialog(Canvas* parent, const wxString& title, DrawingSheet& shee
   auto drawCommandText = std::format("DrawCommand:{}", m_sheet.GetDrawCommandName());
   auto editorState = std::format("EditorState:{}", m_editor.GetStateName());
   auto mousePosition = std::format("MousePosition:{}:{}", m_canvas->GetMousePoint().x, m_canvas->GetMousePoint().y);
+  auto canvasSize = std::format("CanvasSize:{}:{}", m_canvas->GetCanvasSize().x, m_canvas->GetCanvasSize().y);
 
   m_drawState = new wxStaticText(this, wxID_ANY, drawStateText);
   m_drawCommand = new wxStaticText(this, wxID_ANY, drawCommandText);
   m_editorState = new wxStaticText(this, wxID_ANY, editorState);
   m_mousePos = new wxStaticText(this, wxID_ANY, mousePosition);
+  m_canvasSize = new wxStaticText(this, wxID_ANY, canvasSize);
 
   m_sizer->Add(m_drawState, wxSizerFlags().Align(wxALIGN_TOP).Border(wxALL, FromDIP(1)));  // TODO: properly align this
   m_sizer->Add(m_drawCommand, wxSizerFlags().Align(wxALIGN_TOP).Border(wxALL, FromDIP(1)));
   m_sizer->Add(m_editorState, wxSizerFlags().Align(wxALIGN_TOP).Border(wxALL, FromDIP(1)));
   m_sizer->Add(m_mousePos, wxSizerFlags().Align(wxALIGN_TOP).Border(wxALL, FromDIP(1)));
+  m_sizer->Add(m_canvasSize, wxSizerFlags().Align(wxALIGN_TOP).Border(wxALL, FromDIP(1)));
   SetSizerAndFit(m_sizer);
 }
 
@@ -358,10 +372,13 @@ void InfoDialog::OnUpdate()
   auto drawCommandText = std::format("DrawCommand:{}", m_sheet.GetDrawCommandName());
   auto editorStateText = std::format("EditorState:{}", m_editor.GetStateName());
   auto mousePosition = std::format("MousePosition:{}:{}", m_canvas->GetMousePoint().x, m_canvas->GetMousePoint().y);
+  auto canvasSize = std::format("CanvasSize:{}:{}", m_canvas->GetCanvasSize().x, m_canvas->GetCanvasSize().y);
+
   m_drawState->SetLabel(drawStateText);
   m_drawCommand->SetLabel(drawCommandText);
   m_editorState->SetLabel(editorStateText);
   m_mousePos->SetLabel(mousePosition);
+  m_canvasSize->SetLabel(canvasSize);
   Layout();
 }
 

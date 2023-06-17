@@ -241,21 +241,10 @@ bool Printout::HasPage(int pageNum)
 
 void Printout::DrawPage()
 {
-    // You might use THIS code if you were scaling graphics of known size to fit
-    // on the page. The commented-out code illustrates different ways of scaling
-    // the graphics.
-
     // We know the graphic is 230x350. If we didn't know this, we'd need to
     // calculate it.
     wxCoord maxX = GetDC()->FromDIP(800);
     wxCoord maxY = GetDC()->FromDIP(600);
-
-    // This sets the user scale and origin of the DC so that the image fits
-    // within the paper rectangle (but the edges could be cut off by printers
-    // that can't print to the edges of the paper -- which is most of them. Use
-    // this if your image already has its own margins.
-//    FitThisSizeToPaper(wxSize(maxX, maxY));
-//    wxRect fitRect = GetLogicalPaperRect();
 
     // This sets the user scale and origin of the DC so that the image fits
     // within the page rectangle, which is the printable area on Mac and MSW
@@ -263,40 +252,6 @@ void Printout::DrawPage()
     FitThisSizeToPage(wxSize(maxX, maxY));
     wxRect fitRect = GetLogicalPageRect();
 
-    // This sets the user scale and origin of the DC so that the image fits
-    // within the page margins as specified by g_PageSetupData, which you can
-    // change (on some platforms, at least) in the Page Setup dialog. Note that
-    // on Mac, the native Page Setup dialog doesn't let you change the margins
-    // of a wxPageSetupDialogData object, so you'll have to write your own dialog or
-    // use the Mac-only wxMacPageMarginsDialog, as we do in this program.
-    // std::unique_ptr<wxPageSetupDialogData> pageSetupData = std::make_unique<wxPageSetupDialogData>();
-    // FitThisSizeToPageMargins(wxSize(maxX, maxY), *(pageSetupData.get()));
-    // wxRect fitRect = GetLogicalPageMarginsRect(*(pageSetupData.get()));
-
-    // This sets the user scale and origin of the DC so that the image appears
-    // on the paper at the same size that it appears on screen (i.e., 10-point
-    // type on screen is 10-point on the printed page) and is positioned in the
-    // top left corner of the page rectangle (just as the screen image appears
-    // in the top left corner of the window).
-//    MapScreenSizeToPage();
-//    wxRect fitRect = GetLogicalPageRect();
-
-    // You could also map the screen image to the entire paper at the same size
-    // as it appears on screen.
-//    MapScreenSizeToPaper();
-//    wxRect fitRect = GetLogicalPaperRect();
-
-    // You might also wish to do you own scaling in order to draw objects at
-    // full native device resolution. In this case, you should do the following.
-    // Note that you can use the GetLogicalXXXRect() commands to obtain the
-    // appropriate rect to scale to.
-//    MapScreenSizeToDevice();
-//    wxRect fitRect = GetLogicalPageRect();
-
-    // Each of the preceding Fit or Map routines positions the origin so that
-    // the drawn image is positioned at the top left corner of the reference
-    // rectangle. You can easily center or right- or bottom-justify the image as
-    // follows.
 
     // This offsets the image so that it is centered within the reference
     // rectangle defined above.
@@ -304,13 +259,6 @@ void Printout::DrawPage()
     wxCoord yoff = (fitRect.height - maxY) / 2;
     OffsetLogicalOrigin(xoff, yoff);
 
-    // This offsets the image so that it is positioned at the bottom right of
-    // the reference rectangle defined above.
-//    wxCoord xoff = (fitRect.width - maxX);
-//    wxCoord yoff = (fitRect.height - maxY);
-//    OffsetLogicalOrigin(xoff, yoff);
-
     m_canvas->Draw(*GetDC());
-    //wxGetApp().Draw(*GetDC());
 }
 }

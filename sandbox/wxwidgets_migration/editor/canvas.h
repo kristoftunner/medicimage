@@ -29,6 +29,7 @@ private:
   wxStaticText* m_drawCommand;
   wxStaticText* m_editorState;
   wxStaticText* m_mousePos;
+  wxStaticText* m_canvasSize;
   DrawingSheet& m_sheet;
   Editor& m_editor;
   Canvas* m_canvas;
@@ -70,8 +71,13 @@ public:
   CameraAPI* GetCamera() { return m_editor.GetCamera(); }
   std::mutex& GetCameraMutex() { return m_editor.GetCameraMutex(); }
   wxPoint GetMousePoint() { return m_mousePoint; }
+  wxSize GetCanvasSize() { return m_canvasSize; }
 private:
   void UpdateAttributeEditor();
+  glm::vec2 CalcCorrectedMousePos(glm::vec2 pos);
+  wxSize m_canvasSize;
+  float m_canvasScale = 1.0f;
+  glm::vec2 m_imageBorder{ 0.0f, 0.0f };
   bool m_mouseDown = false;
   InfoDialog* m_dialog;
   Editor m_editor;

@@ -30,7 +30,7 @@ Thumbnails::Thumbnails( wxWindow *parent, wxWindowID, const wxPoint &pos, const 
   Bind(EVT_THUMBNAILS_APP_FOLDER_UPDATE, &Thumbnails::OnUpdateAppFolder, this);
 
   SetSizer(m_sizer);
-  SetScrollRate(FromDIP(5), FromDIP(5));
+  SetScrollRate(FromDIP(100), FromDIP(100));
   SetVirtualSize(FromDIP(600), FromDIP(400)); // TODO: work out the scrolling here
 }
 

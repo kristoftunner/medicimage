@@ -26,6 +26,7 @@ bool MyApp::OnInit()
   Logger::Init();
   wxInitAllImageHandlers();  
   MyFrame *frame = new MyFrame();
+  frame->SetSize(0, 0, 800, 600);
   frame->Show(true);
   return true;
 }
