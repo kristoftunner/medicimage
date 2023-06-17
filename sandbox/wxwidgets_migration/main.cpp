@@ -1,14 +1,11 @@
-// wxWidgets "Hello World" Program
- 
-// For compilers that support precompilation, includes "wx/wx.h".
-
-#include "editor/canvas.h"
-#include "frame.h"
 #include <wx/wxprec.h>
-#include "core/log.h"
-
 #include <wx/wx.h>
 #include <wx/image.h>
+
+#include "core/log.h"
+#include "gui/editor/canvas.h"
+#include "gui/frame.h"
+
 namespace app
 {
 using namespace medicimage;
