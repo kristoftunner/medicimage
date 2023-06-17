@@ -25,7 +25,7 @@ public:
 private:
   void OnDeleteDocument(ImageDocumentEvent& event);
   void OnAddDocument(ImageDocumentEvent& event);
-  void OnPaint( wxPaintEvent &event );
+  void OnResize(wxSizeEvent& event);
   void OnAddPatient(PatientEvent& event);
   void OnPatientSelected(wxListEvent& event);
   void OnUpdateAppFolder(AppFolderUpdateEvent& event);

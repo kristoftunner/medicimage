@@ -28,6 +28,7 @@ Thumbnails::Thumbnails( wxWindow *parent, wxWindowID, const wxPoint &pos, const 
   Bind(EVT_EDITOR_DELETE_DOCUMENT, &Thumbnails::OnDeleteDocument, this);
   Bind(EVT_EDITOR_ADD_DOCUMENT, &Thumbnails::OnAddDocument, this);
   Bind(EVT_THUMBNAILS_APP_FOLDER_UPDATE, &Thumbnails::OnUpdateAppFolder, this);
+  Bind(wxEVT_SIZE, &Thumbnails::OnResize, this);
 
   SetSizer(m_sizer);
   SetScrollRate(FromDIP(100), FromDIP(100));
@@ -57,7 +58,11 @@ void Thumbnails::OnAddDocument(ImageDocumentEvent &event)
 
 void Thumbnails::OnPaint(wxPaintEvent &event)
 {
-  //m_sizer->Layout();
+}
+
+void Thumbnails::OnResize(wxSizeEvent& event)
+{
+  UpdateLayout();
 }
 
 void Thumbnails::UpdateLayout()

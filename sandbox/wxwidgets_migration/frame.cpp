@@ -120,7 +120,7 @@ MyFrame::MyFrame()
   menuBar->Append(settings, "&Settings");
   SetMenuBar( menuBar );
   
-  Bind(wxEVT_MENU, &MyFrame::OnPrint, this);
+  Bind(wxEVT_MENU, &MyFrame::OnPrint, this, wxID_PRINT);
   Bind(wxEVT_MENU, &MyFrame::OnAbout, this, wxID_ABOUT);
   Bind(wxEVT_MENU, &MyFrame::OnExit, this, wxID_EXIT);
 
