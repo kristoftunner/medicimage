@@ -14,13 +14,13 @@ SelectablePane::SelectablePane(wxWindow *parent, wxWindowID id, const wxPoint &p
 void SelectablePane::OnPaint(wxPaintEvent &event)
 {
     wxAutoBufferedPaintDC dc(this);
-    dc.SetBackground(wxBrush(this->GetParent()->GetBackgroundColour()));
+    dc.SetBackground(wxBrush(GetParent()->GetBackgroundColour()));
     dc.Clear();
 
     auto gc = wxGraphicsContext::Create(dc);
     if (gc)
     {
-        wxRect selectionRect{0, 0, this->GetSize().GetWidth(), this->GetSize().GetHeight()};
+        wxRect selectionRect{0, 0, GetSize().GetWidth(), GetSize().GetWidth()};
         selectionRect.Deflate(FromDIP(1));
 
         wxRect contentRect = selectionRect;

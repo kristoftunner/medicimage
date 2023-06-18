@@ -392,7 +392,7 @@ EditorPanel::EditorPanel(wxWindow *parent, wxWindowID id, const wxPoint &pos, co
   patientIdInput->Bind(wxEVT_TEXT_ENTER, [this, patientIdInput](wxCommandEvent& event)
   {
     auto id = patientIdInput->GetValue().ToStdString();
-    PatientEvent patientEvent(EVT_THUMBNAILS_ADD_PATIENT, wxID_ANY);
+    PatientSelectedEvent patientEvent(EVT_THUMBNAILS_ADD_PATIENT, wxID_ANY);
     patientEvent.SetData(id);
     ProcessWindowEvent(patientEvent);
     patientIdInput->Clear();

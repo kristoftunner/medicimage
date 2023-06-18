@@ -4,6 +4,7 @@
 #include <wx/log.h>
 
 #include "thumbnails.h"
+#include "gui/toolbox/attribute_editor_events.h"
 
 namespace app
 {
@@ -14,14 +15,10 @@ Thumbnails::Thumbnails( wxWindow *parent, wxWindowID, const wxPoint &pos, const 
   SetBackgroundColour(wxColour(100, 200, 100));
   m_sizer = new wxBoxSizer(wxVERTICAL);
   m_panelName = new wxStaticText(this, wxID_ANY, "Thumbnails");
-  m_patientList = new wxListCtrl(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLC_REPORT | wxLC_SINGLE_SEL);
-  m_patientList->InsertColumn(0, "Patient IDs");
-  UpdatePatientListCtrl();
-  m_patientList->Bind(wxEVT_LIST_ITEM_SELECTED, &Thumbnails::OnPatientSelected, this);
 
   m_sizer->Add(m_panelName, 0, wxALL, FromDIP(5));
-  m_sizer->Add(m_patientList, wxSizerFlags(0).Expand().Border(wxALL, FromDIP(5)));
 
+  Bind(EVT_PATIENT_SELECTED, &Thumbnails::OnPatientSelected, this);
   Bind(EVT_THUMBNAILS_ADD_PATIENT, &Thumbnails::OnAddPatient, this);
   Bind(EVT_EDITOR_SAVE_DOCUMENT, &Thumbnails::OnAddDocument, this);
   Bind(EVT_EDITOR_DELETE_DOCUMENT, &Thumbnails::OnDeleteDocument, this);
@@ -31,7 +28,9 @@ Thumbnails::Thumbnails( wxWindow *parent, wxWindowID, const wxPoint &pos, const 
 
   SetSizer(m_sizer);
   SetScrollRate(FromDIP(100), FromDIP(100));
-  SetVirtualSize(FromDIP(600), FromDIP(400)); // TODO: work out the scrolling here
+  auto minSize = m_sizer->CalcMin();
+  SetVirtualSize(FromDIP(minSize.x), FromDIP(minSize.y)); 
+  UpdatePatientListCtrl();
 }
 
 void Thumbnails::SelectPane(BitmapPane* pane)
@@ -97,14 +96,13 @@ void Thumbnails::UpdateLayout()
       m_sizer->Add(pane, 1, wxALL, FromDIP(5));
     }
   }
-  m_sizer->Add(m_patientList, wxSizerFlags(0).Expand().Border(wxALL, FromDIP(5)));
   auto size = m_sizer->CalcMin();
   SetVirtualSize(FromDIP(size.GetWidth()), FromDIP(size.GetHeight()));
   m_sizer->Layout();
   Refresh();
 }
 
-void Thumbnails::OnAddPatient(PatientEvent &event)
+void Thumbnails::OnAddPatient(PatientSelectedEvent &event)
 {
   wxLogDebug("Thumbnails::OnAddPatient: %s", event.GetPatientId());
   m_documentController.AddPatient(event.GetPatientId());
@@ -112,12 +110,11 @@ void Thumbnails::OnAddPatient(PatientEvent &event)
   UpdateLayout();
 }
 
-void Thumbnails::OnPatientSelected(wxListEvent &event)
+void Thumbnails::OnPatientSelected(PatientSelectedEvent &event)
 {
-  auto selectedIndex = event.GetIndex();
-  std::string selectedItem = m_patientList->GetItemText(selectedIndex).ToStdString();
-  m_documentController.SelectPatient(selectedItem);
-  wxLogDebug("Thumbnails::OnPatientSelected: %s", selectedItem);
+  auto selectedPatient = event.GetPatientId();
+  m_documentController.SelectPatient(selectedPatient);
+  wxLogDebug("Thumbnails::OnPatientSelected: %s", selectedPatient);
   UpdateLayout();
 }
 
@@ -130,18 +127,15 @@ void Thumbnails::OnUpdateAppFolder(AppFolderUpdateEvent &event)
 
 void Thumbnails::UpdatePatientListCtrl()
 {
+  std::vector<UpdatePatientsEvent::Patient> patients;
   auto patientsIds = m_documentController.GetPatientIds(); 
-  m_patientList->DeleteAllItems();
-  int index = 0;
   for (auto patientId : patientsIds)
   {
-    m_patientList->InsertItem(index, patientId);
     bool selected = patientId == m_documentController.GetSelectedPatientId();
-    if(selected)
-    {
-      m_patientList->SetItemState(index, wxLIST_STATE_SELECTED, wxLIST_STATE_SELECTED);
-    }
-    index++;
+    patients.push_back({patientId, selected});
   }
+  UpdatePatientsEvent event(EVT_PATIENT_UPDATED, wxID_ANY);
+  event.SetData(patients);
+  ProcessWindowEvent(event);
 }
 }

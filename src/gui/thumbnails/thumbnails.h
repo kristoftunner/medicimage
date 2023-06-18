@@ -21,13 +21,14 @@ class Thumbnails : public wxScrolled<wxPanel>
 {
 public:
   Thumbnails( wxWindow *parent, wxWindowID, const wxPoint &pos=wxDefaultPosition, const wxSize &size=wxDefaultSize );
+  DocumentController& GetDocumentController() { return m_documentController; }
 
 private:
   void OnDeleteDocument(ImageDocumentEvent& event);
   void OnAddDocument(ImageDocumentEvent& event);
   void OnResize(wxSizeEvent& event);
-  void OnAddPatient(PatientEvent& event);
-  void OnPatientSelected(wxListEvent& event);
+  void OnAddPatient(PatientSelectedEvent& event);
+  void OnPatientSelected(PatientSelectedEvent& event);
   void OnUpdateAppFolder(AppFolderUpdateEvent& event);
 
   void UpdatePatientListCtrl();

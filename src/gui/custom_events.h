@@ -30,10 +30,10 @@ private:
     Entity m_entity;
 };
 
-class PatientEvent : public wxCommandEvent
+class PatientSelectedEvent : public wxCommandEvent
 {
 public:
-    PatientEvent(wxEventType eventType, wxWindowID id)
+    PatientSelectedEvent(wxEventType eventType, wxWindowID id)
         : wxCommandEvent(eventType, id)
     {
     }
@@ -43,12 +43,36 @@ public:
     const std::string& GetPatientId() const { return m_patientId; }
 
     // Required for event cloning
-    wxEvent* Clone() const override { return new PatientEvent(*this); }
+    wxEvent* Clone() const override { return new PatientSelectedEvent(*this); }
 
 private:
     std::string m_patientId = "";
 };
 
+class UpdatePatientsEvent : public wxCommandEvent
+{
+public:
+    struct Patient
+    {
+      std::string id = "";
+      bool selected = false; 
+    };
+
+    UpdatePatientsEvent(wxEventType eventType, wxWindowID id)
+        : wxCommandEvent(eventType, id)
+    {
+    }
+
+    // Getter and setter for the custom data
+    void SetData(const std::vector<Patient>& data) { m_patients = data; }
+    const std::vector<Patient>& GetPatients() const { return m_patients; }
+
+    // Required for event cloning
+    wxEvent* Clone() const override { return new UpdatePatientsEvent(*this); }
+
+private:
+    std::vector<Patient> m_patients;
+};
 class ImageDocumentEvent : public wxCommandEvent
 {
 public:
