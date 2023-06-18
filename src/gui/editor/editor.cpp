@@ -33,7 +33,7 @@ void Editor::Init()
           {
             std::lock_guard<std::mutex> lock(this->m_cameraFrameMutex);
             this->m_cameraFrame = std::move(frame.value());
-            wxBitmap::Rescale(this->m_cameraFrame->GetBitmap(), {800, 600});
+            wxBitmap::Rescale(this->m_cameraFrame->GetBitmap(), {1280, 720});
             this->m_newFrameAvailable = true;
           }
           frame.reset();
@@ -177,6 +177,14 @@ void Editor::OnUndo()
 bool Editor::CanUndo() 
 {
   return (m_state == EditorState::EDITING || m_state == EditorState::IMAGE_SELECTION) && m_drawingSheet.HasAnnotated();
+}
+
+void Editor::OnCancel()
+{
+  if(m_state == EditorState::EDITING)
+  {
+    m_drawingSheet.OnCancel();
+  }
 }
 
 void Editor::OnDrawButtonPushed(DrawCommand command)

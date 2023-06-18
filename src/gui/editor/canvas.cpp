@@ -42,6 +42,7 @@ Canvas::Canvas( wxWindow *parent, wxWindowID id, const wxPoint &pos, const wxSiz
   Bind(TOOLBOX_SAVE, &Canvas::OnSave, this);
   Bind(TOOLBOX_DELETE, &Canvas::OnDelete, this);
   Bind(TOOLBOX_UNDO, &Canvas::OnUndo, this);
+  Bind(TOOLBOX_CANCEL, &Canvas::OnCancel, this);
 
   Bind(TOOLBOX_DRAW_TEXT, &Canvas::OnDrawText, this);
   Bind(TOOLBOX_DRAW_LETTERS, &Canvas::OnDrawIncrementalLetters, this);
@@ -259,6 +260,12 @@ void Canvas::OnUndo(wxCommandEvent &event)
   }
 }
 
+void Canvas::OnCancel(wxCommandEvent &event)
+{
+  m_editor.OnCancel();
+  m_dialog->OnUpdate();
+}
+
 void Canvas::OnDocumentPicked(ImageDocumentEvent &event)
 {
   m_editor.OnDocumentPicked(event.GetData());
@@ -333,12 +340,11 @@ void Canvas::OnDrawSkinTemplate(wxCommandEvent &event)
 void Canvas::UpdateAttributeEditor()
 {
   auto entities = m_editor.GetSelectedEntities();
+  EntityEvent event(EVT_EDITOR_ENTITY_CHANGED, wxID_ANY);
   if(!entities.empty())
-  {
-    EntityEvent event(EVT_EDITOR_ENTITY_CHANGED, wxID_ANY);
     event.SetData(entities[0]);
-    ProcessWindowEvent(event);
-  }
+
+  ProcessWindowEvent(event);
 }
 
 InfoDialog::InfoDialog(Canvas* parent, const wxString& title, DrawingSheet& sheet, Editor& editor)
@@ -407,6 +413,7 @@ EditorPanel::EditorPanel(wxWindow *parent, wxWindowID id, const wxPoint &pos, co
   Bind(TOOLBOX_SAVE, [this](wxCommandEvent& event){this->m_canvas->OnSave(event);});
   Bind(TOOLBOX_DELETE, [this](wxCommandEvent& event){this->m_canvas->OnDelete(event);});
   Bind(TOOLBOX_UNDO, [this](wxCommandEvent& event){this->m_canvas->OnUndo(event);});
+  Bind(TOOLBOX_CANCEL, [this](wxCommandEvent& event){this->m_canvas->OnCancel(event);});
   Bind(TOOLBOX_DRAW_TEXT, [this](wxCommandEvent& event){this->m_canvas->OnDrawText(event);});
   Bind(TOOLBOX_DRAW_LETTERS, [this](wxCommandEvent& event){this->m_canvas->OnDrawIncrementalLetters(event);});
   Bind(TOOLBOX_DRAW_ARROW, [this](wxCommandEvent& event){this->m_canvas->OnDrawArrow(event);});

@@ -119,6 +119,10 @@ void ImageEditor::DrawLine(glm::vec2 begin, glm::vec2 end, glm::vec4 color, floa
   end *= imageSize; 
   color *= 255.0;
 
+  wxPen pen = wxPen(wxColor(static_cast<int>(color.r), static_cast<int>(color.g), static_cast<int>(color.b)), static_cast<int>(thickness));
+  wxBrush bush = wxBrush(wxColor(static_cast<int>(color.r), static_cast<int>(color.g), static_cast<int>(color.b)), wxBRUSHSTYLE_TRANSPARENT);
+  s_dc->SetPen(pen);
+  s_dc->SetBrush(bush);
   s_dc->DrawLine(wxPoint{static_cast<int>(begin.x), static_cast<int>(begin.y)}, wxPoint{static_cast<int>(end.x), static_cast<int>(end.y)}); // TODO: add arrow cuz it is only a line
 }
 
@@ -126,9 +130,18 @@ void ImageEditor::DrawText(glm::vec2 bottomLeft, const std::string &text, int fo
 {
   glm::vec2 imageSize = {s_image->GetWidth(), s_image->GetHeight()};
   bottomLeft *= imageSize;
+
   wxFont font(fontSize, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
+  // get the text bounding rectangle
+  wxCoord w, h, descent, externalLeading;
   s_dc->SetFont(font);
-  s_dc->SetTextForeground(wxColour(0, 0, 0));
+  s_dc->GetTextExtent(text, &w, &h, &descent, &externalLeading, &font);
+  // draw the text background
+  s_dc->SetPen(*wxWHITE_PEN);
+  s_dc->SetBrush(*wxWHITE_BRUSH);
+  s_dc->DrawRectangle(wxPoint{static_cast<int>(bottomLeft.x), static_cast<int>(bottomLeft.y)}, wxSize{static_cast<int>(w), static_cast<int>(h)});
+  s_dc->SetTextForeground(*wxBLACK);
+  s_dc->SetTextBackground(*wxWHITE);
   s_dc->DrawText(text, wxPoint{static_cast<int>(bottomLeft.x), static_cast<int>(bottomLeft.y)});
 }
 

@@ -20,6 +20,7 @@ Toolbox::Toolbox(wxWindow *parent, wxWindowID id, const wxPoint &pos, const wxSi
   m_buttonHandlers.emplace_back(wxBitmap("save.png", wxBITMAP_TYPE_ANY), [this]() { OnSave(); });
   m_buttonHandlers.emplace_back(wxBitmap("delete.png", wxBITMAP_TYPE_ANY), [this]() { OnDelete(); });
   m_buttonHandlers.emplace_back(wxBitmap("undo.png", wxBITMAP_TYPE_ANY), [this]() { OnUndo(); }); 
+  m_buttonHandlers.emplace_back(wxBitmap("cancel.png", wxBITMAP_TYPE_ANY), [this]() { OnCancel(); }); 
   m_buttonHandlers.emplace_back(wxBitmap("add-text.png", wxBITMAP_TYPE_ANY), [this]() { OnDrawText(); });
   m_buttonHandlers.emplace_back(wxBitmap("add-incremental-letters.png", wxBITMAP_TYPE_ANY), [this]() { OnDrawIncrementalLetters(); });
   m_buttonHandlers.emplace_back(wxBitmap("arrow.png", wxBITMAP_TYPE_ANY), [this]() { OnDrawArrow(); });
@@ -85,6 +86,12 @@ void Toolbox::OnUndo()
   event.SetEventObject(this);
   ProcessWindowEvent(event);
 }
+
+void Toolbox::OnCancel()
+{
+  wxCommandEvent event(TOOLBOX_CANCEL, GetId());
+  event.SetEventObject(this);
+  ProcessWindowEvent(event);}
 
 void Toolbox::OnDrawText()
 {

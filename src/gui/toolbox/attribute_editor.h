@@ -23,6 +23,7 @@ public:
   ~AttributeEditor() = default;
 private:
   void OnEntityAttributeChange(EntityEvent& event);
+  void Draw(wxPaintEvent& event);
 private:
   wxGridSizer* m_gridSizer;
   wxBoxSizer* m_topSizer;

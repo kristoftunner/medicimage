@@ -7,6 +7,7 @@ namespace app
   wxDECLARE_EVENT(TOOLBOX_SAVE, wxCommandEvent);
   wxDECLARE_EVENT(TOOLBOX_DELETE, wxCommandEvent);
   wxDECLARE_EVENT(TOOLBOX_UNDO, wxCommandEvent);
+  wxDECLARE_EVENT(TOOLBOX_CANCEL, wxCommandEvent);
 
   wxDECLARE_EVENT(TOOLBOX_DRAW_TEXT, wxCommandEvent);
   wxDECLARE_EVENT(TOOLBOX_DRAW_LETTERS, wxCommandEvent);

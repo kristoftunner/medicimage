@@ -21,6 +21,7 @@ public:
   void OnSave();
   void OnDelete();
   void OnUndo();
+  void OnCancel();
   
   void OnDrawText();
   void OnDrawIncrementalLetters();

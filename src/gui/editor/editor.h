@@ -51,6 +51,7 @@ public:
   std::optional<ImageDocumentEvent> OnDelete();
   bool CanDelete();
   void OnUndo();
+  void OnCancel();
   bool CanUndo();
   void OnDocumentPicked(const ImageDocument& document);
 

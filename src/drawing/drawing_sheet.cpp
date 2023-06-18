@@ -247,6 +247,12 @@ namespace medicimage
     }
   }
 
+  void DrawingSheet::OnCancel()
+  {
+    if(m_currentDrawCommand != DrawCommand::DO_NOTHING)
+      m_drawState->OnCancel();
+  }
+
   std::optional<Entity> DrawingSheet::GetHoveredEntity(const glm::vec2 pos)
   {
     // TODO: may want to move this into editor ui, so here only relative coordinates are handled

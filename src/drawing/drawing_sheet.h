@@ -64,6 +64,7 @@ public:
   void OnTextInput(const std::string& inputText);
   void OnKeyPressed(KeyCode key);
   void OnUpdate(); 
+  void OnCancel();
   // These are only for debug purpose
   BaseDrawState* GetDrawState() { return m_drawState.get(); }
   std::vector<glm::vec2> GetDrawingPoints(){ return std::vector<glm::vec2>{m_firstPoint, m_secondPoint};}
@@ -121,6 +122,9 @@ public:
   BaseDrawState(DrawingSheet* sheet, const std::string& stateName = "BaseDrawState") : m_sheet(sheet), m_stateName(stateName) {}
   virtual ~BaseDrawState() = default;
   const std::string& GetName() const {return m_stateName;}
+  virtual void OnCancel(){
+    m_sheet->ChangeDrawState(std::make_unique<BaseDrawState>(m_sheet)); 
+  }
   virtual void OnMouseHovered(const glm::vec2 pos) {}
   virtual void OnMouseButtonPressed(const glm::vec2 pos) {}
   virtual void OnMouseButtonDown(const glm::vec2 pos) {}
@@ -187,7 +191,7 @@ private:
   void DrawFinalText();
   Timer m_timer;
   std::string m_text = " "; // space is needed to have a blank space for indicating the cursor
-  constexpr static int s_defaultFontSize = 14;
+  constexpr static int s_defaultFontSize = 20;
 };
 
 class DrawIncrementalLetters : public BaseDrawState
@@ -200,7 +204,7 @@ private:
   void IncrementLetter();
   void DecrementLetter();
   std::string m_text = "A";
-  constexpr static int s_defaultFontSize = 10;
+  constexpr static int s_defaultFontSize = 18;
 };
 
 // select states

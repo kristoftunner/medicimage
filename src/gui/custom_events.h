@@ -2,6 +2,7 @@
 
 #include <wx/event.h>
 #include <filesystem>
+#include <optional>
 
 #include "image_handling/image_saver.h"
 #include "drawing/entity.h"
@@ -21,13 +22,13 @@ public:
 
     // Getter and setter for the custom data
     void SetData(const Entity& data) { m_entity = data; }
-    Entity GetData() { return m_entity; }
+    std::optional<Entity> GetData() { return m_entity; }
 
     // Required for event cloning
     wxEvent* Clone() const override { return new EntityEvent(*this); }
 
 private:
-    Entity m_entity;
+    std::optional<Entity> m_entity;
 };
 
 class PatientSelectedEvent : public wxCommandEvent

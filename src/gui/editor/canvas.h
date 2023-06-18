@@ -56,6 +56,7 @@ public:
   void OnSave(wxCommandEvent &event);
   void OnDelete(wxCommandEvent &event);
   void OnUndo(wxCommandEvent &event);
+  void OnCancel(wxCommandEvent &event);
   void OnDocumentPicked(ImageDocumentEvent& event);
 
   void OnDrawText(wxCommandEvent &event);
