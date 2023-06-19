@@ -7,6 +7,8 @@
 #include <wx/textctrl.h>
 #include <wx/timer.h>
 #include <format>
+#include <chrono>
+#include <vector>
 
 #include "drawing/drawing_sheet.h"
 #include "renderer/texture.h"
@@ -30,9 +32,35 @@ private:
   wxStaticText* m_editorState;
   wxStaticText* m_mousePos;
   wxStaticText* m_canvasSize;
+  wxStaticText* m_fps;
   DrawingSheet& m_sheet;
   Editor& m_editor;
   Canvas* m_canvas;
+};
+
+struct FPSCounter{
+  float fps = 0.0f;
+  std::chrono::time_point<std::chrono::steady_clock> lastTime = std::chrono::steady_clock::now();
+  std::vector<float> fpsHistory;
+  void Update() {
+    auto now = std::chrono::steady_clock::now();
+    auto diff = now - lastTime;
+    lastTime = now;
+    fps = 1.0f / std::chrono::duration<float>(diff).count();
+    fpsHistory.push_back(fps);
+    if (fpsHistory.size() > 100) {
+      fpsHistory.erase(fpsHistory.begin());
+    }
+  }
+  
+  float GetAverageFPS() {
+    float sum = 0.0f;
+    for (auto fps : fpsHistory) {
+      sum += fps;
+    }
+    return sum / fpsHistory.size();
+  }
+  
 };
 
 class Canvas : public wxWindow
@@ -73,6 +101,7 @@ public:
   std::mutex& GetCameraMutex() { return m_editor.GetCameraMutex(); }
   wxPoint GetMousePoint() { return m_mousePoint; }
   wxSize GetCanvasSize() { return m_canvasSize; }
+  float GetFPS() { return m_fpsCounter.GetAverageFPS(); }
 private:
   void UpdateAttributeEditor();
   glm::vec2 CalcCorrectedMousePos(glm::vec2 pos);
@@ -84,6 +113,7 @@ private:
   Editor m_editor;
   wxTimer m_frameUpdateTimer;
   wxPoint m_mousePoint;
+  FPSCounter m_fpsCounter;
 };
 
 class EditorPanel : public wxPanel

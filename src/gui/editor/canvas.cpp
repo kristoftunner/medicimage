@@ -194,6 +194,7 @@ void Canvas::OnPaint(wxPaintEvent &event)
   PrepareDC(dc);
   Draw(dc);
   m_canvasSize = GetSize();
+  m_fpsCounter.Update();
 }
 
 void Canvas::OnCameraFrameUpdate(wxTimerEvent &event)
@@ -357,18 +358,21 @@ InfoDialog::InfoDialog(Canvas* parent, const wxString& title, DrawingSheet& shee
   auto editorState = std::format("EditorState:{}", m_editor.GetStateName());
   auto mousePosition = std::format("MousePosition:{}:{}", m_canvas->GetMousePoint().x, m_canvas->GetMousePoint().y);
   auto canvasSize = std::format("CanvasSize:{}:{}", m_canvas->GetCanvasSize().x, m_canvas->GetCanvasSize().y);
+  auto fps = std::format("FPS:{}", m_canvas->GetFPS()); 
 
   m_drawState = new wxStaticText(this, wxID_ANY, drawStateText);
   m_drawCommand = new wxStaticText(this, wxID_ANY, drawCommandText);
   m_editorState = new wxStaticText(this, wxID_ANY, editorState);
   m_mousePos = new wxStaticText(this, wxID_ANY, mousePosition);
   m_canvasSize = new wxStaticText(this, wxID_ANY, canvasSize);
+  m_fps = new wxStaticText(this, wxID_ANY, fps);
 
   m_sizer->Add(m_drawState, wxSizerFlags().Align(wxALIGN_TOP).Border(wxALL, FromDIP(1)));  // TODO: properly align this
   m_sizer->Add(m_drawCommand, wxSizerFlags().Align(wxALIGN_TOP).Border(wxALL, FromDIP(1)));
   m_sizer->Add(m_editorState, wxSizerFlags().Align(wxALIGN_TOP).Border(wxALL, FromDIP(1)));
   m_sizer->Add(m_mousePos, wxSizerFlags().Align(wxALIGN_TOP).Border(wxALL, FromDIP(1)));
   m_sizer->Add(m_canvasSize, wxSizerFlags().Align(wxALIGN_TOP).Border(wxALL, FromDIP(1)));
+  m_sizer->Add(m_fps, wxSizerFlags().Align(wxALIGN_TOP).Border(wxALL, FromDIP(1)));
   SetSizerAndFit(m_sizer);
 }
 
@@ -379,12 +383,14 @@ void InfoDialog::OnUpdate()
   auto editorStateText = std::format("EditorState:{}", m_editor.GetStateName());
   auto mousePosition = std::format("MousePosition:{}:{}", m_canvas->GetMousePoint().x, m_canvas->GetMousePoint().y);
   auto canvasSize = std::format("CanvasSize:{}:{}", m_canvas->GetCanvasSize().x, m_canvas->GetCanvasSize().y);
+  auto fps = std::format("FPS:{}", m_canvas->GetFPS());
 
   m_drawState->SetLabel(drawStateText);
   m_drawCommand->SetLabel(drawCommandText);
   m_editorState->SetLabel(editorStateText);
   m_mousePos->SetLabel(mousePosition);
   m_canvasSize->SetLabel(canvasSize);
+  m_fps->SetLabel(fps);
   Layout();
 }
 
