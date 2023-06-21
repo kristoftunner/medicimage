@@ -21,7 +21,7 @@ void Editor::Init()
     {
       std::this_thread::sleep_for(std::chrono::milliseconds(33));
       {
-        if(this->m_state == EditorState::SHOW_CAMERA)
+        if(m_state == EditorState::SHOW_CAMERA)
         {
           CameraAPI::Frame frame;
           {
@@ -32,16 +32,16 @@ void Editor::Init()
           if (frame)
           {
             std::lock_guard<std::mutex> lock(this->m_cameraFrameMutex);
-            this->m_cameraFrame = std::move(frame.value());
-            wxBitmap::Rescale(this->m_cameraFrame->GetBitmap(), {1280, 720});
-            this->m_newFrameAvailable = true;
+            m_cameraFrame = std::move(frame.value());
+            wxBitmap::Rescale(m_cameraFrame->GetBitmap(), {1280, 720});
+            m_newFrameAvailable = true;
           }
           frame.reset();
         }
       }
       std::chrono::system_clock::time_point now = std::chrono::system_clock::now();
       std::chrono::duration<double> elapsed = now - lastUpdate;
-      this->m_cameraFrameRate = 1000.0 / elapsed.count();
+      m_cameraFrameRate = 1000.0 / elapsed.count();
     }
   };
   m_cameraUpdateThread = std::thread(cameraUpdate);

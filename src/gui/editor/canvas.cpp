@@ -5,6 +5,7 @@
 #include <wx/image.h>
 #include <wx/dcmemory.h>
 #include <wx/textctrl.h>
+#include <wx/graphics.h>
 #include <string>
 
 #include <image_handling/image_editor.h>
@@ -76,8 +77,6 @@ glm::vec2 Canvas::CalcCorrectedMousePos(glm::vec2 pos)
 void Canvas::OnMouseMoved(wxMouseEvent &event)
 {
   wxClientDC dc(this);
-  PrepareDC(dc);
-
   m_mousePoint = wxPoint(event.GetLogicalPosition(dc));
   m_editor.OnMouseMoved(CalcCorrectedMousePos({m_mousePoint.x, m_mousePoint.y}));
   m_dialog->OnUpdate();
@@ -85,7 +84,7 @@ void Canvas::OnMouseMoved(wxMouseEvent &event)
   {
     m_editor.UpdatedDrawing();
     Refresh();
-    UpdateAttributeEditor();
+    //UpdateAttributeEditor();
   }
   
 }
@@ -93,15 +92,13 @@ void Canvas::OnMouseMoved(wxMouseEvent &event)
 void Canvas::OnMousePressed(wxMouseEvent &event)
 {
   wxClientDC dc(this);
-  PrepareDC(dc);
-
   m_mousePoint = wxPoint(event.GetLogicalPosition(dc));
   m_editor.OnMousePressed(CalcCorrectedMousePos({m_mousePoint.x, m_mousePoint.y}));
   if(m_editor.IsDrawingUpdated())
   {
     m_editor.UpdatedDrawing();
     Refresh();
-    UpdateAttributeEditor();
+    //UpdateAttributeEditor();
   }
   
   m_dialog->OnUpdate(); // TODO: check these OnUpdate calls if it is really necessary
@@ -111,8 +108,6 @@ void Canvas::OnMousePressed(wxMouseEvent &event)
 void Canvas::OnMouseReleased(wxMouseEvent &event)
 {
   wxClientDC dc(this);
-  PrepareDC(dc);
-
   m_mousePoint = wxPoint(event.GetLogicalPosition(dc));
 
   m_editor.OnMouseReleased(CalcCorrectedMousePos({m_mousePoint.x, m_mousePoint.y}));
@@ -120,7 +115,7 @@ void Canvas::OnMouseReleased(wxMouseEvent &event)
   {
     m_editor.UpdatedDrawing();
     Refresh();
-    UpdateAttributeEditor();
+    //UpdateAttributeEditor();
   }
   
   m_dialog->OnUpdate();
@@ -170,9 +165,6 @@ void Canvas::Draw(wxDC &dc)
 {
   dc.SetBackground(*wxGREY_BRUSH);
   dc.Clear();
-  dc.SetPen(*wxBLACK_PEN);
-  dc.SetBrush(*wxTRANSPARENT_BRUSH);
-
   auto image = m_editor.Draw();
   // calculate new size of the image, so that it will fit into the window
   auto size = GetSize();
@@ -185,13 +177,33 @@ void Canvas::Draw(wxDC &dc)
   dc.SetUserScale(m_canvasScale, m_canvasScale);
   dc.SetDeviceOrigin(static_cast<int>(m_imageBorder.x), static_cast<int>(m_imageBorder.y)); 
   dc.DrawBitmap(image->GetBitmap(), 0, 0);
-  SetVirtualSize(image->GetWidth(), image->GetHeight()); 
 }
 
+//void Canvas::Draw(wxMemoryDC* dc)
+//{
+//  wxGraphicsContext* gc = wxGraphicsContext::Create(*dc);
+//  //gc->SetBackground(*wxGREY_BRUSH);
+//  //gc->Clear();
+//  gc->SetPen(*wxBLACK_PEN);
+//  gc->SetBrush(*wxTRANSPARENT_BRUSH);
+//
+//  auto image = m_editor.Draw();
+//  // calculate new size of the image, so that it will fit into the window
+//  auto size = GetSize();
+//  auto imageSize = glm::vec2{ image->GetWidth(), image->GetHeight() };
+//  m_canvasScale = std::min((float)size.x / image->GetWidth(), (float)size.y / image->GetHeight());
+//  auto newWidth = image->GetWidth() * m_canvasScale;
+//  auto newHeight = image->GetHeight() * m_canvasScale;
+//  m_imageBorder = (glm::vec2{size.x, size.y} - glm::vec2(newWidth, newHeight)) / 2.0f;
+//
+//  gc->Scale(m_canvasScale, m_canvasScale);
+//  //dc.SetDeviceOrigin(static_cast<int>(m_imageBorder.x), static_cast<int>(m_imageBorder.y)); 
+//  //dc.DrawBitmap(image->GetBitmap(), 0, 0);
+//  gc->DrawBitmap(image->GetBitmap(), m_imageBorder.x, m_imageBorder.y, image->GetWidth(), image->GetHeight());
+//  SetVirtualSize(image->GetWidth(), image->GetHeight()); 
 void Canvas::OnPaint(wxPaintEvent &event)
 {
-  wxAutoBufferedPaintDC dc(this);
-  PrepareDC(dc);
+  wxPaintDC dc(this);
   Draw(dc);
   m_canvasSize = GetSize();
   m_fpsCounter.Update();

@@ -9,6 +9,7 @@
 
 #include <wx/dcmemory.h>
 #include <wx/image.h>
+#include <wx/graphics.h>
 #include <opencv2/imgproc.hpp>
 namespace medicimage
 {
@@ -42,6 +43,8 @@ private:
   // TODO: move this into a better place
   static std::unique_ptr<Image2D> s_image;
   static std::unique_ptr<wxMemoryDC> s_dc;
+  static wxGraphicsContext* s_gc;
+  static wxGraphicsPath s_path;
 };
 
 } // namespace medicimage

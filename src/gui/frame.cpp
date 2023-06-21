@@ -269,6 +269,6 @@ void Printout::DrawPage()
     wxCoord yoff = (fitRect.height - maxY) / 2;
     OffsetLogicalOrigin(xoff, yoff);
 
-    m_canvas->Draw(*GetDC());
+    //m_canvas->Draw(GetDC());
 }
 }

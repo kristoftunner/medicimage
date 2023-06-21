@@ -11,20 +11,23 @@ namespace medicimage
 {
 std::unique_ptr<Image2D> ImageEditor::s_image;
 std::unique_ptr<wxMemoryDC> ImageEditor::s_dc;
+wxGraphicsContext* ImageEditor::s_gc;
 
 void ImageEditor::Begin(std::unique_ptr<Image2D> image)
 {
   s_image = std::move(image);
   s_dc = std::make_unique<wxMemoryDC>(s_image->GetBitmap());
+  s_gc = wxGraphicsContext::Create(*(s_dc.get()));
   wxImage image2 = s_image->GetBitmap().ConvertToImage();
   bool hasAlpha = image2.HasAlpha();
-  s_dc->SetBrush(*wxTRANSPARENT_BRUSH);
+  s_gc->SetBrush(*wxTRANSPARENT_BRUSH);
 }
 
 std::unique_ptr<Image2D> ImageEditor::End()
 {
   s_dc->SelectObject(wxNullBitmap);
   s_dc.reset();
+  delete s_gc;
   return std::move(s_image);
 }
 
@@ -38,21 +41,21 @@ void ImageEditor::DrawCircle(glm::vec2 center, float radius, glm::vec4 color, fl
   color *= 255.0;
   if(filled)
   { // TODO add transparency support with wxGraphicsContext
-    s_dc->SetPen(*wxTRANSPARENT_PEN);
-    s_dc->SetBrush(wxBrush(wxColor(0,0,0,0)));
-    s_dc->DrawCircle(wxPoint{static_cast<int>(center.x), static_cast<int>(center.y)}, static_cast<int>(radius));
+    s_gc->SetPen(*wxTRANSPARENT_PEN);
+    s_gc->SetBrush(wxBrush(wxColor(0,0,0,0)));
+    s_gc->DrawEllipse(static_cast<int>(center.x), static_cast<int>(center.y), static_cast<int>(radius), static_cast<int>(radius));
 
-    s_dc->SetPen(wxPen(wxColor(static_cast<int>(color.r), static_cast<int>(color.g), static_cast<int>(color.b)), static_cast<int>(thickness)));
-    s_dc->SetBrush(wxBrush(wxColor(static_cast<int>(color.r), static_cast<int>(color.g), static_cast<int>(color.b), 128)));
-    s_dc->DrawCircle(wxPoint{static_cast<int>(center.x), static_cast<int>(center.y)}, static_cast<int>(radius));
+    s_gc->SetPen(wxPen(wxColor(static_cast<int>(color.r), static_cast<int>(color.g), static_cast<int>(color.b)), static_cast<int>(thickness)));
+    s_gc->SetBrush(wxBrush(wxColor(static_cast<int>(color.r), static_cast<int>(color.g), static_cast<int>(color.b), 128)));
+    s_gc->DrawEllipse(static_cast<int>(center.x), static_cast<int>(center.y), static_cast<int>(radius), static_cast<int>(radius));
   }
   else
   {
     wxPen pen = wxPen(wxColor(static_cast<int>(color.r), static_cast<int>(color.g), static_cast<int>(color.b)), static_cast<int>(thickness));
     wxBrush bush = wxBrush(wxColor(static_cast<int>(color.r), static_cast<int>(color.g), static_cast<int>(color.b)), wxBRUSHSTYLE_TRANSPARENT);
-    s_dc->SetPen(pen);
-    s_dc->SetBrush(bush);
-    s_dc->DrawCircle(wxPoint{static_cast<int>(center.x), static_cast<int>(center.y)}, static_cast<int>(radius));
+    s_gc->SetPen(pen);
+    s_gc->SetBrush(bush);
+    s_gc->DrawEllipse(static_cast<int>(center.x), static_cast<int>(center.y), static_cast<int>(radius), static_cast<int>(radius));
   }
 
 }
@@ -78,9 +81,10 @@ void ImageEditor::DrawRectangle(glm::vec2 topleft, glm::vec2 bottomright, glm::v
     {
       wxPen pen = wxPen(wxColor(static_cast<int>(color.r), static_cast<int>(color.g), static_cast<int>(color.b)), static_cast<int>(thickness));
       wxBrush bush = wxBrush(wxColor(static_cast<int>(color.r), static_cast<int>(color.g), static_cast<int>(color.b)), wxBRUSHSTYLE_TRANSPARENT);
-      s_dc->SetPen(pen);
-      s_dc->SetBrush(bush);
-      s_dc->DrawRectangle(wxRect(wxPoint{static_cast<int>(topleft.x), static_cast<int>(topleft.y)}, wxPoint{static_cast<int>(bottomright.x), static_cast<int>(bottomright.y)}));
+      s_gc->SetPen(pen);
+      s_gc->SetBrush(bush);
+      auto rect = wxRect(wxPoint{static_cast<int>(topleft.x), static_cast<int>(topleft.y)}, wxPoint{static_cast<int>(bottomright.x), static_cast<int>(bottomright.y)}); 
+      s_gc->DrawRectangle(rect.x, rect.y, rect.width, rect.height);
     }
   }
 
@@ -103,13 +107,16 @@ void ImageEditor::DrawArrow(glm::vec2 begin, glm::vec2 end, glm::vec4 color, flo
   glm::vec2 arrowPoint2 = end - dir * glm::vec2(10) + leftDir * glm::vec2(8);
   
   // Draw the arrowhead
-  wxPoint arrowPoints[3] = { {static_cast<int>(end.x), static_cast<int>(end.y)}, {static_cast<int>(arrowPoint1.x), static_cast<int>(arrowPoint1.y)}, {static_cast<int>(arrowPoint2.x), static_cast<int>(arrowPoint2.y)} };
+  wxPoint2DDouble arrowPoints[4] = {
+      {static_cast<double>(begin.x), static_cast<double>(begin.y)},
+      {static_cast<double>(end.x), static_cast<double>(end.y)},
+      {static_cast<double>(arrowPoint1.x), static_cast<double>(arrowPoint1.y)},
+      {static_cast<double>(arrowPoint2.x), static_cast<double>(arrowPoint2.y)}};
   wxPen pen = wxPen(wxColor(static_cast<int>(color.r), static_cast<int>(color.g), static_cast<int>(color.b)), static_cast<int>(thickness));
   wxBrush bush = wxBrush(wxColor(static_cast<int>(color.r), static_cast<int>(color.g), static_cast<int>(color.b)), wxBRUSHSTYLE_TRANSPARENT);
-  s_dc->SetPen(pen);
-  s_dc->SetBrush(bush);
-  s_dc->DrawLine(wxPoint{static_cast<int>(begin.x), static_cast<int>(begin.y)}, wxPoint{static_cast<int>(end.x), static_cast<int>(end.y)}); 
-  s_dc->DrawPolygon(3, arrowPoints);
+  s_gc->SetPen(pen);
+  s_gc->SetBrush(bush);
+  s_gc->DrawLines(4, arrowPoints);
   //TODO: add rotation 
 }
 void ImageEditor::DrawLine(glm::vec2 begin, glm::vec2 end, glm::vec4 color, float thickness, double tipLengith)
@@ -121,9 +128,12 @@ void ImageEditor::DrawLine(glm::vec2 begin, glm::vec2 end, glm::vec4 color, floa
 
   wxPen pen = wxPen(wxColor(static_cast<int>(color.r), static_cast<int>(color.g), static_cast<int>(color.b)), static_cast<int>(thickness));
   wxBrush bush = wxBrush(wxColor(static_cast<int>(color.r), static_cast<int>(color.g), static_cast<int>(color.b)), wxBRUSHSTYLE_TRANSPARENT);
-  s_dc->SetPen(pen);
-  s_dc->SetBrush(bush);
-  s_dc->DrawLine(wxPoint{static_cast<int>(begin.x), static_cast<int>(begin.y)}, wxPoint{static_cast<int>(end.x), static_cast<int>(end.y)}); // TODO: add arrow cuz it is only a line
+  s_gc->SetPen(pen);
+  s_gc->SetBrush(bush);
+  wxPoint2DDouble arrowPoints[4] = {
+      {static_cast<double>(begin.x), static_cast<double>(begin.y)},
+      {static_cast<double>(end.x), static_cast<double>(end.y)}};
+  s_gc->DrawLines(2, arrowPoints);
 }
 
 void ImageEditor::DrawText(glm::vec2 bottomLeft, const std::string &text, int fontSize, float thickness)
@@ -134,15 +144,15 @@ void ImageEditor::DrawText(glm::vec2 bottomLeft, const std::string &text, int fo
   wxFont font(fontSize, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
   // get the text bounding rectangle
   wxCoord w, h, descent, externalLeading;
-  s_dc->SetFont(font);
-  s_dc->GetTextExtent(text, &w, &h, &descent, &externalLeading, &font);
-  // draw the text background
-  s_dc->SetPen(*wxWHITE_PEN);
-  s_dc->SetBrush(*wxWHITE_BRUSH);
-  s_dc->DrawRectangle(wxPoint{static_cast<int>(bottomLeft.x), static_cast<int>(bottomLeft.y)}, wxSize{static_cast<int>(w), static_cast<int>(h)});
-  s_dc->SetTextForeground(*wxBLACK);
-  s_dc->SetTextBackground(*wxWHITE);
-  s_dc->DrawText(text, wxPoint{static_cast<int>(bottomLeft.x), static_cast<int>(bottomLeft.y)});
+  //s_gc->SetFont(font);
+  //s_gc->GetTextExtent(text, &w, &h, &descent, &externalLeading, &font);
+  //// draw the text background
+  //s_gc->SetPen(*wxWHITE_PEN);
+  //s_gc->SetBrush(*wxWHITE_BRUSH);
+  //s_gc->DrawRectangle(wxPoint{static_cast<int>(bottomLeft.x), static_cast<int>(bottomLeft.y)}, wxSize{static_cast<int>(w), static_cast<int>(h)});
+  //s_gc->SetTextForeground(*wxBLACK);
+  //s_gc->SetTextBackground(*wxWHITE);
+  //s_gc->DrawText(text, wxPoint{static_cast<int>(bottomLeft.x), static_cast<int>(bottomLeft.y)});
 }
 
 
@@ -156,11 +166,11 @@ void ImageEditor::DrawSpline(glm::vec2 begin, glm::vec2 middle, glm::vec2 end, i
 
   wxPen pen = wxPen(wxColor(static_cast<int>(color.r), static_cast<int>(color.g), static_cast<int>(color.b)), static_cast<int>(thickness));
   wxBrush bush = wxBrush(wxColor(static_cast<int>(color.r), static_cast<int>(color.g), static_cast<int>(color.b)), wxBRUSHSTYLE_TRANSPARENT);
-  s_dc->SetPen(pen);
-  s_dc->SetBrush(bush);
+  s_gc->SetPen(pen);
+  s_gc->SetBrush(bush);
 
   wxPoint splinePoints[3] = { {static_cast<int>(begin.x), static_cast<int>(begin.y)}, {static_cast<int>(middle.x), static_cast<int>(middle.y)}, {static_cast<int>(end.x), static_cast<int>(end.y)} };
-  s_dc->DrawSpline(3, splinePoints);
+  //s_gc->DrawSpline(3, splinePoints);
 }
 
 glm::vec2 ImageEditor::GetTextBoundingBox(const std::string &text, int fontSize, float thickness)

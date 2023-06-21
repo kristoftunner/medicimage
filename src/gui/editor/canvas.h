@@ -6,9 +6,11 @@
 #include <wx/stattext.h>
 #include <wx/textctrl.h>
 #include <wx/timer.h>
+#include <wx/dcbuffer.h>
 #include <format>
 #include <chrono>
 #include <vector>
+#include <variant>
 
 #include "drawing/drawing_sheet.h"
 #include "renderer/texture.h"
