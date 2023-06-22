@@ -57,10 +57,8 @@ public:
     m_mouseDown = false;
   }
 
-  void OnPaint(wxPaintEvent& event)
+  wxBitmap DrawBitmap(wxBitmap bitmap)
   {
-  #if 1
-    wxBitmap bitmap(400,600);
     wxMemoryDC memDC(bitmap);
     auto gc = wxGraphicsContext::Create(memDC);
     if(gc)
@@ -68,18 +66,32 @@ public:
       
       gc->SetPen(*wxWHITE_PEN);
       gc->SetBrush(*wxWHITE_BRUSH);
-      gc->DrawRectangle(0, 0, 400, 600);
+      gc->DrawRectangle(0, 0, 1280, 780);
       auto width = m_secondPoint.x - m_firstPoint.x;
       auto height = m_secondPoint.y - m_firstPoint.y;
       gc->SetPen(*wxRED_PEN);
-      gc->DrawRectangle(m_firstPoint.x, m_firstPoint.y, width, height);
+      for(int i = 0; i < 10; ++i)
+      {
+        gc->DrawRectangle(m_firstPoint.x + i * 20, m_firstPoint.y + i * 20, width, height);
+      }
       delete gc;
     }
-
     memDC.SelectObject(wxNullBitmap);
 
+    return bitmap;
+  }
+  
+  void OnPaint(wxPaintEvent& event)
+  {
+  #if 1
+    wxBitmap bitmap(1280, 720);
+    auto bitmap2 = DrawBitmap(bitmap);
+    auto bitmap3 = DrawBitmap(bitmap2);
+
     wxPaintDC dc(this);
-    dc.DrawBitmap(bitmap, 0, 0);
+    dc.Clear();
+    dc.SetUserScale(.5, .5);
+    dc.DrawBitmap(bitmap3, 0, 0);
 #else
     wxPaintDC dc(this);
     auto gc = wxGraphicsContext::Create(dc);

@@ -26,7 +26,6 @@ namespace medicimage
 
     m_sheetSize = viewportSize;
     m_originalDoc = std::move(doc);
-    m_drawing = std::make_unique<Image2D>(*m_originalDoc->image.get());
   }
   
   void DrawingSheet::SetDrawCommand(const DrawCommand command)
@@ -88,9 +87,9 @@ namespace medicimage
     std::stringstream ss;
     ss << std::put_time(std::localtime(&(m_originalDoc->timestamp)), "%d-%b-%Y %X");
     std::string footerText = m_originalDoc->documentId + " - " + ss.str();
-    m_drawing = ImageEditor::AddImageFooter(footerText, *m_originalDoc->image.get());
+    auto drawing = ImageEditor::AddImageFooter(footerText, *m_originalDoc->image.get());
 
-    ImageEditor::Begin(std::move(m_drawing));
+    ImageEditor::Begin(std::move(drawing));
     auto circles = Entity::View<CircleComponent>();
     for(auto e : circles)
     {
@@ -154,7 +153,7 @@ namespace medicimage
         sw.Draw();
     }
 
-    m_drawing = ImageEditor::End();
+    drawing = ImageEditor::End();
 
     std::for_each(circles.begin(), circles.end(), m_drawState->DeleteTemporaries());
     std::for_each(rectangles.begin(), rectangles.end(), m_drawState->DeleteTemporaries());
@@ -164,7 +163,7 @@ namespace medicimage
     std::for_each(skinTemplates.begin(), skinTemplates.end(), m_drawState->DeleteTemporaries());
     std::for_each(splines.begin(), splines.end(), m_drawState->DeleteTemporaries());
 
-    return std::make_unique<Image2D>(*m_drawing.get());
+    return std::move(drawing);
   }
 
   void DrawingSheet::ChangeDrawState(std::unique_ptr<BaseDrawState> newState)
@@ -180,71 +179,43 @@ namespace medicimage
   void DrawingSheet::OnMouseHovered(const glm::vec2 pos)
   {
     if(m_currentDrawCommand != DrawCommand::DO_NOTHING)
-    {
-      ImageEditor::Begin(std::move(m_drawing));
       m_drawState->OnMouseHovered(pos);
-      m_drawing = ImageEditor::End();
-    }
   }
 
   void DrawingSheet::OnMouseButtonPressed(const glm::vec2 pos)
   {
     if (m_currentDrawCommand != DrawCommand::DO_NOTHING)
-    {
-      ImageEditor::Begin(std::move(m_drawing));
       m_drawState->OnMouseButtonPressed(pos);
-      m_drawing = ImageEditor::End();
-    }
   }
 
   void DrawingSheet::OnMouseButtonDown(const glm::vec2 pos)
   {
     if(m_currentDrawCommand != DrawCommand::DO_NOTHING)
-    {
-      ImageEditor::Begin(std::move(m_drawing));
       m_drawState->OnMouseButtonDown(pos);
-      m_drawing = ImageEditor::End();
-    }
   }
 
   void DrawingSheet::OnMouseButtonReleased(const glm::vec2 pos)
   {
     if(m_currentDrawCommand != DrawCommand::DO_NOTHING)
-    {
-      ImageEditor::Begin(std::move(m_drawing));
       m_drawState->OnMouseButtonReleased(pos);
-      m_drawing = ImageEditor::End();
-    }
   }
 
   void DrawingSheet::OnTextInput(const std::string &inputText)
   {
     if (m_currentDrawCommand != DrawCommand::DO_NOTHING)
-    {
-      ImageEditor::Begin(std::move(m_drawing));
       m_drawState->OnTextInput(inputText);
-      m_drawing = ImageEditor::End();
-    }
   }
 
   void DrawingSheet::OnKeyPressed(KeyCode key)
   {
     if (m_currentDrawCommand != DrawCommand::DO_NOTHING)
-    {
-      ImageEditor::Begin(std::move(m_drawing));
       m_drawState->OnKeyPressed(key);
-      m_drawing = ImageEditor::End();
-    }
   }
 
   void DrawingSheet::OnUpdate()
   {
     if(m_currentDrawCommand != DrawCommand::DO_NOTHING)
-    {
-      ImageEditor::Begin(std::move(m_drawing));
       m_drawState->OnUpdate();
-      m_drawing = ImageEditor::End();
-    }
   }
 
   void DrawingSheet::OnCancel()

@@ -105,6 +105,7 @@ public:
   wxSize GetCanvasSize() { return m_canvasSize; }
   float GetFPS() { return m_fpsCounter.GetAverageFPS(); }
 private:
+  std::unique_ptr<Image2D> DummyDraw();
   void UpdateAttributeEditor();
   glm::vec2 CalcCorrectedMousePos(glm::vec2 pos);
   wxSize m_canvasSize;
@@ -116,6 +117,8 @@ private:
   wxTimer m_frameUpdateTimer;
   wxPoint m_mousePoint;
   FPSCounter m_fpsCounter;
+
+  wxPoint m_firstPoint, m_secondPoint;
 };
 
 class EditorPanel : public wxPanel

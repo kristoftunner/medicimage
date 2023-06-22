@@ -83,7 +83,6 @@ public:
   glm::vec2 GetNormalizedPos(const glm::vec2 pos);
 private:
   std::unique_ptr<ImageDocument> m_originalDoc;
-  std::unique_ptr<Image2D> m_drawing;
 
   std::optional<Entity> m_hoveredEntity;
   std::optional<Entity> m_draggedEntity;

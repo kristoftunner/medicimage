@@ -84,9 +84,8 @@ void Canvas::OnMouseMoved(wxMouseEvent &event)
   {
     m_editor.UpdatedDrawing();
     Refresh();
-    //UpdateAttributeEditor();
+    UpdateAttributeEditor();
   }
-  
 }
 
 void Canvas::OnMousePressed(wxMouseEvent &event)
@@ -98,7 +97,7 @@ void Canvas::OnMousePressed(wxMouseEvent &event)
   {
     m_editor.UpdatedDrawing();
     Refresh();
-    //UpdateAttributeEditor();
+    UpdateAttributeEditor();
   }
   
   m_dialog->OnUpdate(); // TODO: check these OnUpdate calls if it is really necessary
@@ -115,7 +114,7 @@ void Canvas::OnMouseReleased(wxMouseEvent &event)
   {
     m_editor.UpdatedDrawing();
     Refresh();
-    //UpdateAttributeEditor();
+    UpdateAttributeEditor();
   }
   
   m_dialog->OnUpdate();
@@ -161,6 +160,32 @@ void Canvas::OnKeyPressed(wxKeyEvent &event)
   m_dialog->OnUpdate();
 }
 
+std::unique_ptr<Image2D> Canvas::DummyDraw()
+{
+  auto image = std::make_unique<Image2D>("Checkerboard.png");
+
+  wxBitmap::Rescale(image->GetBitmap(), {1280, 780});
+  wxMemoryDC memDC(image->GetBitmap());
+  auto gc = wxGraphicsContext::Create(memDC);
+  if(gc)
+  {
+    
+    gc->SetPen(*wxWHITE_PEN);
+    gc->SetBrush(*wxWHITE_BRUSH);
+    gc->DrawRectangle(0, 0, 1280, 780);
+    auto width = m_secondPoint.x - m_firstPoint.x;
+    auto height = m_secondPoint.y - m_firstPoint.y;
+    gc->SetPen(*wxRED_PEN);
+    for(int i = 0; i < 10; ++i)
+    {
+      gc->DrawRectangle(m_firstPoint.x + i * 20, m_firstPoint.y + i * 20, width, height);
+    }
+    delete gc;
+  }
+  memDC.SelectObject(wxNullBitmap);
+  
+  return std::move(image);
+}
 void Canvas::Draw(wxDC &dc)
 {
   dc.SetBackground(*wxGREY_BRUSH);
@@ -179,28 +204,6 @@ void Canvas::Draw(wxDC &dc)
   dc.DrawBitmap(image->GetBitmap(), 0, 0);
 }
 
-//void Canvas::Draw(wxMemoryDC* dc)
-//{
-//  wxGraphicsContext* gc = wxGraphicsContext::Create(*dc);
-//  //gc->SetBackground(*wxGREY_BRUSH);
-//  //gc->Clear();
-//  gc->SetPen(*wxBLACK_PEN);
-//  gc->SetBrush(*wxTRANSPARENT_BRUSH);
-//
-//  auto image = m_editor.Draw();
-//  // calculate new size of the image, so that it will fit into the window
-//  auto size = GetSize();
-//  auto imageSize = glm::vec2{ image->GetWidth(), image->GetHeight() };
-//  m_canvasScale = std::min((float)size.x / image->GetWidth(), (float)size.y / image->GetHeight());
-//  auto newWidth = image->GetWidth() * m_canvasScale;
-//  auto newHeight = image->GetHeight() * m_canvasScale;
-//  m_imageBorder = (glm::vec2{size.x, size.y} - glm::vec2(newWidth, newHeight)) / 2.0f;
-//
-//  gc->Scale(m_canvasScale, m_canvasScale);
-//  //dc.SetDeviceOrigin(static_cast<int>(m_imageBorder.x), static_cast<int>(m_imageBorder.y)); 
-//  //dc.DrawBitmap(image->GetBitmap(), 0, 0);
-//  gc->DrawBitmap(image->GetBitmap(), m_imageBorder.x, m_imageBorder.y, image->GetWidth(), image->GetHeight());
-//  SetVirtualSize(image->GetWidth(), image->GetHeight()); 
 void Canvas::OnPaint(wxPaintEvent &event)
 {
   wxPaintDC dc(this);
