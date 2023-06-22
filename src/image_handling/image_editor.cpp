@@ -16,8 +16,6 @@ void ImageEditor::Begin(std::unique_ptr<Image2D> image)
 {
   s_image = std::move(image);
   s_dc = std::make_unique<wxMemoryDC>(s_image->GetBitmap());
-  wxImage image2 = s_image->GetBitmap().ConvertToImage();
-  bool hasAlpha = image2.HasAlpha();
   s_dc->SetBrush(*wxTRANSPARENT_BRUSH);
 }
 
