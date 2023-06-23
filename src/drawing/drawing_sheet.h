@@ -174,7 +174,10 @@ class DrawTextInitialState : public BaseDrawState
 public:
   DrawTextInitialState(DrawingSheet* sheet) : BaseDrawState(sheet, "DrawTextInitialState") {m_sheet->ClearSelectionShapes();}
   void OnMouseHovered(const glm::vec2 pos) override;
-  void OnMouseButtonPressed(const glm::vec2 pos) override;
+  void OnMouseButtonReleased(const glm::vec2 pos) override;   
+private:
+  std::string m_text = " "; // space is needed to have a blank space for indicating the cursor
+  constexpr static int s_defaultFontSize = 20;
 };
 
 class DrawTextState : public BaseDrawState

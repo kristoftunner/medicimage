@@ -361,7 +361,7 @@ namespace medicimage
     }
   }
   
-  Entity TextComponentWrapper::CreateText(glm::vec2 firstPoint, const std::string& inputText, int fontSize, DrawObjectType objectType)
+  Entity TextComponentWrapper::CreateText(glm::vec2 firstPoint, const glm::vec2 sheetSize, const std::string& inputText,int fontSize, DrawObjectType objectType)
   {
     auto entity = Entity::CreateEntity(0, "Text");
     entity.GetComponent<CommonAttributesComponent>().temporary = objectType == DrawObjectType::TEMPORARY ? true : false;
@@ -374,6 +374,9 @@ namespace medicimage
     auto& text = entity.AddComponent<TextComponent>();
     text.text = inputText;
     text.fontSize = fontSize;
+
+    auto textSize = ImageEditor::GetTextBoundingBox(text.text, text.fontSize, 5.0) ;  // TODO: add thickness component
+    text.boxSize = textSize / sheetSize;
     return entity;
   }
 
@@ -382,14 +385,14 @@ namespace medicimage
     auto& text = m_entity.GetComponent<TextComponent>();
     if(!m_entity.HasComponent<BoundingContourComponent>())
       m_entity.AddComponent<BoundingContourComponent>();
-    if(!m_entity.HasComponent<PickPointsComponent>())
-      m_entity.AddComponent<PickPointsComponent>();
+    // no need for pickpoints for text
+    //if(!m_entity.HasComponent<PickPointsComponent>())
+    //  m_entity.AddComponent<PickPointsComponent>();
 
-    auto textSize = ImageEditor::GetTextBoundingBox(text.text, text.fontSize, 5.0);  // TODO: add thickness component
     auto& boundingBox = m_entity.GetComponent<BoundingContourComponent>();
-    auto& pickPoints = m_entity.GetComponent<PickPointsComponent>();
-    boundingBox.cornerPoints = {{0,0}, {textSize.x, 0}, {textSize.x, -textSize.y}, {0, -textSize.y}, {0,0}};
-    pickPoints.pickPoints = {{0,0}, {textSize.x, 0}, {textSize.x, -textSize.y}, {0, -textSize.y}};  
+    //auto& pickPoints = m_entity.GetComponent<PickPointsComponent>();
+    boundingBox.cornerPoints = {{0,0}, {text.boxSize.x, 0}, {text.boxSize.x, text.boxSize.y}, {0, text.boxSize.y}, {0,0}};
+    //pickPoints.pickPoints = {{0,0}, {text.boxSize.x, 0}, {text.boxSize.x, -text.boxSize.y}, {0, -text.boxSize.y}};  
   }
 
   void TextComponentWrapper::OnObjectDrag(glm::vec2 diff)

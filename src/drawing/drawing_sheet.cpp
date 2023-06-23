@@ -440,30 +440,28 @@ namespace medicimage
   }
   
   void DrawTextInitialState::OnMouseHovered(const glm::vec2 pos)
-  { // change the mouse cursor to text editor cursor
+  { // TODO: change the mouse cursor to text editor cursor
     ;
   }
   
-  void DrawTextInitialState::OnMouseButtonPressed(const glm::vec2 pos)
+  void DrawTextInitialState::OnMouseButtonReleased(const glm::vec2 pos)
   {
     m_sheet->m_firstPoint = m_sheet->GetNormalizedPos(pos);
+    if(m_text != "")
+    {
+      TextComponentWrapper tw(TextComponentWrapper::CreateText(m_sheet->m_firstPoint, m_sheet->m_sheetSize,m_text, s_defaultFontSize, DrawObjectType::TEMPORARY));
+      tw.UpdateShapeAttributes();
+    }
     m_sheet->ChangeDrawState(std::make_unique<DrawTextState>(m_sheet)); 
   }
 
-  DrawTextState::~DrawTextState()
-  {
-    if(m_text != "")
-    {
-      m_sheet->Annotated(); // needed for weird UI feature
-    }
-  }
 
   void DrawTextState::OnTextInput(const std::string &inputText)
   {
     if(m_text == " ")   // first delete the space character, which is there only for showing a blank space when using text input
       m_text = "";
     m_text += inputText;
-    TextComponentWrapper tw(TextComponentWrapper::CreateText(m_sheet->m_firstPoint, m_text, s_defaultFontSize, DrawObjectType::TEMPORARY));
+    TextComponentWrapper tw(TextComponentWrapper::CreateText(m_sheet->m_firstPoint, m_sheet->m_sheetSize, m_text, s_defaultFontSize, DrawObjectType::TEMPORARY));
     tw.UpdateShapeAttributes();
   }
   
@@ -473,15 +471,13 @@ namespace medicimage
     {
       if(key == Key::MDIK_RETURN)
       {
-        TextComponentWrapper tw(TextComponentWrapper::CreateText(m_sheet->m_firstPoint, m_text, s_defaultFontSize, DrawObjectType::PERMANENT));
-        tw.UpdateShapeAttributes();
         m_sheet->SetDrawCommand(DrawCommand::OBJECT_SELECT); 
         m_sheet->ChangeDrawState(std::make_unique<ObjectSelectInitialState>(m_sheet));
       }
       else if(key == Key::MDIK_BACKSPACE)
       {
         m_text.pop_back();
-        TextComponentWrapper tw(TextComponentWrapper::CreateText(m_sheet->m_firstPoint, m_text, s_defaultFontSize, DrawObjectType::TEMPORARY));
+        TextComponentWrapper tw(TextComponentWrapper::CreateText(m_sheet->m_firstPoint,m_sheet->m_sheetSize, m_text, s_defaultFontSize, DrawObjectType::TEMPORARY));
         tw.UpdateShapeAttributes();
       }
     }
@@ -489,11 +485,6 @@ namespace medicimage
   
   void DrawTextState::OnMouseButtonPressed(const glm::vec2 pos)
   {
-    if(m_text != "")
-    {
-      TextComponentWrapper tw(TextComponentWrapper::CreateText(m_sheet->m_firstPoint, m_text, s_defaultFontSize, DrawObjectType::PERMANENT));
-      tw.UpdateShapeAttributes();
-    }
     m_sheet->SetDrawCommand(DrawCommand::OBJECT_SELECT); 
     m_sheet->ChangeDrawState(std::make_unique<ObjectSelectInitialState>(m_sheet));
   }
@@ -502,10 +493,19 @@ namespace medicimage
   {
     if(m_text != "")
     {
-      TextComponentWrapper tw(TextComponentWrapper::CreateText(m_sheet->m_firstPoint, m_text, s_defaultFontSize, DrawObjectType::TEMPORARY));
+      TextComponentWrapper tw(TextComponentWrapper::CreateText(m_sheet->m_firstPoint, m_sheet->m_sheetSize,m_text, s_defaultFontSize, DrawObjectType::TEMPORARY));
       tw.UpdateShapeAttributes();
     }
-    
+  }
+
+  DrawTextState::~DrawTextState()
+  {
+    if(m_text != "")
+    {
+      TextComponentWrapper tw(TextComponentWrapper::CreateText(m_sheet->m_firstPoint, m_sheet->m_sheetSize,m_text, s_defaultFontSize, DrawObjectType::PERMANENT));
+      tw.UpdateShapeAttributes();
+      m_sheet->Annotated(); // needed for weird UI feature
+    }
   }
 
   void DrawIncrementalLetters::OnKeyPressed(KeyCode key)
@@ -527,7 +527,7 @@ namespace medicimage
   void DrawIncrementalLetters::OnMouseButtonPressed(const glm::vec2 pos)
   {
     m_sheet->m_firstPoint = m_sheet->GetNormalizedPos(pos);
-    TextComponentWrapper tw(TextComponentWrapper::CreateText(m_sheet->m_firstPoint, m_text, s_defaultFontSize, DrawObjectType::PERMANENT));
+    TextComponentWrapper tw(TextComponentWrapper::CreateText(m_sheet->m_firstPoint, m_sheet->m_sheetSize,m_text, s_defaultFontSize, DrawObjectType::PERMANENT));
     tw.UpdateShapeAttributes();
     IncrementLetter();
     m_sheet->Annotated(); // needed for weird UI feature
@@ -650,31 +650,35 @@ namespace medicimage
 
   void ObjectSelectedState::OnMouseButtonPressed(const glm::vec2 pos)
   {
+    // TODO: refactor this function, code smell
     m_sheet->m_firstPoint = m_sheet->GetNormalizedPos(pos);
     auto view = Entity::View<BoundingContourComponent>();
     // first iterate trough all the selected objects to see if we are clicking on a pickpoint or drag area
-    for(auto e : view)
+    for (auto e : view)
     {
       Entity entity(e);
-      if(entity.GetComponent<CommonAttributesComponent>().selected)
+      if (entity.GetComponent<CommonAttributesComponent>().selected)
       {
-        if(m_sheet->IsPickpointSelected(entity, m_sheet->m_firstPoint))
+        if (entity.HasComponent<PickPointsComponent>())
         {
-          m_sheet->ChangeDrawState(std::make_unique<PickPointSelectedState>(m_sheet));
-          return; 
+          if (m_sheet->IsPickpointSelected(entity, m_sheet->m_firstPoint))
+          {
+            m_sheet->ChangeDrawState(std::make_unique<PickPointSelectedState>(m_sheet));
+            return;
+          }
         }
-        else if(m_sheet->IsDragAreaSelected(entity, m_sheet->m_firstPoint))
+        else if (m_sheet->IsDragAreaSelected(entity, m_sheet->m_firstPoint))
         {
           m_sheet->m_draggedEntity = entity;
-          m_sheet->ChangeDrawState(std::make_unique<ObjectDraggingState>(m_sheet)); 
+          m_sheet->ChangeDrawState(std::make_unique<ObjectDraggingState>(m_sheet));
           return;
         }
       }
     }
-    // next iterate trough all the not selected objects to see if we are clicking on the bounding box
+
     m_sheet->ClearSelectionShapes();
     auto hoveredEntity = m_sheet->GetHoveredEntity(pos);
-    if(hoveredEntity.has_value())
+    if (hoveredEntity.has_value())
     {
       hoveredEntity.value().GetComponent<CommonAttributesComponent>().selected = true;
       return;
