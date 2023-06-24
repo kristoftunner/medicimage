@@ -110,7 +110,7 @@ private:
   glm::vec2 CalcCorrectedMousePos(glm::vec2 pos);
   wxSize m_canvasSize;
   float m_canvasScale = 1.0f;
-  glm::vec2 m_imageBorder{ 0.0f, 0.0f };
+  glm::vec2 m_canvasBorder{ 0.0f, 0.0f };
   bool m_mouseDown = false;
   InfoDialog* m_dialog;
   Editor m_editor;

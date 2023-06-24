@@ -59,6 +59,7 @@ public:
   {
     std::stringstream ss;
     ss << std::put_time(std::localtime(&(timestamp)), "%d-%b-%Y %X");
+    ss << "   " + documentId ;
     return ss.str();
   }
 

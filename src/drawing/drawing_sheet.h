@@ -229,6 +229,7 @@ class ObjectSelectedState : public BaseDrawState
 public:
   ObjectSelectedState(DrawingSheet* sheet) : BaseDrawState(sheet, "ObjectSelectedState") {}
   void OnMouseButtonPressed(const glm::vec2 pos) override;
+  void OnKeyPressed(KeyCode key) override;
 };
 
 class PickPointSelectedState : public BaseDrawState

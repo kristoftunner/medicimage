@@ -103,7 +103,7 @@ void ImageEditor::DrawArrow(glm::vec2 begin, glm::vec2 end, glm::vec4 color, flo
   // Draw the arrowhead
   wxPoint arrowPoints[3] = { {static_cast<int>(end.x), static_cast<int>(end.y)}, {static_cast<int>(arrowPoint1.x), static_cast<int>(arrowPoint1.y)}, {static_cast<int>(arrowPoint2.x), static_cast<int>(arrowPoint2.y)} };
   wxPen pen = wxPen(wxColor(static_cast<int>(color.r), static_cast<int>(color.g), static_cast<int>(color.b)), static_cast<int>(thickness));
-  wxBrush bush = wxBrush(wxColor(static_cast<int>(color.r), static_cast<int>(color.g), static_cast<int>(color.b)), wxBRUSHSTYLE_TRANSPARENT);
+  wxBrush bush = wxBrush(wxColor(static_cast<int>(color.r), static_cast<int>(color.g), static_cast<int>(color.b)), wxBRUSHSTYLE_SOLID);
   s_dc->SetPen(pen);
   s_dc->SetBrush(bush);
   s_dc->DrawLine(wxPoint{static_cast<int>(begin.x), static_cast<int>(begin.y)}, wxPoint{static_cast<int>(end.x), static_cast<int>(end.y)}); 

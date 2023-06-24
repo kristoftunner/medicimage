@@ -70,8 +70,8 @@ Canvas::~Canvas()
 // clamps the mouse position only onto the image, not to the background
 glm::vec2 Canvas::CalcCorrectedMousePos(glm::vec2 pos)
 {
-  auto maxSize = glm::vec2(m_canvasSize.x, m_canvasSize.y) - m_imageBorder * 2.0f;
-  glm::vec2 correctedPos = clamp(pos - m_imageBorder, glm::vec2(0.0f), maxSize);
+  auto maxSize = glm::vec2(m_canvasSize.x, m_canvasSize.y) - m_canvasBorder * 2.0f;
+  glm::vec2 correctedPos = clamp(pos - m_canvasBorder, glm::vec2(0.0f), maxSize);
   return correctedPos / m_canvasScale;
 }
 
@@ -130,6 +130,8 @@ void Canvas::OnCharInput(wxKeyEvent &event)
     m_editor.OnKeyPressed(Key::MDIK_BACKSPACE);
   else if(keycode == WXK_RETURN || keycode == WXK_NUMPAD_ENTER)
     m_editor.OnKeyPressed(Key::MDIK_RETURN);
+  else if(keycode == WXK_DELETE)
+    m_editor.OnKeyPressed(Key::MDIK_DELETE);
   else
     m_editor.OnCharInput(str);
 
@@ -198,10 +200,10 @@ void Canvas::Draw(wxDC &dc)
   m_canvasScale = std::min((float)size.x / image->GetWidth(), (float)size.y / image->GetHeight());
   auto newWidth = image->GetWidth() * m_canvasScale;
   auto newHeight = image->GetHeight() * m_canvasScale;
-  m_imageBorder = (glm::vec2{size.x, size.y} - glm::vec2(newWidth, newHeight)) / 2.0f;
+  m_canvasBorder = (glm::vec2{size.x, size.y} - glm::vec2(newWidth, newHeight)) / 2.0f;
 
   dc.SetUserScale(m_canvasScale, m_canvasScale);
-  dc.SetDeviceOrigin(static_cast<int>(m_imageBorder.x), static_cast<int>(m_imageBorder.y)); 
+  dc.SetDeviceOrigin(static_cast<int>(m_canvasBorder.x), static_cast<int>(m_canvasBorder.y)); 
   dc.DrawBitmap(image->GetBitmap(), 0, 0);
 }
 

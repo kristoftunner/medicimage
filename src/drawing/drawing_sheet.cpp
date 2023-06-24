@@ -690,6 +690,19 @@ namespace medicimage
     m_sheet->ChangeDrawState(std::make_unique<ObjectSelectInitialState>(m_sheet));
   }
 
+  void ObjectSelectedState::OnKeyPressed(KeyCode key)
+  {
+    auto selectedEntities = m_sheet->GetSelectedEntities();
+    if (key == Key::MDIK_DELETE)
+    {
+      for (auto entity : selectedEntities)
+      {
+        Entity::DestroyEntity(entity);
+      }
+      m_sheet->ChangeDrawState(std::make_unique<ObjectSelectInitialState>(m_sheet));
+    }
+  }
+
   static std::unique_ptr<BaseDrawComponentWrapper> CreateDrawComponentWrapper(Entity entity)
   {
     if (entity.HasComponent<RectangleComponent>())

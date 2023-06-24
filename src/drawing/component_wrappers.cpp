@@ -410,7 +410,7 @@ namespace medicimage
     {
       c += transform.translation;
     }
-    ImageEditor::DrawRectangle(boundingBox.cornerPoints[0], boundingBox.cornerPoints[2], {0.5, 0.5, 0.5, 1.0}, 4, false);
+    ImageEditor::DrawRectangle(boundingBox.cornerPoints[0], boundingBox.cornerPoints[2], {0, 0, 0, 1.0}, 1, false);
     return;
   }
 

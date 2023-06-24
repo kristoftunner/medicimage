@@ -202,8 +202,8 @@ void Editor::OnDrawButtonPushed(DrawCommand command)
     m_state = EditorState::EDITING;
     m_drawingSheet.StartAnnotation();
     //auto size = ImageEditor::GetTopleftBorderSize();
-    //m_drawingSheet.SetDocument(std::make_unique<ImageDocument>(m_activeDocument), {m_activeDocument.image->GetWidth() + 2*size.x, m_activeDocument.image->GetHeight() + 60}); // TODO REFACTOR: this is just a bad hack, do something with it
-    m_drawingSheet.SetDocument(std::make_unique<ImageDocument>(m_activeDocument), {m_activeDocument.image->GetWidth() , m_activeDocument.image->GetHeight()} ); 
+    auto borders = ImageEditor::GetImageBorders();
+    m_drawingSheet.SetDocument(std::make_unique<ImageDocument>(m_activeDocument), {m_activeDocument.image->GetWidth() + borders.left + borders.right, m_activeDocument.image->GetHeight() + borders.top + borders.bottom}); // TODO REFACTOR: this is just a bad hack, do something with it
     m_drawingSheet.ChangeDrawState(std::make_unique<BaseDrawState>(&m_drawingSheet));
   }
   m_drawingSheet.SetDrawCommand(command);
@@ -214,7 +214,8 @@ void Editor::OnDocumentPicked(const ImageDocument &document)
   if(m_state == EditorState::SHOW_CAMERA || m_state == EditorState::IMAGE_SELECTION)
   {
     m_activeDocument = document;
-    m_drawingSheet.SetDocument(std::make_unique<ImageDocument>(m_activeDocument), {m_activeDocument.image->GetWidth(), m_activeDocument.image->GetHeight()});   
+    auto borders = ImageEditor::GetImageBorders();
+    m_drawingSheet.SetDocument(std::make_unique<ImageDocument>(m_activeDocument), {m_activeDocument.image->GetWidth() + borders.left + borders.right, m_activeDocument.image->GetHeight() + borders.top + borders.bottom}); // TODO REFACTOR: this is just a bad hack, do something with it
     m_state = EditorState::IMAGE_SELECTION;
   }
 }
@@ -232,7 +233,7 @@ std::unique_ptr<Image2D> Editor::Draw()
     }
     case EditorState::IMAGE_SELECTION:
     {
-      auto image = m_drawingSheet.Draw(); // needed because add footer is called in the Draw method
+      auto image = m_drawingSheet.Draw(); 
       return std::move(image);
     }
     case EditorState::EDITING:
@@ -258,9 +259,10 @@ std::string Editor::GetStateName() const
 glm::vec2 Editor::ClampMousePosition(const glm::vec2 &pos)
 {
   const auto imageBorders = ImageEditor::GetImageBorders();
+  auto borders = ImageEditor::GetImageBorders();
   const auto imageSize = glm::vec2{m_activeDocument.image->GetWidth(), m_activeDocument.image->GetHeight()}; 
-  const auto maxSize = glm::vec2(imageSize.x, imageSize.y) - glm::vec2{imageBorders.right, imageBorders.bottom};
-  glm::vec2 correctedPos = glm::clamp(pos ,glm::vec2{imageBorders.left, imageBorders.top}, maxSize);
+  const auto maxSize = glm::vec2(imageSize.x, imageSize.y) + glm::vec2{borders.left + borders.right, borders.top + borders.bottom};
+  const glm::vec2 correctedPos = glm::clamp(pos ,glm::vec2{imageBorders.left, imageBorders.top}, maxSize - glm::vec2{borders.right, borders.bottom});
   return correctedPos;
 }
 
