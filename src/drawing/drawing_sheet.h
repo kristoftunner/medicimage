@@ -121,9 +121,7 @@ public:
   BaseDrawState(DrawingSheet* sheet, const std::string& stateName = "BaseDrawState") : m_sheet(sheet), m_stateName(stateName) {}
   virtual ~BaseDrawState() = default;
   const std::string& GetName() const {return m_stateName;}
-  virtual void OnCancel(){
-    m_sheet->ChangeDrawState(std::make_unique<BaseDrawState>(m_sheet)); 
-  }
+  virtual void OnCancel();
   virtual void OnMouseHovered(const glm::vec2 pos) {}
   virtual void OnMouseButtonPressed(const glm::vec2 pos) {}
   virtual void OnMouseButtonDown(const glm::vec2 pos) {}

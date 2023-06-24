@@ -84,10 +84,7 @@ namespace medicimage
 
   std::unique_ptr<Image2D> DrawingSheet::Draw()
   {
-    std::stringstream ss;
-    ss << std::put_time(std::localtime(&(m_originalDoc->timestamp)), "%d-%b-%Y %X");
-    std::string footerText = m_originalDoc->documentId + " - " + ss.str();
-    auto drawing = ImageEditor::AddImageFooter(footerText, *m_originalDoc->image.get());
+    auto drawing  = m_originalDoc->DrawFooter();
 
     ImageEditor::Begin(std::move(drawing));
     auto circles = Entity::View<CircleComponent>();
@@ -354,6 +351,11 @@ namespace medicimage
     return normalizedPos;
   }
 
+  void BaseDrawState::OnCancel()
+  {
+    m_sheet->ChangeDrawState(std::make_unique<ObjectSelectInitialState>(m_sheet));
+  }
+
   void InitialObjectDrawState::OnMouseHovered(const glm::vec2 pos)
   {
     m_sheet->m_hoveredEntity = m_sheet->GetHoveredEntity(pos);
@@ -500,7 +502,7 @@ namespace medicimage
 
   DrawTextState::~DrawTextState()
   {
-    if(m_text != "")
+    if(m_text != "" && m_text != " ")
     {
       TextComponentWrapper tw(TextComponentWrapper::CreateText(m_sheet->m_firstPoint, m_sheet->m_sheetSize,m_text, s_defaultFontSize, DrawObjectType::PERMANENT));
       tw.UpdateShapeAttributes();
@@ -667,7 +669,8 @@ namespace medicimage
             return;
           }
         }
-        else if (m_sheet->IsDragAreaSelected(entity, m_sheet->m_firstPoint))
+
+        if (m_sheet->IsDragAreaSelected(entity, m_sheet->m_firstPoint))
         {
           m_sheet->m_draggedEntity = entity;
           m_sheet->ChangeDrawState(std::make_unique<ObjectDraggingState>(m_sheet));

@@ -32,7 +32,11 @@ class Editor
 {
 public:
   Editor() = default;
-  ~Editor() = default;
+  ~Editor()
+  {
+    m_closeRequested = true;
+    m_cameraUpdateThread.join();
+  }
   void Init();
   void UpdateAppFolder(const std::filesystem::path& appFolder);
 
@@ -82,6 +86,7 @@ public:
   DrawingSheet& GetDrawingSheet() { return m_drawingSheet; } // Getter for the debug dialog box
   std::string GetStateName() const;
 private:
+  glm::vec2 ClampMousePosition(const glm::vec2& pos);
   bool m_mouseDown = false;
   EditorState m_state = EditorState::SHOW_CAMERA; // default state is showing the camrea
   DrawingSheet m_drawingSheet;
@@ -94,6 +99,7 @@ private:
   std::mutex m_cameraFrameMutex;
   std::atomic<float> m_cameraFrameRate = 0.0f;
   std::atomic<bool> m_newFrameAvailable = false;
+  std::atomic<bool> m_closeRequested = false;
   std::thread m_cameraUpdateThread;
 };
 

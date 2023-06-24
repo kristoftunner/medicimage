@@ -13,6 +13,13 @@
 namespace medicimage
 {
 
+struct ImageBorders
+{
+  int left = 0;
+  int right = 0;
+  int top = 0;
+  int bottom = 0;
+};
 class ImageEditor
 {
 public:
@@ -33,6 +40,8 @@ public:
   static glm::vec2 GetTextBoundingBox(const std::string& text, int fontSize, float thickness);
 
   static glm::vec2 GetTopleftBorderSize() {return {s_sideBorder, s_topBorder};}
+  static ImageBorders GetImageBorders();
+  
 private:
   static Image2D AddFooter(Image2D& image, const std::string& footerText);
   static constexpr int s_sideBorder = 10;

@@ -67,6 +67,7 @@ Canvas::~Canvas()
 {
 }
 
+// clamps the mouse position only onto the image, not to the background
 glm::vec2 Canvas::CalcCorrectedMousePos(glm::vec2 pos)
 {
   auto maxSize = glm::vec2(m_canvasSize.x, m_canvasSize.y) - m_imageBorder * 2.0f;
@@ -192,21 +193,21 @@ void Canvas::Draw(wxDC &dc)
   dc.Clear();
   auto image = m_editor.Draw();
   // calculate new size of the image, so that it will fit into the window
-  //auto size = GetSize();
-  //auto imageSize = glm::vec2{ image->GetWidth(), image->GetHeight() };
-  //m_canvasScale = std::min((float)size.x / image->GetWidth(), (float)size.y / image->GetHeight());
-  //auto newWidth = image->GetWidth() * m_canvasScale;
-  //auto newHeight = image->GetHeight() * m_canvasScale;
-  //m_imageBorder = (glm::vec2{size.x, size.y} - glm::vec2(newWidth, newHeight)) / 2.0f;
+  auto size = GetSize();
+  auto imageSize = glm::vec2{ image->GetWidth(), image->GetHeight() };
+  m_canvasScale = std::min((float)size.x / image->GetWidth(), (float)size.y / image->GetHeight());
+  auto newWidth = image->GetWidth() * m_canvasScale;
+  auto newHeight = image->GetHeight() * m_canvasScale;
+  m_imageBorder = (glm::vec2{size.x, size.y} - glm::vec2(newWidth, newHeight)) / 2.0f;
 
-  //dc.SetUserScale(m_canvasScale, m_canvasScale);
-  //dc.SetDeviceOrigin(static_cast<int>(m_imageBorder.x), static_cast<int>(m_imageBorder.y)); 
+  dc.SetUserScale(m_canvasScale, m_canvasScale);
+  dc.SetDeviceOrigin(static_cast<int>(m_imageBorder.x), static_cast<int>(m_imageBorder.y)); 
   dc.DrawBitmap(image->GetBitmap(), 0, 0);
 }
 
 void Canvas::OnPaint(wxPaintEvent &event)
 {
-  wxPaintDC dc(this);
+  wxAutoBufferedPaintDC dc(this);
   Draw(dc);
   m_canvasSize = GetSize();
   m_fpsCounter.Update();
@@ -280,6 +281,7 @@ void Canvas::OnCancel(wxCommandEvent &event)
 {
   m_editor.OnCancel();
   m_dialog->OnUpdate();
+  Refresh();
 }
 
 void Canvas::OnDocumentPicked(ImageDocumentEvent &event)

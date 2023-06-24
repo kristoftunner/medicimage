@@ -386,13 +386,9 @@ namespace medicimage
     if(!m_entity.HasComponent<BoundingContourComponent>())
       m_entity.AddComponent<BoundingContourComponent>();
     // no need for pickpoints for text
-    //if(!m_entity.HasComponent<PickPointsComponent>())
-    //  m_entity.AddComponent<PickPointsComponent>();
 
     auto& boundingBox = m_entity.GetComponent<BoundingContourComponent>();
-    //auto& pickPoints = m_entity.GetComponent<PickPointsComponent>();
     boundingBox.cornerPoints = {{0,0}, {text.boxSize.x, 0}, {text.boxSize.x, text.boxSize.y}, {0, text.boxSize.y}, {0,0}};
-    //pickPoints.pickPoints = {{0,0}, {text.boxSize.x, 0}, {text.boxSize.x, -text.boxSize.y}, {0, -text.boxSize.y}};  
   }
 
   void TextComponentWrapper::OnObjectDrag(glm::vec2 diff)
@@ -409,6 +405,13 @@ namespace medicimage
     auto& thickness = m_entity.GetComponent<ThicknessComponent>();
     auto& text = m_entity.GetComponent<TextComponent>();
     ImageEditor::DrawText(transform.translation, text.text, text.fontSize, thickness.thickness); // TODO: add thickness component
+    auto boundingBox = m_entity.GetComponent<BoundingContourComponent>();
+    for(auto& c : boundingBox.cornerPoints)
+    {
+      c += transform.translation;
+    }
+    ImageEditor::DrawRectangle(boundingBox.cornerPoints[0], boundingBox.cornerPoints[2], {0.5, 0.5, 0.5, 1.0}, 4, false);
+    return;
   }
 
   Entity SplineComponentWrapper::CreateSpline(glm::vec2 begin, glm::vec2 middle, glm::vec2 end, DrawObjectType objectType)

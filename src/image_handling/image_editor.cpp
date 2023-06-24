@@ -173,6 +173,11 @@ glm::vec2 ImageEditor::GetTextBoundingBox(const std::string &text, int fontSize,
   return glm::vec2{static_cast<float>(textSize.x) , static_cast<float>(textSize.y) };
 }
 
+ImageBorders ImageEditor::GetImageBorders()
+{
+  return ImageBorders{s_sideBorder, s_topBorder, s_sideBorder, s_bottomBorder};
+}
+
 Image2D ImageEditor::AddFooter(Image2D& image, const std::string& footerText)
 {
   glm::vec2 borderedImageSize = {image.GetWidth(), image.GetHeight()};

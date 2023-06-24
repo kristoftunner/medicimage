@@ -19,6 +19,10 @@ void Editor::Init()
     std::chrono::system_clock::time_point lastUpdate = std::chrono::system_clock::now();
     while(true)
     {
+      if(m_closeRequested)
+      {
+        return;
+      }
       std::this_thread::sleep_for(std::chrono::milliseconds(33));
       {
         if(m_state == EditorState::SHOW_CAMERA)
@@ -51,7 +55,8 @@ void Editor::OnMouseMoved(const glm::vec2 &pos)
 {
   if((m_state == EditorState::EDITING || m_state == EditorState::IMAGE_SELECTION) && m_mouseDown)
   {
-    m_drawingSheet.OnMouseButtonDown(pos);
+    auto clampedPos = ClampMousePosition(pos);
+    m_drawingSheet.OnMouseButtonDown(clampedPos);
     m_newDrawingAvailable = true;
   }
 }
@@ -61,7 +66,8 @@ void Editor::OnMousePressed(const glm::vec2 &pos)
   if(m_state == EditorState::EDITING || m_state == EditorState::IMAGE_SELECTION)
   {
     m_mouseDown = true;
-    m_drawingSheet.OnMouseButtonPressed(pos);
+    auto clampedPos = ClampMousePosition(pos);
+    m_drawingSheet.OnMouseButtonPressed(clampedPos);
     m_newDrawingAvailable = true;
   }
 }
@@ -71,7 +77,8 @@ void Editor::OnMouseReleased(const glm::vec2 &pos)
   if((m_state == EditorState::EDITING || m_state == EditorState::IMAGE_SELECTION) && m_mouseDown)
   {
     m_mouseDown = false;
-    m_drawingSheet.OnMouseButtonReleased(pos);
+    auto clampedPos = ClampMousePosition(pos);
+    m_drawingSheet.OnMouseButtonReleased(clampedPos);
     m_newDrawingAvailable = true;
   }
 }
@@ -194,8 +201,9 @@ void Editor::OnDrawButtonPushed(DrawCommand command)
     wxLogDebug("Changing state to IMAGE_SELECTION->EDITING");
     m_state = EditorState::EDITING;
     m_drawingSheet.StartAnnotation();
-    auto size = ImageEditor::GetTopleftBorderSize();
-    m_drawingSheet.SetDocument(std::make_unique<ImageDocument>(m_activeDocument), {m_activeDocument.image->GetWidth() + 2*size.x, m_activeDocument.image->GetHeight() + 60}); // TODO REFACTOR: this is just a bad hack, do something with it
+    //auto size = ImageEditor::GetTopleftBorderSize();
+    //m_drawingSheet.SetDocument(std::make_unique<ImageDocument>(m_activeDocument), {m_activeDocument.image->GetWidth() + 2*size.x, m_activeDocument.image->GetHeight() + 60}); // TODO REFACTOR: this is just a bad hack, do something with it
+    m_drawingSheet.SetDocument(std::make_unique<ImageDocument>(m_activeDocument), {m_activeDocument.image->GetWidth() , m_activeDocument.image->GetHeight()} ); 
     m_drawingSheet.ChangeDrawState(std::make_unique<BaseDrawState>(&m_drawingSheet));
   }
   m_drawingSheet.SetDrawCommand(command);
@@ -245,6 +253,15 @@ std::string Editor::GetStateName() const
     case EditorState::EDITING: return "EDITING";
     default: return "UNKNOWN";
   }
+}
+
+glm::vec2 Editor::ClampMousePosition(const glm::vec2 &pos)
+{
+  const auto imageBorders = ImageEditor::GetImageBorders();
+  const auto imageSize = glm::vec2{m_activeDocument.image->GetWidth(), m_activeDocument.image->GetHeight()}; 
+  const auto maxSize = glm::vec2(imageSize.x, imageSize.y) - glm::vec2{imageBorders.right, imageBorders.bottom};
+  glm::vec2 correctedPos = glm::clamp(pos ,glm::vec2{imageBorders.left, imageBorders.top}, maxSize);
+  return correctedPos;
 }
 
 void Editor::OnDrawText()
