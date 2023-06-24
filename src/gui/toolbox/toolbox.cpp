@@ -16,19 +16,19 @@ namespace app
 Toolbox::Toolbox(wxWindow *parent, wxWindowID id, const wxPoint &pos, const wxSize &size)
   : wxPanel(parent, id, pos, size)
 {
-  m_buttonHandlers.emplace_back(wxBitmap("screenshot.png", wxBITMAP_TYPE_ANY), [this]() { OnScreenshot(); });
-  m_buttonHandlers.emplace_back(wxBitmap("save.png", wxBITMAP_TYPE_ANY), [this]() { OnSave(); });
-  m_buttonHandlers.emplace_back(wxBitmap("delete.png", wxBITMAP_TYPE_ANY), [this]() { OnDelete(); });
-  m_buttonHandlers.emplace_back(wxBitmap("undo.png", wxBITMAP_TYPE_ANY), [this]() { OnUndo(); }); 
-  m_buttonHandlers.emplace_back(wxBitmap("cancel.png", wxBITMAP_TYPE_ANY), [this]() { OnCancel(); }); 
-  m_buttonHandlers.emplace_back(wxBitmap("add-text.png", wxBITMAP_TYPE_ANY), [this]() { OnDrawText(); });
-  m_buttonHandlers.emplace_back(wxBitmap("add-incremental-letters.png", wxBITMAP_TYPE_ANY), [this]() { OnDrawIncrementalLetters(); });
-  m_buttonHandlers.emplace_back(wxBitmap("arrow.png", wxBITMAP_TYPE_ANY), [this]() { OnDrawArrow(); });
-  m_buttonHandlers.emplace_back(wxBitmap("circle.png", wxBITMAP_TYPE_ANY), [this]() { OnDrawCircle(); });
-  m_buttonHandlers.emplace_back(wxBitmap("line.png", wxBITMAP_TYPE_ANY), [this]() { OnDrawLine(); });
-  m_buttonHandlers.emplace_back(wxBitmap("multiline.png", wxBITMAP_TYPE_ANY), [this]() { OnDrawMultiline(); });
-  m_buttonHandlers.emplace_back(wxBitmap("rectangle.png", wxBITMAP_TYPE_ANY), [this]() { OnDrawRectangle(); });
-  m_buttonHandlers.emplace_back(wxBitmap("skin-template.png", wxBITMAP_TYPE_ANY), [this]() { OnDrawSkinTemplate(); });
+  m_buttonHandlers.emplace_back(wxBitmap("screenshot.png", wxBITMAP_TYPE_PNG), [this]() { OnScreenshot(); });
+  m_buttonHandlers.emplace_back(wxBitmap("save.png", wxBITMAP_TYPE_PNG), [this]() { OnSave(); });
+  m_buttonHandlers.emplace_back(wxBitmap("delete.png", wxBITMAP_TYPE_PNG), [this]() { OnDelete(); });
+  m_buttonHandlers.emplace_back(wxBitmap("undo.png", wxBITMAP_TYPE_PNG), [this]() { OnUndo(); }); 
+  m_buttonHandlers.emplace_back(wxBitmap("cancel.png", wxBITMAP_TYPE_PNG), [this]() { OnCancel(); }); 
+  m_buttonHandlers.emplace_back(wxBitmap("add-text.png", wxBITMAP_TYPE_PNG), [this]() { OnDrawText(); });
+  m_buttonHandlers.emplace_back(wxBitmap("add-incremental-letters.png", wxBITMAP_TYPE_PNG), [this]() { OnDrawIncrementalLetters(); });
+  m_buttonHandlers.emplace_back(wxBitmap("arrow.png", wxBITMAP_TYPE_PNG), [this]() { OnDrawArrow(); });
+  m_buttonHandlers.emplace_back(wxBitmap("circle.png", wxBITMAP_TYPE_PNG), [this]() { OnDrawCircle(); });
+  m_buttonHandlers.emplace_back(wxBitmap("line.png", wxBITMAP_TYPE_PNG), [this]() { OnDrawLine(); });
+  m_buttonHandlers.emplace_back(wxBitmap("multiline.png", wxBITMAP_TYPE_PNG), [this]() { OnDrawMultiline(); });
+  m_buttonHandlers.emplace_back(wxBitmap("rectangle.png", wxBITMAP_TYPE_PNG), [this]() { OnDrawRectangle(); });
+  m_buttonHandlers.emplace_back(wxBitmap("skin-template.png", wxBITMAP_TYPE_PNG), [this]() { OnDrawSkinTemplate(); });
 
   auto topSizer = new wxBoxSizer(wxVERTICAL);
   auto text = new wxStaticText(this, wxID_ANY, "Toolbox");

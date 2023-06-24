@@ -18,6 +18,7 @@ public:
         return FromDIP(wxSize(45, 45));
     }
 
+    bool selectable = true;
     bool selected = false;
 
 protected:

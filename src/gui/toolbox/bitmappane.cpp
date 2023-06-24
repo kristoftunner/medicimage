@@ -18,26 +18,39 @@ void SelectablePane::OnPaint(wxPaintEvent &event)
     dc.Clear();
 
     auto gc = wxGraphicsContext::Create(dc);
+    gc->SetCompositionMode(wxCOMPOSITION_OVER);
     if (gc)
     {
-        wxRect selectionRect{0, 0, GetSize().GetWidth(), GetSize().GetWidth()};
-        selectionRect.Deflate(FromDIP(1));
+      wxRect selectionRect{ 0, 0, GetSize().GetWidth(), GetSize().GetWidth() };
+      selectionRect.Deflate(FromDIP(1));
 
-        wxRect contentRect = selectionRect;
-        contentRect.Deflate(FromDIP(2));
+      wxRect contentRect = selectionRect;
+      contentRect.Deflate(FromDIP(2));
 
-        const auto roundness = FromDIP(4);
+      const auto roundness = FromDIP(4);
 
-        DrawContent(gc, contentRect, roundness);
+      DrawContent(gc, contentRect, roundness);
 
+      if (selectable)
+      {
         if (selected)
         {
-            gc->SetPen(wxSystemSettings::GetAppearance().IsDark() ? *wxWHITE_PEN : *wxBLACK_PEN);
-            gc->SetBrush(*wxTRANSPARENT_BRUSH);
-            gc->DrawRoundedRectangle(selectionRect.GetX(), selectionRect.GetY(), selectionRect.GetWidth(), selectionRect.GetHeight(), roundness);
+          wxBrush brush(wxColor{ 57, 200, 32, 128 }, wxBRUSHSTYLE_SOLID);
+          gc->SetPen(*wxBLACK_PEN);
+          gc->SetBrush(brush);
+          gc->DrawRoundedRectangle(selectionRect.GetX(), selectionRect.GetY(), selectionRect.GetWidth(), selectionRect.GetHeight(), roundness);
         }
 
-        delete gc;
+      }
+      else
+      {
+        wxBrush brush(wxColor{ 128, 128, 128, 128 }, wxBRUSHSTYLE_SOLID);
+        gc->SetPen(*wxTRANSPARENT_PEN);
+        gc->SetBrush(brush);
+        gc->DrawRoundedRectangle(selectionRect.GetX(), selectionRect.GetY(), selectionRect.GetWidth(), selectionRect.GetHeight(), roundness);
+      }
+
+      delete gc;
     }
 }
 
