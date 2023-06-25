@@ -40,12 +40,12 @@ public:
   void OnDrawSkinTemplate();
 private:
   void SelectPane(BitmapPane* pane);
-  //std::vector<BitmapPane*> m_colorPanes;
   std::unordered_map<ButtonType, BitmapButton> m_buttons;
   AttributeEditor* m_attributeEditor = nullptr;
 
   const std::string m_lightBackground = "#f4f3f3";
   const std::string m_darkBackground = "#2c2828";
+  static constexpr int s_buttonSize = 60;
 };
 
 }

@@ -56,6 +56,7 @@ MyFrame::MyFrame()
   nestedSplitter->SplitVertically(toolboxSplitter, m_editorPanel, 200);
   nestedSplitter->SetMinimumPaneSize(200);
   nestedSplitter->SetDoubleBuffered(true);
+  nestedSplitter->SetSashGravity(0.1);
   
   thumbnails->SetBackgroundColour(wxColour(isDark ? m_darkBackground : m_lightBackground));
   
