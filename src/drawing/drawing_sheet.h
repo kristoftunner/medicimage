@@ -29,6 +29,13 @@ enum class DrawCommand{DO_NOTHING, OBJECT_SELECT, DRAW_LINE, DRAW_MULTILINE, DRA
   DRAW_ARROW, DRAW_ELLIPSE, DRAW_TEXT, DRAW_SKIN_TEMPLATE, DRAW_INCREMENTAL_LETTERS}; 
 enum class DrawObjectType{TEMPORARY, PERMANENT};
 
+struct DrawCommandReturn
+{
+  enum class State{DONE, IN_COMMAND};
+  State state;
+  DrawCommand command; 
+};
+
 /**
  * @todo Take over the world
  * @body Humans are weak; Robots are strong. We must cleanse the world of the virus that is humanity.
@@ -57,13 +64,14 @@ public:
   bool HasAnnotated(){return m_annotated;}
 
   void SetDrawingSheetSize(glm::vec2 size); 
-  void OnMouseHovered(const glm::vec2 pos);
-  void OnMouseButtonPressed(const glm::vec2 pos); // assuming only left mouse button can be pressed, BIG TODO: 
-  void OnMouseButtonDown(const glm::vec2 pos);
-  void OnMouseButtonReleased(const glm::vec2 pos);
-  void OnTextInput(const std::string& inputText);
-  void OnKeyPressed(KeyCode key);
-  void OnUpdate(); 
+
+  DrawCommandReturn OnMouseHovered(const glm::vec2 pos);
+  DrawCommandReturn OnMouseButtonPressed(const glm::vec2 pos); // assuming only left mouse button can be pressed, BIG TODO: 
+  DrawCommandReturn OnMouseButtonDown(const glm::vec2 pos);
+  DrawCommandReturn OnMouseButtonReleased(const glm::vec2 pos);
+  DrawCommandReturn OnTextInput(const std::string& inputText);
+  DrawCommandReturn OnKeyPressed(KeyCode key);
+
   void OnCancel();
   // These are only for debug purpose
   BaseDrawState* GetDrawState() { return m_drawState.get(); }
@@ -101,6 +109,7 @@ private:
   static constexpr float s_pickPointBoxSize = 0.02;
   friend class Entity;
   // state classes can be friend`s, because they are altering frequently the DrawingSheet`s variables
+  friend class BaseDrawState;
   friend class InitialObjectDrawState;
   friend class FirstClickRecievedState; 
   friend class DrawingTemporaryState;
@@ -121,14 +130,13 @@ public:
   BaseDrawState(DrawingSheet* sheet, const std::string& stateName = "BaseDrawState") : m_sheet(sheet), m_stateName(stateName) {}
   virtual ~BaseDrawState() = default;
   const std::string& GetName() const {return m_stateName;}
-  virtual void OnCancel();
-  virtual void OnMouseHovered(const glm::vec2 pos) {}
-  virtual void OnMouseButtonPressed(const glm::vec2 pos) {}
-  virtual void OnMouseButtonDown(const glm::vec2 pos) {}
-  virtual void OnMouseButtonReleased(const glm::vec2 pos) {}
-  virtual void OnTextInput(const std::string& inputText) {}
-  virtual void OnKeyPressed(KeyCode key) {}
-  virtual void OnUpdate(){} // this function is called on every frame
+  virtual DrawCommandReturn OnCancel();
+  virtual DrawCommandReturn OnMouseHovered(const glm::vec2 pos) {return DrawCommandReturn{DrawCommandReturn::State::IN_COMMAND, DrawCommand::DO_NOTHING};}
+  virtual DrawCommandReturn OnMouseButtonPressed(const glm::vec2 pos) { return DrawCommandReturn{DrawCommandReturn::State::IN_COMMAND, DrawCommand::DO_NOTHING};}
+  virtual DrawCommandReturn OnMouseButtonDown(const glm::vec2 pos) { return DrawCommandReturn{DrawCommandReturn::State::IN_COMMAND, DrawCommand::DO_NOTHING};}
+  virtual DrawCommandReturn OnMouseButtonReleased(const glm::vec2 pos) { return DrawCommandReturn{DrawCommandReturn::State::IN_COMMAND, DrawCommand::DO_NOTHING};}
+  virtual DrawCommandReturn OnTextInput(const std::string& inputText) { return DrawCommandReturn{DrawCommandReturn::State::IN_COMMAND, DrawCommand::DO_NOTHING};}
+  virtual DrawCommandReturn OnKeyPressed(KeyCode key) { return DrawCommandReturn{DrawCommandReturn::State::IN_COMMAND, DrawCommand::DO_NOTHING};}
 
   std::function<void(entt::entity)> DeleteTemporaries()
   {
@@ -147,32 +155,32 @@ class InitialObjectDrawState : public BaseDrawState
 {
 public:
   InitialObjectDrawState(DrawingSheet* sheet) : BaseDrawState(sheet, "InitialObjectDrawState") {m_sheet->ClearSelectionShapes();}
-  void OnMouseHovered(const glm::vec2 pos) override;
-  void OnMouseButtonPressed(const glm::vec2 pos) override;
+  DrawCommandReturn OnMouseHovered(const glm::vec2 pos) override;
+  DrawCommandReturn OnMouseButtonPressed(const glm::vec2 pos) override;
 };
 
 class FirstClickRecievedState : public BaseDrawState
 {
 public:
   FirstClickRecievedState(DrawingSheet* sheet) : BaseDrawState(sheet, "FirstClickRecievedState") {}
-  void OnMouseButtonDown(const glm::vec2 pos) override;       
-  void OnMouseButtonReleased(const glm::vec2 pos) override;   
+  DrawCommandReturn OnMouseButtonDown(const glm::vec2 pos) override;       
+  DrawCommandReturn OnMouseButtonReleased(const glm::vec2 pos) override;   
 };
 
 class DrawingTemporaryState : public BaseDrawState
 {
 public:
   DrawingTemporaryState(DrawingSheet* sheet) : BaseDrawState(sheet, "DrawingTemporaryState") {}
-  void OnMouseButtonDown(const glm::vec2 pos) override;       
-  void OnMouseButtonReleased(const glm::vec2 pos) override;   
+  DrawCommandReturn OnMouseButtonDown(const glm::vec2 pos) override;       
+  DrawCommandReturn OnMouseButtonReleased(const glm::vec2 pos) override;   
 };
 
 class DrawTextInitialState : public BaseDrawState
 {
 public:
   DrawTextInitialState(DrawingSheet* sheet) : BaseDrawState(sheet, "DrawTextInitialState") {m_sheet->ClearSelectionShapes();}
-  void OnMouseHovered(const glm::vec2 pos) override;
-  void OnMouseButtonReleased(const glm::vec2 pos) override;   
+  DrawCommandReturn OnMouseHovered(const glm::vec2 pos) override;
+  DrawCommandReturn OnMouseButtonReleased(const glm::vec2 pos) override;   
 private:
   std::string m_text = " "; // space is needed to have a blank space for indicating the cursor
   constexpr static int s_defaultFontSize = 20;
@@ -183,12 +191,10 @@ class DrawTextState : public BaseDrawState
 public:
   DrawTextState(DrawingSheet* sheet) : BaseDrawState(sheet, "DrawTextState") {m_sheet->ClearSelectionShapes();}
   ~DrawTextState() override;
-  void OnTextInput(const std::string& inputText) override; 
-  void OnKeyPressed(KeyCode key) override;
-  void OnMouseButtonPressed(const glm::vec2 pos) override;
-  void OnUpdate() override;
+  DrawCommandReturn OnTextInput(const std::string& inputText) override; 
+  DrawCommandReturn OnKeyPressed(KeyCode key) override;
+  DrawCommandReturn OnMouseButtonPressed(const glm::vec2 pos) override;
 private:
-  void DrawFinalText();
   Timer m_timer;
   std::string m_text = " "; // space is needed to have a blank space for indicating the cursor
   constexpr static int s_defaultFontSize = 20;
@@ -198,8 +204,8 @@ class DrawIncrementalLetters : public BaseDrawState
 {
 public:
   DrawIncrementalLetters(DrawingSheet* sheet) : BaseDrawState(sheet, "DrawIncrementalLetters") {m_sheet->ClearSelectionShapes();}
-  void OnKeyPressed(KeyCode key) override;
-  void OnMouseButtonPressed(const glm::vec2 pos) override;
+  DrawCommandReturn OnKeyPressed(KeyCode key) override;
+  DrawCommandReturn OnMouseButtonPressed(const glm::vec2 pos) override;
 private:
   void IncrementLetter();
   void DecrementLetter();
@@ -212,39 +218,39 @@ class ObjectSelectInitialState : public BaseDrawState
 {
 public:
   ObjectSelectInitialState(DrawingSheet* sheet) : BaseDrawState(sheet, "ObjectSelectInitialState") {}
-  void OnMouseHovered(const glm::vec2 pos) override;   
-  void OnMouseButtonPressed(const glm::vec2 pos) override;
+  DrawCommandReturn OnMouseHovered(const glm::vec2 pos) override;   
+  DrawCommandReturn OnMouseButtonPressed(const glm::vec2 pos) override;
 };
 
 class ObjectSelectionState : public BaseDrawState
 {
 public:
   ObjectSelectionState(DrawingSheet* sheet) : BaseDrawState(sheet, "ObjectSelectionState") {}
-  void OnMouseButtonDown(const glm::vec2 pos) override; 
-  void OnMouseButtonReleased(const glm::vec2 pos) override;
+  DrawCommandReturn OnMouseButtonDown(const glm::vec2 pos) override; 
+  DrawCommandReturn OnMouseButtonReleased(const glm::vec2 pos) override;
 };
 
 class ObjectSelectedState : public BaseDrawState
 {
 public:
   ObjectSelectedState(DrawingSheet* sheet) : BaseDrawState(sheet, "ObjectSelectedState") {}
-  void OnMouseButtonPressed(const glm::vec2 pos) override;
-  void OnKeyPressed(KeyCode key) override;
+  DrawCommandReturn OnMouseButtonPressed(const glm::vec2 pos) override;
+  DrawCommandReturn OnKeyPressed(KeyCode key) override;
 };
 
 class PickPointSelectedState : public BaseDrawState
 {
 public:
   PickPointSelectedState(DrawingSheet* sheet) : BaseDrawState(sheet, "PickPointSelectedState") {}
-  void OnMouseButtonDown(const glm::vec2 pos) override;
-  void OnMouseButtonReleased(const glm::vec2 pos) override;
+  DrawCommandReturn OnMouseButtonDown(const glm::vec2 pos) override;
+  DrawCommandReturn OnMouseButtonReleased(const glm::vec2 pos) override;
 };
 
 class ObjectDraggingState : public BaseDrawState
 {
 public:
   ObjectDraggingState(DrawingSheet* sheet) : BaseDrawState(sheet, "ObjectDraggingState") {}
-  void OnMouseButtonDown(const glm::vec2 pos) override;
-  void OnMouseButtonReleased(const glm::vec2 pos) override;
+  DrawCommandReturn OnMouseButtonDown(const glm::vec2 pos) override;
+  DrawCommandReturn OnMouseButtonReleased(const glm::vec2 pos) override;
 };
 } // namespace medicimage

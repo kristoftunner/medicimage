@@ -40,24 +40,25 @@ public:
   void Init();
   void UpdateAppFolder(const std::filesystem::path& appFolder);
 
-  void OnMouseMoved(const glm::vec2& pos);
-  void OnMousePressed(const glm::vec2& pos);
-  void OnMouseReleased(const glm::vec2& pos);
+  std::optional<ToolboxButtonEvent> OnMouseMoved(const glm::vec2& pos);
+  std::optional<ToolboxButtonEvent> OnMousePressed(const glm::vec2& pos);
+  std::optional<ToolboxButtonEvent> OnMouseReleased(const glm::vec2& pos);
 
-  void OnCharInput(const std::string& character);
-  void OnKeyPressed(KeyCode key);
+  std::optional<ToolboxButtonEvent> OnCharInput(const std::string& character);
+  std::optional<ToolboxButtonEvent> OnKeyPressed(KeyCode key);
 
   // Event handlers coming from the parent toolbox window
   std::optional<ImageDocumentEvent> OnScreenshot();
   void OnScreenshotDone();
   std::optional<ImageDocumentEvent> OnSave();
-  
   std::optional<ImageDocumentEvent> OnDelete();
   bool CanDelete();
   void OnUndo();
   void OnCancel();
   bool CanUndo();
   void OnDocumentPicked(const ImageDocument& document);
+
+  std::optional<ToolboButtonStateUpdateEvent> GetDisabledButtons() const;
 
   void OnDrawText();
   void OnDrawIncrementalLetters();

@@ -3,8 +3,8 @@
 namespace app
 {
 
-SelectablePane::SelectablePane(wxWindow *parent, wxWindowID id, const wxPoint &pos, const wxSize &size)
-    : wxWindow(parent, id, pos, size, wxFULL_REPAINT_ON_RESIZE)
+SelectablePane::SelectablePane(wxWindow *parent, wxWindowID id, const wxPoint &pos, const wxSize &size, bool highlightable)
+    : wxWindow(parent, id, pos, size, wxFULL_REPAINT_ON_RESIZE), m_highlightable(highlightable)
 {
     this->SetBackgroundStyle(wxBG_STYLE_PAINT);
 
@@ -31,11 +31,13 @@ void SelectablePane::OnPaint(wxPaintEvent &event)
 
       DrawContent(gc, contentRect, roundness);
 
-      if (selectable)
+      if (!m_disabled)
       {
-        if (selected)
+        if (m_selected)
         {
-          wxBrush brush(wxColor{ 57, 200, 32, 128 }, wxBRUSHSTYLE_SOLID);
+          wxBrush brush(*wxTRANSPARENT_BRUSH);
+          if(m_highlightable)
+            brush = wxBrush(wxColor{ 57, 200, 32, 128 }, wxBRUSHSTYLE_SOLID);
           gc->SetPen(*wxBLACK_PEN);
           gc->SetBrush(brush);
           gc->DrawRoundedRectangle(selectionRect.GetX(), selectionRect.GetY(), selectionRect.GetWidth(), selectionRect.GetHeight(), roundness);
@@ -44,7 +46,9 @@ void SelectablePane::OnPaint(wxPaintEvent &event)
       }
       else
       {
-        wxBrush brush(wxColor{ 128, 128, 128, 128 }, wxBRUSHSTYLE_SOLID);
+        wxBrush brush(*wxTRANSPARENT_BRUSH);
+        if(m_highlightable)
+          brush = wxBrush(wxColor{ 128, 128, 128, 128 }, wxBRUSHSTYLE_SOLID);
         gc->SetPen(*wxTRANSPARENT_PEN);
         gc->SetBrush(brush);
         gc->DrawRoundedRectangle(selectionRect.GetX(), selectionRect.GetY(), selectionRect.GetWidth(), selectionRect.GetHeight(), roundness);
@@ -54,8 +58,8 @@ void SelectablePane::OnPaint(wxPaintEvent &event)
     }
 }
 
-BitmapPane::BitmapPane(wxBitmap bitmap, wxWindow *parent, wxWindowID id, const wxColor &paneColor, const wxPoint &pos, const wxSize &size)
-    : SelectablePane(parent, id, pos, size), m_color(paneColor), m_bitmap(bitmap)
+BitmapPane::BitmapPane(wxBitmap bitmap, wxWindow *parent, wxWindowID id, const wxColor &paneColor,bool higlightable, const wxPoint &pos, const wxSize &size )
+    : SelectablePane(parent, id, pos, size, higlightable), m_color(paneColor), m_bitmap(bitmap)
 {
 }
 

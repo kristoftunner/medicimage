@@ -4,6 +4,7 @@
 #include "editor_events.h"
 #include "camera/opencv_camera.h"
 #include "image_handling/image_editor.h"
+#include "gui/toolbox/toolbox_events.h"
 
 namespace app
 {
@@ -51,54 +52,141 @@ void Editor::Init()
   m_cameraUpdateThread = std::thread(cameraUpdate);
 }
 
-void Editor::OnMouseMoved(const glm::vec2 &pos)
+static std::optional<ButtonType> MapDrawCommandToButton(DrawCommand command)
+{
+  switch(command)
+  {
+    case DrawCommand::DRAW_ARROW:
+      return ButtonType::DRAW_ARROW_BUTTON;
+    case DrawCommand::DRAW_CIRCLE:
+      return ButtonType::DRAW_CIRCLE_BUTTON;
+    case DrawCommand::DRAW_ELLIPSE:
+      return std::nullopt; // TODO: ellipse is not yet implemented
+    case DrawCommand::DRAW_INCREMENTAL_LETTERS:
+      return ButtonType::DRAW_LETTERS_BUTTON;
+    case DrawCommand::DRAW_LINE:
+      return ButtonType::DRAW_LINE_BUTTON;
+    case DrawCommand::DRAW_MULTILINE:
+      return ButtonType::DRAW_MULTILINE_BUTTON;
+    case DrawCommand::DRAW_RECTANGLE:
+      return ButtonType::DRAW_RECTANGLE_BUTTON;
+    case DrawCommand::DRAW_TEXT:
+      return ButtonType::DRAW_TEXT_BUTTON;
+    case DrawCommand::DRAW_SKIN_TEMPLATE:
+      return ButtonType::DRAW_SKIN_TEMPLATE_BUTTON;
+    case DrawCommand::DO_NOTHING:
+    case DrawCommand::OBJECT_SELECT:
+      return std::nullopt;
+  }
+}
+
+std::optional<ToolboxButtonEvent> Editor::OnMouseMoved(const glm::vec2 &pos)
 {
   if((m_state == EditorState::EDITING || m_state == EditorState::IMAGE_SELECTION) && m_mouseDown)
   {
     auto clampedPos = ClampMousePosition(pos);
-    m_drawingSheet.OnMouseButtonDown(clampedPos);
+    auto commandReturn = m_drawingSheet.OnMouseButtonDown(clampedPos);
     m_newDrawingAvailable = true;
+    if(commandReturn.state == DrawCommandReturn::State::DONE)
+    {
+      auto buttonType = MapDrawCommandToButton(commandReturn.command);
+      if(buttonType)
+      {
+        auto event = ToolboxButtonEvent(TOOLBOX_BUTTON_COMMAND_DONE, wxID_ANY);
+        event.SetType(buttonType.value());
+        return event;
+      }
+    }
   }
+
+  return std::nullopt;
 }
 
-void Editor::OnMousePressed(const glm::vec2 &pos)
+std::optional<ToolboxButtonEvent> Editor::OnMousePressed(const glm::vec2 &pos)
 {
   if(m_state == EditorState::EDITING || m_state == EditorState::IMAGE_SELECTION)
   {
     m_mouseDown = true;
     auto clampedPos = ClampMousePosition(pos);
-    m_drawingSheet.OnMouseButtonPressed(clampedPos);
+    auto commandReturn = m_drawingSheet.OnMouseButtonPressed(clampedPos);
     m_newDrawingAvailable = true;
+    if(commandReturn.state == DrawCommandReturn::State::DONE)
+    {
+      auto buttonType = MapDrawCommandToButton(commandReturn.command);
+      if(buttonType)
+      {
+        auto event = ToolboxButtonEvent(TOOLBOX_BUTTON_COMMAND_DONE, wxID_ANY);
+        event.SetType(buttonType.value());
+        return event;
+      }
+    }
   }
+  return std::nullopt;
 }
 
-void Editor::OnMouseReleased(const glm::vec2 &pos)
+std::optional<ToolboxButtonEvent> Editor::OnMouseReleased(const glm::vec2 &pos)
 {
   if((m_state == EditorState::EDITING || m_state == EditorState::IMAGE_SELECTION) && m_mouseDown)
   {
     m_mouseDown = false;
     auto clampedPos = ClampMousePosition(pos);
-    m_drawingSheet.OnMouseButtonReleased(clampedPos);
+    auto commandReturn = m_drawingSheet.OnMouseButtonReleased(clampedPos);
     m_newDrawingAvailable = true;
+    if(commandReturn.state == DrawCommandReturn::State::DONE)
+    {
+      auto buttonType = MapDrawCommandToButton(commandReturn.command);
+      if(buttonType)
+      {
+        auto event = ToolboxButtonEvent(TOOLBOX_BUTTON_COMMAND_DONE, wxID_ANY);
+        event.SetType(buttonType.value());
+        return event;
+      }
+    }
   }
+  return std::nullopt;
 }
 
-void Editor::OnCharInput(const std::string &character)
+std::optional<ToolboxButtonEvent> Editor::OnCharInput(const std::string &character)
 {
   if(m_state == EditorState::EDITING)
   {
-    m_drawingSheet.OnTextInput(character);
+    auto commandReturn = m_drawingSheet.OnTextInput(character);
     m_newDrawingAvailable = true;
+
+    if(commandReturn.state == DrawCommandReturn::State::DONE)
+    {
+      auto buttonType = MapDrawCommandToButton(commandReturn.command);
+      if(buttonType)
+      {
+        auto event = ToolboxButtonEvent(TOOLBOX_BUTTON_COMMAND_DONE, wxID_ANY);
+        event.SetType(buttonType.value());
+        return event;
+      }
+    }
   }
+  return std::nullopt;
 }
 
-void Editor::OnKeyPressed(KeyCode key)
+std::optional<ToolboxButtonEvent> Editor::OnKeyPressed(KeyCode key)
 {
   if(m_state == EditorState::EDITING)
   {
-    m_drawingSheet.OnKeyPressed(key);
+    auto commandReturn = m_drawingSheet.OnKeyPressed(key);
     m_newDrawingAvailable = true;
+
+    if(commandReturn.state == DrawCommandReturn::State::DONE)
+    {
+      auto buttonType = MapDrawCommandToButton(commandReturn.command);
+      if(buttonType)
+      {
+        auto event = ToolboxButtonEvent(TOOLBOX_BUTTON_COMMAND_DONE, wxID_ANY);
+        event.SetType(buttonType.value());
+        return event;
+      }
+    }
   }
+
+  return std::nullopt;
 }
 
 std::optional<ImageDocumentEvent> Editor::OnScreenshot()
@@ -218,6 +306,72 @@ void Editor::OnDocumentPicked(const ImageDocument &document)
     m_drawingSheet.SetDocument(std::make_unique<ImageDocument>(m_activeDocument), {m_activeDocument.image->GetWidth() + borders.left + borders.right, m_activeDocument.image->GetHeight() + borders.top + borders.bottom}); // TODO REFACTOR: this is just a bad hack, do something with it
     m_state = EditorState::IMAGE_SELECTION;
   }
+}
+
+std::optional<ToolboButtonStateUpdateEvent> Editor::GetDisabledButtons() const
+{
+  std::vector<ButtonType> disabledButtons, enabledButtons;
+  if(m_state == EditorState::SHOW_CAMERA)
+  {
+    disabledButtons.push_back(ButtonType::SAVE_BUTTON);
+    disabledButtons.push_back(ButtonType::DELETE_BUTTON);
+    disabledButtons.push_back(ButtonType::UNDO_BUTTON);
+    disabledButtons.push_back(ButtonType::CANCEL_BUTTON);
+    disabledButtons.push_back(ButtonType::DRAW_TEXT_BUTTON);
+    disabledButtons.push_back(ButtonType::DRAW_LETTERS_BUTTON);
+    disabledButtons.push_back(ButtonType::DRAW_ARROW_BUTTON);
+    disabledButtons.push_back(ButtonType::DRAW_CIRCLE_BUTTON);
+    disabledButtons.push_back(ButtonType::DRAW_LINE_BUTTON);
+    disabledButtons.push_back(ButtonType::DRAW_MULTILINE_BUTTON);
+    disabledButtons.push_back(ButtonType::DRAW_RECTANGLE_BUTTON);
+    disabledButtons.push_back(ButtonType::DRAW_SKIN_TEMPLATE_BUTTON);
+  
+    enabledButtons.push_back(ButtonType::SCREENSHOT_BUTTON);
+  }
+  else if(m_state == EditorState::IMAGE_SELECTION)
+  {
+    disabledButtons.push_back(ButtonType::SCREENSHOT_BUTTON);
+    disabledButtons.push_back(ButtonType::SAVE_BUTTON);
+    disabledButtons.push_back(ButtonType::CANCEL_BUTTON);
+
+    enabledButtons.push_back(ButtonType::DRAW_TEXT_BUTTON);
+    enabledButtons.push_back(ButtonType::DRAW_LETTERS_BUTTON);
+    enabledButtons.push_back(ButtonType::DRAW_ARROW_BUTTON);
+    enabledButtons.push_back(ButtonType::DRAW_CIRCLE_BUTTON);
+    enabledButtons.push_back(ButtonType::DRAW_LINE_BUTTON);
+    enabledButtons.push_back(ButtonType::DRAW_MULTILINE_BUTTON);
+    enabledButtons.push_back(ButtonType::DRAW_RECTANGLE_BUTTON);
+    enabledButtons.push_back(ButtonType::DRAW_SKIN_TEMPLATE_BUTTON);
+    enabledButtons.push_back(ButtonType::UNDO_BUTTON);
+    enabledButtons.push_back(ButtonType::DELETE_BUTTON);
+  }
+  else if(m_state == EditorState::EDITING)
+  {
+    disabledButtons.push_back(ButtonType::SCREENSHOT_BUTTON);
+    disabledButtons.push_back(ButtonType::DELETE_BUTTON);
+
+    enabledButtons.push_back(ButtonType::SAVE_BUTTON);
+    enabledButtons.push_back(ButtonType::UNDO_BUTTON);
+    enabledButtons.push_back(ButtonType::CANCEL_BUTTON);
+    enabledButtons.push_back(ButtonType::DRAW_TEXT_BUTTON);
+    enabledButtons.push_back(ButtonType::DRAW_LETTERS_BUTTON);
+    enabledButtons.push_back(ButtonType::DRAW_ARROW_BUTTON);
+    enabledButtons.push_back(ButtonType::DRAW_CIRCLE_BUTTON);
+    enabledButtons.push_back(ButtonType::DRAW_LINE_BUTTON);
+    enabledButtons.push_back(ButtonType::DRAW_MULTILINE_BUTTON);
+    enabledButtons.push_back(ButtonType::DRAW_RECTANGLE_BUTTON);
+    enabledButtons.push_back(ButtonType::DRAW_SKIN_TEMPLATE_BUTTON);
+  }
+
+  if(disabledButtons.size() > 0)
+  {
+    ToolboButtonStateUpdateEvent event(TOOLBOX_BUTTTON_DISABLED, wxID_ANY);
+    event.SetDisabledButtons(disabledButtons);
+    event.SetEnabledButtons(enabledButtons);
+    return event;
+  }
+  else
+    return std::nullopt;
 }
 
 std::unique_ptr<Image2D> Editor::Draw()

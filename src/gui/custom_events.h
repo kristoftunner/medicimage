@@ -6,6 +6,7 @@
 
 #include "image_handling/image_saver.h"
 #include "drawing/entity.h"
+#include "toolbox/toolbox_buttons.h"
 
 namespace app
 {
@@ -110,6 +111,48 @@ public:
 
 private:
   std::filesystem::path m_appFolder;
+};
+
+class ToolboxButtonEvent : public wxCommandEvent
+{
+public:
+    ToolboxButtonEvent(wxEventType eventType, wxWindowID id)
+        : wxCommandEvent(eventType, id)
+    {
+    }
+
+    // Getter and setter for the custom data
+    void SetType(const ButtonType button) { buttonType = button; }
+    const ButtonType GetButtonType() const { return buttonType; }
+
+    // Required for event cloning
+    wxEvent* Clone() const override { return new ToolboxButtonEvent(*this); }
+
+private:
+  ButtonType buttonType;
+};
+
+class ToolboButtonStateUpdateEvent : public wxCommandEvent
+{
+public:
+    ToolboButtonStateUpdateEvent(wxEventType eventType, wxWindowID id)
+        : wxCommandEvent(eventType, id)
+    {
+    }
+
+    // Getter and setter for the custom data
+    void SetDisabledButtons(const std::vector<ButtonType>& buttons) { buttonsToDisable = buttons; }
+    void SetEnabledButtons(const std::vector<ButtonType>& buttons) { buttonsToEnable = buttons; }
+    const std::vector<ButtonType>& GetDisabledButtons() const { return buttonsToDisable; }
+    const std::vector<ButtonType>& GetEnabledButtons() const { return buttonsToEnable; }
+
+    // Required for event cloning
+    wxEvent* Clone() const override { return new ToolboButtonStateUpdateEvent(*this); }
+
+private:
+  // TODO: better data structures
+  std::vector<ButtonType> buttonsToDisable;
+  std::vector<ButtonType> buttonsToEnable;
 };
 
 } // namespace app

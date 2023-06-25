@@ -82,7 +82,7 @@ public:
   void OnCameraFrameUpdate(wxTimerEvent& event);
 
   // Event handlers coming from the parent toolbox window
-  void OnScreenshot(wxCommandEvent &event);
+  void OnScreenshot();
   void OnSave(wxCommandEvent &event);
   void OnDelete(wxCommandEvent &event);
   void OnUndo(wxCommandEvent &event);

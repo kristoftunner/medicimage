@@ -37,7 +37,7 @@ void Thumbnails::SelectPane(BitmapPane* pane)
 {
   for (auto colorPane : m_colorPanes)
   {
-    colorPane->selected = (colorPane == pane);
+    colorPane->m_selected = (colorPane == pane);
     colorPane->Refresh();
   }
 }
@@ -86,7 +86,7 @@ void Thumbnails::UpdateLayout()
     int panelWidth = GetSize().GetWidth();
     for(auto& buttonHandler : m_buttonHandlers)
     {
-      auto pane = new BitmapPane(buttonHandler.first, this, wxID_ANY, wxColour(m_lightBackground), wxDefaultPosition, {panelWidth, panelWidth});
+      auto pane = new BitmapPane(buttonHandler.first, this, wxID_ANY, wxColour(m_lightBackground), false, wxDefaultPosition, {panelWidth, panelWidth});
       pane->Bind(wxEVT_LEFT_DOWN, [this, pane, buttonHandler](wxMouseEvent &event)
       {
         SelectPane(pane);

@@ -11,15 +11,16 @@ namespace app
 class SelectablePane : public wxWindow
 {
 public:
-    SelectablePane(wxWindow *parent, wxWindowID id = wxID_ANY, const wxPoint &pos = wxDefaultPosition, const wxSize &size = wxDefaultSize);
+    SelectablePane(wxWindow *parent, wxWindowID id = wxID_ANY, const wxPoint &pos = wxDefaultPosition, const wxSize &size = wxDefaultSize, bool highlightable = false);
 
     wxSize DoGetBestSize() const override
     {
         return FromDIP(wxSize(45, 45));
     }
 
-    bool selectable = true;
-    bool selected = false;
+    bool m_disabled = false;
+    bool m_selected = false;
+    bool m_highlightable = false;
 
 protected:
     virtual void DrawContent(wxGraphicsContext *gc, const wxRect &rect, int roundness) const = 0;
@@ -31,7 +32,7 @@ private:
 class BitmapPane : public SelectablePane
 {
 public:
-    BitmapPane(wxBitmap bitmap, wxWindow *parent, wxWindowID id, const wxColor &paneColor, const wxPoint &pos = wxDefaultPosition, const wxSize &size = wxDefaultSize);
+    BitmapPane(wxBitmap bitmap, wxWindow *parent, wxWindowID id, const wxColor &paneColor, bool higlightable = false, const wxPoint &pos = wxDefaultPosition, const wxSize &size = wxDefaultSize);
 
     wxColour m_color;
     wxBitmap m_bitmap;

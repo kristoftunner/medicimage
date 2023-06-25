@@ -173,46 +173,52 @@ namespace medicimage
     m_sheetSize = size;
   }
 
-  void DrawingSheet::OnMouseHovered(const glm::vec2 pos)
+  DrawCommandReturn DrawingSheet::OnMouseHovered(const glm::vec2 pos)
   {
     if(m_currentDrawCommand != DrawCommand::DO_NOTHING)
-      m_drawState->OnMouseHovered(pos);
+      return m_drawState->OnMouseHovered(pos);
+    else
+      return {DrawCommandReturn::State::IN_COMMAND, DrawCommand::DO_NOTHING};
   }
 
-  void DrawingSheet::OnMouseButtonPressed(const glm::vec2 pos)
+  DrawCommandReturn DrawingSheet::OnMouseButtonPressed(const glm::vec2 pos)
   {
     if (m_currentDrawCommand != DrawCommand::DO_NOTHING)
-      m_drawState->OnMouseButtonPressed(pos);
+      return m_drawState->OnMouseButtonPressed(pos);
+    else
+      return {DrawCommandReturn::State::IN_COMMAND, DrawCommand::DO_NOTHING};
   }
 
-  void DrawingSheet::OnMouseButtonDown(const glm::vec2 pos)
+  DrawCommandReturn DrawingSheet::OnMouseButtonDown(const glm::vec2 pos)
   {
     if(m_currentDrawCommand != DrawCommand::DO_NOTHING)
-      m_drawState->OnMouseButtonDown(pos);
+      return m_drawState->OnMouseButtonDown(pos);
+    else
+      return {DrawCommandReturn::State::IN_COMMAND, DrawCommand::DO_NOTHING};
   }
 
-  void DrawingSheet::OnMouseButtonReleased(const glm::vec2 pos)
+  DrawCommandReturn DrawingSheet::OnMouseButtonReleased(const glm::vec2 pos)
   {
     if(m_currentDrawCommand != DrawCommand::DO_NOTHING)
-      m_drawState->OnMouseButtonReleased(pos);
+      return m_drawState->OnMouseButtonReleased(pos);
+    else
+      return {DrawCommandReturn::State::IN_COMMAND, DrawCommand::DO_NOTHING};
   }
 
-  void DrawingSheet::OnTextInput(const std::string &inputText)
+  DrawCommandReturn DrawingSheet::OnTextInput(const std::string &inputText)
   {
     if (m_currentDrawCommand != DrawCommand::DO_NOTHING)
-      m_drawState->OnTextInput(inputText);
+      return m_drawState->OnTextInput(inputText);
+    else
+      return {DrawCommandReturn::State::IN_COMMAND, DrawCommand::DO_NOTHING};
   }
 
-  void DrawingSheet::OnKeyPressed(KeyCode key)
+  DrawCommandReturn DrawingSheet::OnKeyPressed(KeyCode key)
   {
     if (m_currentDrawCommand != DrawCommand::DO_NOTHING)
-      m_drawState->OnKeyPressed(key);
-  }
-
-  void DrawingSheet::OnUpdate()
-  {
-    if(m_currentDrawCommand != DrawCommand::DO_NOTHING)
-      m_drawState->OnUpdate();
+      return m_drawState->OnKeyPressed(key);
+    else
+      return {DrawCommandReturn::State::IN_COMMAND, DrawCommand::DO_NOTHING};
   }
 
   void DrawingSheet::OnCancel()
@@ -351,31 +357,41 @@ namespace medicimage
     return normalizedPos;
   }
 
-  void BaseDrawState::OnCancel()
+  DrawCommandReturn BaseDrawState::OnCancel()
   {
+    DrawCommandReturn ret = {DrawCommandReturn::State::IN_COMMAND, m_sheet->m_currentDrawCommand};
     m_sheet->ChangeDrawState(std::make_unique<ObjectSelectInitialState>(m_sheet));
+    return ret;
   }
 
-  void InitialObjectDrawState::OnMouseHovered(const glm::vec2 pos)
+  DrawCommandReturn InitialObjectDrawState::OnMouseHovered(const glm::vec2 pos)
   {
+    DrawCommandReturn ret = {DrawCommandReturn::State::IN_COMMAND, m_sheet->m_currentDrawCommand};
     m_sheet->m_hoveredEntity = m_sheet->GetHoveredEntity(pos);
+    return ret;
   }
 
-  void InitialObjectDrawState::OnMouseButtonPressed(const glm::vec2 pos)
+  DrawCommandReturn InitialObjectDrawState::OnMouseButtonPressed(const glm::vec2 pos)
   {
+    DrawCommandReturn ret = {DrawCommandReturn::State::IN_COMMAND, m_sheet->m_currentDrawCommand};
     m_sheet->ChangeDrawState(std::make_unique<FirstClickRecievedState>(m_sheet)); 
+    return ret;
   }
 
-  void FirstClickRecievedState::OnMouseButtonDown(const glm::vec2 pos)
+  DrawCommandReturn FirstClickRecievedState::OnMouseButtonDown(const glm::vec2 pos)
   {
+    DrawCommandReturn ret{DrawCommandReturn::State::IN_COMMAND, m_sheet->m_currentDrawCommand};
     m_sheet->m_firstPoint = m_sheet->GetNormalizedPos(pos);
     m_sheet->ChangeDrawState(std::make_unique<DrawingTemporaryState>(m_sheet)); 
+    return ret;
   }
 
-  void FirstClickRecievedState::OnMouseButtonReleased(const glm::vec2 pos)
+  DrawCommandReturn FirstClickRecievedState::OnMouseButtonReleased(const glm::vec2 pos)
   {
     // fallback to initial state, because it was just an accidental single click
+    DrawCommandReturn ret{DrawCommandReturn::State::IN_COMMAND, m_sheet->m_currentDrawCommand};
     m_sheet->ChangeDrawState(std::make_unique<InitialObjectDrawState>(m_sheet));
+    return ret;
   }
 
   static std::unique_ptr<BaseDrawComponentWrapper> CreateComponentWrapper(DrawCommand command, glm::vec2 firstPoint, glm::vec2 secondPoint, glm::vec2 sheetSize, DrawObjectType objectType)
@@ -410,43 +426,52 @@ namespace medicimage
       }
     }
   }
-  void DrawingTemporaryState::OnMouseButtonDown(const glm::vec2 pos)
+  DrawCommandReturn DrawingTemporaryState::OnMouseButtonDown(const glm::vec2 pos)
   { 
     m_sheet->m_secondPoint = m_sheet->GetNormalizedPos(pos);
     Entity entity;
 
     auto wrapper = CreateComponentWrapper(m_sheet->m_currentDrawCommand, m_sheet->m_firstPoint, m_sheet->m_secondPoint, m_sheet->m_sheetSize, DrawObjectType::TEMPORARY);
     wrapper->UpdateShapeAttributes();
+    return {DrawCommandReturn::State::IN_COMMAND, m_sheet->m_currentDrawCommand};
   }
 
-  void DrawingTemporaryState::OnMouseButtonReleased(const glm::vec2 pos)
-  { // TODO REFACTOR: see above 
+  DrawCommandReturn DrawingTemporaryState::OnMouseButtonReleased(const glm::vec2 pos)
+  { // TODO REFACTOR: see above
     m_sheet->m_secondPoint = m_sheet->GetNormalizedPos(pos);
     Entity entity;
     auto wrapper = CreateComponentWrapper(m_sheet->m_currentDrawCommand, m_sheet->m_firstPoint, m_sheet->m_secondPoint, m_sheet->m_sheetSize, DrawObjectType::PERMANENT);
     wrapper->UpdateShapeAttributes();
-    
+
     m_sheet->Annotated(); // needed for weird UI feature
 
-    if(m_sheet->m_currentDrawCommand == DrawCommand::DRAW_LINE) // line is a special case, because we are drawing multiple NOT connected lines
+    DrawCommandReturn ret;
+    if (m_sheet->m_currentDrawCommand == DrawCommand::DRAW_LINE) // line is a special case, because we are drawing multiple NOT connected lines
+    {
+      ret = {DrawCommandReturn::State::IN_COMMAND, m_sheet->m_currentDrawCommand};
       m_sheet->ChangeDrawState(std::make_unique<InitialObjectDrawState>(m_sheet));
-    else if(m_sheet->m_currentDrawCommand == DrawCommand::DRAW_MULTILINE)
+    }
+    else if (m_sheet->m_currentDrawCommand == DrawCommand::DRAW_MULTILINE)
+    {
+      ret = {DrawCommandReturn::State::IN_COMMAND, m_sheet->m_currentDrawCommand};
       m_sheet->m_firstPoint = m_sheet->m_secondPoint;
+    }
     else
     {
-      m_sheet->SetDrawCommand(DrawCommand::OBJECT_SELECT); 
+      ret = {DrawCommandReturn::State::DONE, m_sheet->m_currentDrawCommand};
+      m_sheet->SetDrawCommand(DrawCommand::OBJECT_SELECT);
       m_sheet->ChangeDrawState(std::make_unique<ObjectSelectInitialState>(m_sheet));
-
     }
 
+    return ret;
   }
-  
-  void DrawTextInitialState::OnMouseHovered(const glm::vec2 pos)
+
+  DrawCommandReturn DrawTextInitialState::OnMouseHovered(const glm::vec2 pos)
   { // TODO: change the mouse cursor to text editor cursor
-    ;
+    return {DrawCommandReturn::State::IN_COMMAND, m_sheet->m_currentDrawCommand};
   }
   
-  void DrawTextInitialState::OnMouseButtonReleased(const glm::vec2 pos)
+  DrawCommandReturn DrawTextInitialState::OnMouseButtonReleased(const glm::vec2 pos)
   {
     m_sheet->m_firstPoint = m_sheet->GetNormalizedPos(pos);
     if(m_text != "")
@@ -454,25 +479,31 @@ namespace medicimage
       TextComponentWrapper tw(TextComponentWrapper::CreateText(m_sheet->m_firstPoint, m_sheet->m_sheetSize,m_text, s_defaultFontSize, DrawObjectType::TEMPORARY));
       tw.UpdateShapeAttributes();
     }
+
+    DrawCommandReturn ret{DrawCommandReturn::State::IN_COMMAND, m_sheet->m_currentDrawCommand};
     m_sheet->ChangeDrawState(std::make_unique<DrawTextState>(m_sheet)); 
+    return ret;
   }
 
 
-  void DrawTextState::OnTextInput(const std::string &inputText)
+  DrawCommandReturn DrawTextState::OnTextInput(const std::string &inputText)
   {
     if(m_text == " ")   // first delete the space character, which is there only for showing a blank space when using text input
       m_text = "";
     m_text += inputText;
     TextComponentWrapper tw(TextComponentWrapper::CreateText(m_sheet->m_firstPoint, m_sheet->m_sheetSize, m_text, s_defaultFontSize, DrawObjectType::TEMPORARY));
     tw.UpdateShapeAttributes();
+    return {DrawCommandReturn::State::IN_COMMAND, m_sheet->m_currentDrawCommand};
   }
   
-  void DrawTextState::OnKeyPressed(KeyCode key)
+  DrawCommandReturn DrawTextState::OnKeyPressed(KeyCode key)
   { // exit the command if enter is pressed
+    DrawCommandReturn ret;
     if(m_text != "")
     {
       if(key == Key::MDIK_RETURN)
       {
+        ret = {DrawCommandReturn::State::DONE, m_sheet->m_currentDrawCommand};
         m_sheet->SetDrawCommand(DrawCommand::OBJECT_SELECT); 
         m_sheet->ChangeDrawState(std::make_unique<ObjectSelectInitialState>(m_sheet));
       }
@@ -481,23 +512,21 @@ namespace medicimage
         m_text.pop_back();
         TextComponentWrapper tw(TextComponentWrapper::CreateText(m_sheet->m_firstPoint,m_sheet->m_sheetSize, m_text, s_defaultFontSize, DrawObjectType::TEMPORARY));
         tw.UpdateShapeAttributes();
+        ret = {DrawCommandReturn::State::IN_COMMAND, m_sheet->m_currentDrawCommand};
       }
     }
+    else
+      ret = {DrawCommandReturn::State::IN_COMMAND, m_sheet->m_currentDrawCommand};
+
+    return ret;
   }
   
-  void DrawTextState::OnMouseButtonPressed(const glm::vec2 pos)
+  DrawCommandReturn DrawTextState::OnMouseButtonPressed(const glm::vec2 pos)
   {
+    DrawCommandReturn ret = {DrawCommandReturn::State::DONE, m_sheet->m_currentDrawCommand};
     m_sheet->SetDrawCommand(DrawCommand::OBJECT_SELECT); 
     m_sheet->ChangeDrawState(std::make_unique<ObjectSelectInitialState>(m_sheet));
-  }
-
-  void DrawTextState::OnUpdate()
-  {
-    if(m_text != "")
-    {
-      TextComponentWrapper tw(TextComponentWrapper::CreateText(m_sheet->m_firstPoint, m_sheet->m_sheetSize,m_text, s_defaultFontSize, DrawObjectType::TEMPORARY));
-      tw.UpdateShapeAttributes();
-    }
+    return ret;
   }
 
   DrawTextState::~DrawTextState()
@@ -510,29 +539,38 @@ namespace medicimage
     }
   }
 
-  void DrawIncrementalLetters::OnKeyPressed(KeyCode key)
+  DrawCommandReturn DrawIncrementalLetters::OnKeyPressed(KeyCode key)
   {
+    DrawCommandReturn ret;
     if(key == Key::MDIK_RETURN)
     {
+      ret = {DrawCommandReturn::State::DONE, m_sheet->m_currentDrawCommand};
       m_sheet->SetDrawCommand(DrawCommand::OBJECT_SELECT); 
       m_sheet->ChangeDrawState(std::make_unique<ObjectSelectInitialState>(m_sheet));
     }
     else if(key == Key::MDIK_UP)
     {
+      ret = {DrawCommandReturn::State::IN_COMMAND, m_sheet->m_currentDrawCommand};
       IncrementLetter();
     }
     else if(key == Key::MDIK_DOWN)
     {
+      ret = {DrawCommandReturn::State::IN_COMMAND, m_sheet->m_currentDrawCommand};
       DecrementLetter();
     }
+    else
+      ret = {DrawCommandReturn::State::IN_COMMAND, m_sheet->m_currentDrawCommand};
+    return ret;
   }
-  void DrawIncrementalLetters::OnMouseButtonPressed(const glm::vec2 pos)
+  DrawCommandReturn DrawIncrementalLetters::OnMouseButtonPressed(const glm::vec2 pos)
   {
+    DrawCommandReturn ret{DrawCommandReturn::State::IN_COMMAND, m_sheet->m_currentDrawCommand};
     m_sheet->m_firstPoint = m_sheet->GetNormalizedPos(pos);
     TextComponentWrapper tw(TextComponentWrapper::CreateText(m_sheet->m_firstPoint, m_sheet->m_sheetSize,m_text, s_defaultFontSize, DrawObjectType::PERMANENT));
     tw.UpdateShapeAttributes();
     IncrementLetter();
     m_sheet->Annotated(); // needed for weird UI feature
+    return ret;
   }
 
   void DrawIncrementalLetters::IncrementLetter()
@@ -595,13 +633,15 @@ namespace medicimage
     }
   }
 
-  void ObjectSelectInitialState::OnMouseHovered(const glm::vec2 pos)
+  DrawCommandReturn ObjectSelectInitialState::OnMouseHovered(const glm::vec2 pos)
   {
     m_sheet->m_hoveredEntity = m_sheet->GetHoveredEntity(pos);
+    return {DrawCommandReturn::State::IN_COMMAND, m_sheet->m_currentDrawCommand};
   }
 
-  void ObjectSelectInitialState::OnMouseButtonPressed(const glm::vec2 pos)
+  DrawCommandReturn ObjectSelectInitialState::OnMouseButtonPressed(const glm::vec2 pos)
   {
+    DrawCommandReturn ret{DrawCommandReturn::State::IN_COMMAND, m_sheet->m_currentDrawCommand};
     m_sheet->m_firstPoint = m_sheet->GetNormalizedPos(pos);
     auto entity = m_sheet->GetHoveredEntity(pos);
     if(entity.has_value())
@@ -613,9 +653,10 @@ namespace medicimage
     {
       m_sheet->ChangeDrawState(std::make_unique<ObjectSelectionState>(m_sheet));
     }
+    return ret;
   }
 
-  void ObjectSelectionState::OnMouseButtonDown(const glm::vec2 pos)
+  DrawCommandReturn ObjectSelectionState::OnMouseButtonDown(const glm::vec2 pos)
   {
     m_sheet->m_secondPoint = m_sheet->GetNormalizedPos(pos);
     auto& firstPoint = m_sheet->m_firstPoint;
@@ -628,10 +669,12 @@ namespace medicimage
       entity.GetComponent<ThicknessComponent>().thickness = 2;
       entity.GetComponent<CommonAttributesComponent>().filled = true;
     }
+    return {DrawCommandReturn::State::IN_COMMAND, m_sheet->m_currentDrawCommand};
   }
 
-  void ObjectSelectionState::OnMouseButtonReleased(const glm::vec2 pos)
+  DrawCommandReturn ObjectSelectionState::OnMouseButtonReleased(const glm::vec2 pos)
   { // If we have selected entities, then go back to initial select state, else go forward
+    DrawCommandReturn ret{DrawCommandReturn::State::IN_COMMAND, m_sheet->m_currentDrawCommand};
     bool hasSelectedObject = false;
     auto view = Entity::View<BoundingContourComponent>();
     for(auto e : view)
@@ -648,11 +691,14 @@ namespace medicimage
       m_sheet->ChangeDrawState(std::make_unique<ObjectSelectedState>(m_sheet)); 
     else
       m_sheet->ChangeDrawState(std::make_unique<ObjectSelectInitialState>(m_sheet)); 
+
+    return ret;
   }
 
-  void ObjectSelectedState::OnMouseButtonPressed(const glm::vec2 pos)
+  DrawCommandReturn ObjectSelectedState::OnMouseButtonPressed(const glm::vec2 pos)
   {
     // TODO: refactor this function, code smell
+    DrawCommandReturn ret;
     m_sheet->m_firstPoint = m_sheet->GetNormalizedPos(pos);
     auto view = Entity::View<BoundingContourComponent>();
     // first iterate trough all the selected objects to see if we are clicking on a pickpoint or drag area
@@ -665,16 +711,18 @@ namespace medicimage
         {
           if (m_sheet->IsPickpointSelected(entity, m_sheet->m_firstPoint))
           {
+            ret = {DrawCommandReturn::State::IN_COMMAND, m_sheet->m_currentDrawCommand};
             m_sheet->ChangeDrawState(std::make_unique<PickPointSelectedState>(m_sheet));
-            return;
+            return ret;
           }
         }
 
         if (m_sheet->IsDragAreaSelected(entity, m_sheet->m_firstPoint))
         {
+          ret = {DrawCommandReturn::State::IN_COMMAND, m_sheet->m_currentDrawCommand};
           m_sheet->m_draggedEntity = entity;
           m_sheet->ChangeDrawState(std::make_unique<ObjectDraggingState>(m_sheet));
-          return;
+          return ret;
         }
       }
     }
@@ -683,15 +731,18 @@ namespace medicimage
     auto hoveredEntity = m_sheet->GetHoveredEntity(pos);
     if (hoveredEntity.has_value())
     {
+      ret = {DrawCommandReturn::State::IN_COMMAND, m_sheet->m_currentDrawCommand};
       hoveredEntity.value().GetComponent<CommonAttributesComponent>().selected = true;
-      return;
+      return ret;
     }
     // clicking outside of the pickpoints and drage area, clear selection and go back to initial state
     m_sheet->ChangeDrawState(std::make_unique<ObjectSelectInitialState>(m_sheet));
+    return {DrawCommandReturn::State::IN_COMMAND, m_sheet->m_currentDrawCommand};
   }
 
-  void ObjectSelectedState::OnKeyPressed(KeyCode key)
+  DrawCommandReturn ObjectSelectedState::OnKeyPressed(KeyCode key)
   {
+    DrawCommandReturn ret{DrawCommandReturn::State::IN_COMMAND, m_sheet->m_currentDrawCommand};
     auto selectedEntities = m_sheet->GetSelectedEntities();
     if (key == Key::MDIK_DELETE)
     {
@@ -701,6 +752,7 @@ namespace medicimage
       }
       m_sheet->ChangeDrawState(std::make_unique<ObjectSelectInitialState>(m_sheet));
     }
+    return ret;
   }
 
   static std::unique_ptr<BaseDrawComponentWrapper> CreateDrawComponentWrapper(Entity entity)
@@ -734,7 +786,7 @@ namespace medicimage
 
   }   
 
-  void PickPointSelectedState::OnMouseButtonDown(const glm::vec2 pos)
+  DrawCommandReturn PickPointSelectedState::OnMouseButtonDown(const glm::vec2 pos)
   {
     auto currentPoint = m_sheet->GetNormalizedPos(pos);
     auto diff = (currentPoint - m_sheet->m_firstPoint) * glm::vec2(1.0);
@@ -750,10 +802,12 @@ namespace medicimage
         wrapper->OnPickPointDrag(diff, selectedPointIndex);
       }
     }
+    return {DrawCommandReturn::State::IN_COMMAND, m_sheet->m_currentDrawCommand};
   }
 
-  void PickPointSelectedState::OnMouseButtonReleased(const glm::vec2 pos)
+  DrawCommandReturn PickPointSelectedState::OnMouseButtonReleased(const glm::vec2 pos)
   {
+    DrawCommandReturn ret{DrawCommandReturn::State::DONE, m_sheet->m_currentDrawCommand};
     // clear pickpoint selection
     auto view = Entity::View<PickPointsComponent>();
     for(auto e : view)
@@ -762,9 +816,10 @@ namespace medicimage
       entity.GetComponent<PickPointsComponent>().selectedPoint = -1;
     }
     m_sheet->ChangeDrawState(std::make_unique<ObjectSelectedState>(m_sheet));
+    return ret;
   }
 
-  void ObjectDraggingState::OnMouseButtonDown(const glm::vec2 pos)
+  DrawCommandReturn ObjectDraggingState::OnMouseButtonDown(const glm::vec2 pos)
   {
     if(m_sheet->m_draggedEntity.has_value())
     { // TODO: implement a proper visitor pattern here
@@ -776,11 +831,14 @@ namespace medicimage
       auto wrapper = CreateDrawComponentWrapper(m_sheet->m_draggedEntity.value());
       wrapper->OnObjectDrag(diff);
     }
+    return {DrawCommandReturn::State::IN_COMMAND, m_sheet->m_currentDrawCommand};
   }
 
-  void ObjectDraggingState::OnMouseButtonReleased(const glm::vec2 pos)
+  DrawCommandReturn ObjectDraggingState::OnMouseButtonReleased(const glm::vec2 pos)
   {
+    DrawCommandReturn ret{DrawCommandReturn::State::DONE, m_sheet->m_currentDrawCommand};
     m_sheet->ChangeDrawState(std::make_unique<ObjectSelectedState>(m_sheet));
+    return ret;
   }
 
 } // namespace medicimage

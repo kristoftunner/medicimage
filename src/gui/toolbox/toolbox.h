@@ -2,6 +2,7 @@
 
 #include <wx/panel.h>
 #include <vector>
+#include <unordered_map>
 
 #include "bitmappane.h"
 #include "toolbox.h"
@@ -10,6 +11,12 @@
 
 namespace app
 {
+
+struct BitmapButton
+{
+  BitmapPane* pane;
+  std::function<void()> handlerFn;
+};
 
 class Toolbox : public wxPanel
 {
@@ -32,10 +39,9 @@ public:
   void OnDrawRectangle();
   void OnDrawSkinTemplate();
 private:
-
   void SelectPane(BitmapPane* pane);
-  std::vector<BitmapPane*> m_colorPanes;
-  std::vector<BitmapButtonHandler> m_buttonHandlers;
+  //std::vector<BitmapPane*> m_colorPanes;
+  std::unordered_map<ButtonType, BitmapButton> m_buttons;
   AttributeEditor* m_attributeEditor = nullptr;
 
   const std::string m_lightBackground = "#f4f3f3";

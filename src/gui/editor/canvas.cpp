@@ -39,20 +39,6 @@ Canvas::Canvas( wxWindow *parent, wxWindowID id, const wxPoint &pos, const wxSiz
 
   Bind(wxEVT_CHAR_HOOK, &Canvas::OnCharInput, this);
 
-  Bind(TOOLBOX_SCREENSHOT, &Canvas::OnScreenshot, this);
-  Bind(TOOLBOX_SAVE, &Canvas::OnSave, this);
-  Bind(TOOLBOX_DELETE, &Canvas::OnDelete, this);
-  Bind(TOOLBOX_UNDO, &Canvas::OnUndo, this);
-  Bind(TOOLBOX_CANCEL, &Canvas::OnCancel, this);
-
-  Bind(TOOLBOX_DRAW_TEXT, &Canvas::OnDrawText, this);
-  Bind(TOOLBOX_DRAW_LETTERS, &Canvas::OnDrawIncrementalLetters, this);
-  Bind(TOOLBOX_DRAW_ARROW, &Canvas::OnDrawArrow, this);
-  Bind(TOOLBOX_DRAW_CIRCLE, &Canvas::OnDrawCircle, this);
-  Bind(TOOLBOX_DRAW_LINE, &Canvas::OnDrawLine, this);
-  Bind(TOOLBOX_DRAW_MULTILINE, &Canvas::OnDrawMultiline, this);
-  Bind(TOOLBOX_DRAW_RECTANGLE, &Canvas::OnDrawRectangle, this);
-  Bind(TOOLBOX_DRAW_SKIN_TEMPLATE, &Canvas::OnDrawSkinTemplate, this);
   Bind(wxEVT_TIMER, &Canvas::OnCameraFrameUpdate, this);  
   
   Bind(EVT_ENTITY_ATTRIBUTE_EDITED, [this](EntityEvent& event)
@@ -77,9 +63,13 @@ glm::vec2 Canvas::CalcCorrectedMousePos(glm::vec2 pos)
 
 void Canvas::OnMouseMoved(wxMouseEvent &event)
 {
+  // BIG TODO: refactor this button disabling stuff
   wxClientDC dc(this);
   m_mousePoint = wxPoint(event.GetLogicalPosition(dc));
-  m_editor.OnMouseMoved(CalcCorrectedMousePos({m_mousePoint.x, m_mousePoint.y}));
+  auto eventFromEditor = m_editor.OnMouseMoved(CalcCorrectedMousePos({m_mousePoint.x, m_mousePoint.y}));
+  if(eventFromEditor)
+    ProcessWindowEvent(eventFromEditor.value());
+
   m_dialog->OnUpdate();
   if(m_editor.IsDrawingUpdated())
   {
@@ -93,7 +83,10 @@ void Canvas::OnMousePressed(wxMouseEvent &event)
 {
   wxClientDC dc(this);
   m_mousePoint = wxPoint(event.GetLogicalPosition(dc));
-  m_editor.OnMousePressed(CalcCorrectedMousePos({m_mousePoint.x, m_mousePoint.y}));
+  auto eventFromEditor = m_editor.OnMousePressed(CalcCorrectedMousePos({m_mousePoint.x, m_mousePoint.y}));
+  if(eventFromEditor)
+    ProcessWindowEvent(eventFromEditor.value());
+
   if(m_editor.IsDrawingUpdated())
   {
     m_editor.UpdatedDrawing();
@@ -110,7 +103,10 @@ void Canvas::OnMouseReleased(wxMouseEvent &event)
   wxClientDC dc(this);
   m_mousePoint = wxPoint(event.GetLogicalPosition(dc));
 
-  m_editor.OnMouseReleased(CalcCorrectedMousePos({m_mousePoint.x, m_mousePoint.y}));
+  auto eventFromEditor = m_editor.OnMouseReleased(CalcCorrectedMousePos({m_mousePoint.x, m_mousePoint.y}));
+  if(eventFromEditor)
+    ProcessWindowEvent(eventFromEditor.value());
+
   if(m_editor.IsDrawingUpdated())
   {
     m_editor.UpdatedDrawing();
@@ -121,45 +117,70 @@ void Canvas::OnMouseReleased(wxMouseEvent &event)
   m_dialog->OnUpdate();
 }
 
-void Canvas::OnCharInput(wxKeyEvent &event)
+void Canvas::OnCharInput(wxKeyEvent& event)
 {
-  auto character  = event.GetUnicodeKey();
+  auto character = event.GetUnicodeKey();
   std::string str(1, static_cast<char>(character));
   int keycode = event.GetKeyCode();
-  if(keycode == WXK_BACK)
-    m_editor.OnKeyPressed(Key::MDIK_BACKSPACE);
-  else if(keycode == WXK_RETURN || keycode == WXK_NUMPAD_ENTER)
-    m_editor.OnKeyPressed(Key::MDIK_RETURN);
-  else if(keycode == WXK_DELETE)
-    m_editor.OnKeyPressed(Key::MDIK_DELETE);
-  else
-    m_editor.OnCharInput(str);
+  if (keycode == WXK_BACK)
+  {
+    auto eventFromEditor = m_editor.OnKeyPressed(Key::MDIK_BACKSPACE);
+    if (eventFromEditor)
+      ProcessWindowEvent(eventFromEditor.value());
+  }
+  else if (keycode == WXK_RETURN || keycode == WXK_NUMPAD_ENTER)
+  {
+    auto eventFromEditor = m_editor.OnKeyPressed(Key::MDIK_RETURN);
+    if (eventFromEditor)
+      ProcessWindowEvent(eventFromEditor.value());
 
-  if(m_editor.IsDrawingUpdated())
+  }
+  else if (keycode == WXK_DELETE)
+  {
+    auto eventFromEditor = m_editor.OnKeyPressed(Key::MDIK_DELETE);
+    if (eventFromEditor)
+      ProcessWindowEvent(eventFromEditor.value());
+  }
+  else
+  {
+    auto eventFromEditor = m_editor.OnCharInput(str);
+    if (eventFromEditor)
+      ProcessWindowEvent(eventFromEditor.value());
+  }
+
+  if (m_editor.IsDrawingUpdated())
   {
     Refresh();
     m_editor.UpdatedDrawing();
     UpdateAttributeEditor();
   }
-  
+
   m_dialog->OnUpdate();
 }
 
 void Canvas::OnKeyPressed(wxKeyEvent &event)
 {
   int keycode = event.GetKeyCode();
-  if(keycode == WXK_BACK)
-    m_editor.OnKeyPressed(Key::MDIK_BACKSPACE);
-  else if(keycode == WXK_RETURN || keycode == WXK_NUMPAD_ENTER)
-    m_editor.OnKeyPressed(Key::MDIK_RETURN);
+  if (keycode == WXK_BACK)
+  {
+    auto eventFromEditor = m_editor.OnKeyPressed(Key::MDIK_BACKSPACE);
+    if (eventFromEditor)
+      ProcessWindowEvent(eventFromEditor.value());
+  }
+  else if (keycode == WXK_RETURN || keycode == WXK_NUMPAD_ENTER)
+  {
+    auto eventFromEditor = m_editor.OnKeyPressed(Key::MDIK_RETURN);
+    if (eventFromEditor)
+      ProcessWindowEvent(eventFromEditor.value());
+  }
 
-  if(m_editor.IsDrawingUpdated())
+  if (m_editor.IsDrawingUpdated())
   {
     Refresh();
     m_editor.UpdatedDrawing();
     UpdateAttributeEditor();
   }
-  
+
   m_dialog->OnUpdate();
 }
 
@@ -223,9 +244,12 @@ void Canvas::OnCameraFrameUpdate(wxTimerEvent &event)
     m_editor.UpdatedFrame();
     m_dialog->OnUpdate();
   }
+  auto buttonDisableEvent = m_editor.GetDisabledButtons();
+  if(buttonDisableEvent)
+    ProcessWindowEvent(buttonDisableEvent.value());
 }
 
-void Canvas::OnScreenshot(wxCommandEvent &event)
+void Canvas::OnScreenshot()
 {
   auto documentAddEvent = m_editor.OnScreenshot();
   if(documentAddEvent)
@@ -233,6 +257,13 @@ void Canvas::OnScreenshot(wxCommandEvent &event)
     ProcessWindowEvent(documentAddEvent.value());
   }
   m_dialog->OnUpdate();
+  ToolboxButtonEvent toolboxEvent(TOOLBOX_BUTTON_COMMAND_DONE, GetId());
+  toolboxEvent.SetType(ButtonType::SCREENSHOT_BUTTON);
+  ProcessWindowEvent(toolboxEvent);
+
+  auto buttonDisableEvent = m_editor.GetDisabledButtons();
+  if(buttonDisableEvent)
+    ProcessWindowEvent(buttonDisableEvent.value());
 }
 
 void Canvas::OnSave(wxCommandEvent &event)
@@ -243,6 +274,13 @@ void Canvas::OnSave(wxCommandEvent &event)
     ProcessWindowEvent(imageSaveEvent.value());
   } 
   m_dialog->OnUpdate();
+  ToolboxButtonEvent toolboxEvent(TOOLBOX_BUTTON_COMMAND_DONE, GetId());
+  toolboxEvent.SetType(ButtonType::SAVE_BUTTON);
+  ProcessWindowEvent(toolboxEvent);
+
+  auto buttonDisableEvent = m_editor.GetDisabledButtons();
+  if(buttonDisableEvent)
+    ProcessWindowEvent(buttonDisableEvent.value());
 }
 
 void Canvas::OnDelete(wxCommandEvent &event)
@@ -259,10 +297,23 @@ void Canvas::OnDelete(wxCommandEvent &event)
       }
       m_dialog->OnUpdate();
       Refresh();
+      ToolboxButtonEvent toolboxEvent(TOOLBOX_BUTTON_COMMAND_DONE, GetId());
+      toolboxEvent.SetType(ButtonType::DELETE_BUTTON);
+      ProcessWindowEvent(toolboxEvent);
+  auto buttonDisableEvent = m_editor.GetDisabledButtons();
+  if(buttonDisableEvent)
+    ProcessWindowEvent(buttonDisableEvent.value());
+    }
+    else
+    {
+      ToolboxButtonEvent toolboxEvent(TOOLBOX_BUTTON_COMMAND_DONE, GetId());
+      toolboxEvent.SetType(ButtonType::DELETE_BUTTON);
+      ProcessWindowEvent(toolboxEvent);
+  auto buttonDisableEvent = m_editor.GetDisabledButtons();
+  if(buttonDisableEvent)
+    ProcessWindowEvent(buttonDisableEvent.value());
     }
   }
-  // TODO: implement this
-  
 }
 
 void Canvas::OnUndo(wxCommandEvent &event)
@@ -275,6 +326,21 @@ void Canvas::OnUndo(wxCommandEvent &event)
       m_editor.OnUndo();
       m_dialog->OnUpdate();
       Refresh();
+      ToolboxButtonEvent toolboxEvent(TOOLBOX_BUTTON_COMMAND_DONE, GetId());
+      toolboxEvent.SetType(ButtonType::UNDO_BUTTON);
+      ProcessWindowEvent(toolboxEvent);
+  auto buttonDisableEvent = m_editor.GetDisabledButtons();
+  if(buttonDisableEvent)
+    ProcessWindowEvent(buttonDisableEvent.value());
+    }
+    else
+    {
+      ToolboxButtonEvent toolboxEvent(TOOLBOX_BUTTON_COMMAND_DONE, GetId());
+      toolboxEvent.SetType(ButtonType::UNDO_BUTTON);
+      ProcessWindowEvent(toolboxEvent);
+  auto buttonDisableEvent = m_editor.GetDisabledButtons();
+  if(buttonDisableEvent)
+    ProcessWindowEvent(buttonDisableEvent.value());
     }
   }
 }
@@ -284,6 +350,9 @@ void Canvas::OnCancel(wxCommandEvent &event)
   m_editor.OnCancel();
   m_dialog->OnUpdate();
   Refresh();
+  ToolboxButtonEvent toolboxEvent(TOOLBOX_BUTTON_COMMAND_DONE, GetId());
+  toolboxEvent.SetType(ButtonType::CANCEL_BUTTON);
+  ProcessWindowEvent(toolboxEvent);
 }
 
 void Canvas::OnDocumentPicked(ImageDocumentEvent &event)
@@ -291,6 +360,9 @@ void Canvas::OnDocumentPicked(ImageDocumentEvent &event)
   m_editor.OnDocumentPicked(event.GetData());
   m_dialog->OnUpdate();
   Refresh();
+  auto buttonDisableEvent = m_editor.GetDisabledButtons();
+  if(buttonDisableEvent)
+    ProcessWindowEvent(buttonDisableEvent.value());
 }
 
 void Canvas::OnDrawText(wxCommandEvent &event)
@@ -434,19 +506,54 @@ EditorPanel::EditorPanel(wxWindow *parent, wxWindowID id, const wxPoint &pos, co
   SetSizerAndFit(sizer);
 
   //relay the events from frame to canvas
-  Bind(TOOLBOX_SCREENSHOT, [this](wxCommandEvent& event){this->m_canvas->OnScreenshot(event);});
-  Bind(TOOLBOX_SAVE, [this](wxCommandEvent& event){this->m_canvas->OnSave(event);});
-  Bind(TOOLBOX_DELETE, [this](wxCommandEvent& event){this->m_canvas->OnDelete(event);});
-  Bind(TOOLBOX_UNDO, [this](wxCommandEvent& event){this->m_canvas->OnUndo(event);});
-  Bind(TOOLBOX_CANCEL, [this](wxCommandEvent& event){this->m_canvas->OnCancel(event);});
-  Bind(TOOLBOX_DRAW_TEXT, [this](wxCommandEvent& event){this->m_canvas->OnDrawText(event);});
-  Bind(TOOLBOX_DRAW_LETTERS, [this](wxCommandEvent& event){this->m_canvas->OnDrawIncrementalLetters(event);});
-  Bind(TOOLBOX_DRAW_ARROW, [this](wxCommandEvent& event){this->m_canvas->OnDrawArrow(event);});
-  Bind(TOOLBOX_DRAW_CIRCLE, [this](wxCommandEvent& event){this->m_canvas->OnDrawCircle(event);});
-  Bind(TOOLBOX_DRAW_LINE, [this](wxCommandEvent& event){this->m_canvas->OnDrawLine(event);});
-  Bind(TOOLBOX_DRAW_MULTILINE, [this](wxCommandEvent& event){this->m_canvas->OnDrawMultiline(event);});
-  Bind(TOOLBOX_DRAW_RECTANGLE, [this](wxCommandEvent& event){this->m_canvas->OnDrawRectangle(event);});
-  Bind(TOOLBOX_DRAW_SKIN_TEMPLATE, [this](wxCommandEvent& event){this->m_canvas->OnDrawSkinTemplate(event);});
+  Bind(TOOLBOX_BUTTON_PUSHED, [this](ToolboxButtonEvent& event){
+    auto buttonType = event.GetButtonType();
+    switch(buttonType)
+    {
+      case ButtonType::SCREENSHOT_BUTTON:
+        m_canvas->OnScreenshot();
+        break;
+      case ButtonType::SAVE_BUTTON:
+        m_canvas->OnSave(event);
+        break;
+      case ButtonType::DELETE_BUTTON:
+        m_canvas->OnDelete(event);
+        break;
+      case ButtonType::UNDO_BUTTON:
+        m_canvas->OnUndo(event);
+        break;
+      case ButtonType::CANCEL_BUTTON:
+        m_canvas->OnCancel(event);
+        break;
+      case ButtonType::DRAW_TEXT_BUTTON:
+        m_canvas->OnDrawText(event);
+        break;
+      case ButtonType::DRAW_ARROW_BUTTON:
+        m_canvas->OnDrawArrow(event);
+        break;
+      case ButtonType::DRAW_LETTERS_BUTTON:
+        m_canvas->OnDrawIncrementalLetters(event);
+        break;
+      case ButtonType::DRAW_CIRCLE_BUTTON:
+        m_canvas->OnDrawCircle(event);
+        break;
+      case ButtonType::DRAW_LINE_BUTTON:
+        m_canvas->OnDrawLine(event);
+        break;
+      case ButtonType::DRAW_MULTILINE_BUTTON:
+        m_canvas->OnDrawMultiline(event);
+        break;
+      case ButtonType::DRAW_RECTANGLE_BUTTON:
+        m_canvas->OnDrawRectangle(event);
+        break;
+      case ButtonType::DRAW_SKIN_TEMPLATE_BUTTON:
+        m_canvas->OnDrawSkinTemplate(event);
+        break;
+      default:
+        wxLogError("Unknown button type");
+        break;
+    }
+  });
   Bind(EVT_THUMBNAILS_DOCUMENT_PICK, [this](ImageDocumentEvent& event){this->m_canvas->OnDocumentPicked(event);});
 
   Bind(EVT_ENTITY_ATTRIBUTE_EDITED, [this](EntityEvent& event){wxPostEvent(this->m_canvas, event);});
