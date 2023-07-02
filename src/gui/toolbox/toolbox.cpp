@@ -15,18 +15,18 @@ namespace app
 {
 
   Toolbox::Toolbox(wxWindow* parent, wxWindowID id, const wxPoint& pos, const wxSize& size)
-    : wxPanel(parent, id, pos, size)
+    : wxScrolled<wxPanel>(parent, id, pos, size)
   {
-    m_buttons.insert({ ButtonType::SCREENSHOT_BUTTON, 
-      BitmapButton(new BitmapPane(wxBitmap("screenshot.png", wxBITMAP_TYPE_PNG), this, wxID_ANY, wxColour(s_lightBackground), true, wxDefaultPosition, {s_buttonSize, s_buttonSize}), [this]() { OnScreenshot(); }) });
+    m_buttons.insert({ ButtonType::LIVE_CAMERA_BUTTON, 
+      BitmapButton(new BitmapPane(wxBitmap("live-camera.png", wxBITMAP_TYPE_PNG), this, wxID_ANY, wxColour(s_lightBackground), true, wxDefaultPosition, {s_buttonSize * 2, s_buttonSize * 2}), [this]() { OnUndo(); }) });
+    m_buttons.insert({ ButtonType::SNAPSHOT_BUTTON, 
+      BitmapButton(new BitmapPane(wxBitmap("snapshot.png", wxBITMAP_TYPE_PNG), this, wxID_ANY, wxColour(s_lightBackground), true, wxDefaultPosition, {s_buttonSize * 2, s_buttonSize }), [this]() { OnScreenshot(); }) });
     m_buttons.insert({ ButtonType::SAVE_BUTTON,   
       BitmapButton(new BitmapPane(wxBitmap("save.png", wxBITMAP_TYPE_PNG), this, wxID_ANY, wxColour(s_lightBackground), true, wxDefaultPosition, {s_buttonSize, s_buttonSize}), [this]() { OnSave(); }) });
     m_buttons.insert({ ButtonType::DELETE_BUTTON, 
       BitmapButton(new BitmapPane(wxBitmap("delete.png", wxBITMAP_TYPE_PNG), this, wxID_ANY, wxColour(s_lightBackground), true, wxDefaultPosition, {s_buttonSize, s_buttonSize}), [this]() { OnDelete(); }) });
-    m_buttons.insert({ ButtonType::UNDO_BUTTON, 
-      BitmapButton(new BitmapPane(wxBitmap("undo.png", wxBITMAP_TYPE_PNG), this, wxID_ANY, wxColour(s_lightBackground), true, wxDefaultPosition, {s_buttonSize, s_buttonSize}), [this]() { OnUndo(); }) });
-    m_buttons.insert({ ButtonType::CANCEL_BUTTON, 
-      BitmapButton(new BitmapPane(wxBitmap("cancel.png", wxBITMAP_TYPE_PNG), this, wxID_ANY, wxColour(s_lightBackground), true, wxDefaultPosition, {s_buttonSize, s_buttonSize}), [this]() { OnCancel(); }) });
+    m_buttons.insert({ ButtonType::SELECT_BUTTON, 
+      BitmapButton(new BitmapPane(wxBitmap("select.png", wxBITMAP_TYPE_PNG), this, wxID_ANY, wxColour(s_lightBackground), true, wxDefaultPosition, {s_buttonSize, s_buttonSize}), [this]() { OnCancel(); }) });
     m_buttons.insert({ ButtonType::DRAW_TEXT_BUTTON, 
       BitmapButton(new BitmapPane(wxBitmap("add-text.png", wxBITMAP_TYPE_PNG), this, wxID_ANY, wxColour(s_lightBackground), true, wxDefaultPosition, {s_buttonSize, s_buttonSize}), [this]() { OnDrawText(); }) });
     m_buttons.insert({ ButtonType::DRAW_LETTERS_BUTTON, 
@@ -60,10 +60,14 @@ namespace app
     auto text = new wxStaticText(this, wxID_ANY, "Toolbox");
     topSizer->Add(text, 0, wxALL, FromDIP(5));
 
-    auto toolboxPaneSizer = new wxWrapSizer(wxHORIZONTAL);
+    auto drawToolSizer = new wxGridSizer(2, 0, 0);
+    auto liveCameraSizer = new wxBoxSizer(wxVERTICAL); 
+    auto snapshotSizer = new wxBoxSizer(wxVERTICAL);
+    auto zoomPanelSizer = new wxBoxSizer(wxHORIZONTAL);
+
     for (auto& buttonHandler : m_buttons)
     {
-      auto button = buttonHandler.second;
+      auto& button = buttonHandler.second;
       button.pane->Bind(wxEVT_LEFT_DOWN, [this, button, buttonHandler](wxMouseEvent& event)
         {
           if (!button.pane->m_disabled)
@@ -72,7 +76,15 @@ namespace app
             button.handlerFn();
           }
         });
-      toolboxPaneSizer->Add(button.pane, 0, wxALL, FromDIP(5));
+      auto buttonType = buttonHandler.first;
+      if(buttonType == ButtonType::ZOOM_IN_BUTTON || buttonType == ButtonType::ZOOM_OUT_BUTTON)
+          zoomPanelSizer->Add(button.pane, wxSizerFlags(1));
+      else if(buttonType == ButtonType::SNAPSHOT_BUTTON)
+          snapshotSizer->Add(button.pane, wxSizerFlags(0).Expand());
+      else if(buttonType == ButtonType::LIVE_CAMERA_BUTTON)
+          liveCameraSizer->Add(button.pane, wxSizerFlags(1));
+      else
+          drawToolSizer->Add(button.pane, wxSizerFlags(1));
     }
 
     Bind(TOOLBOX_BUTTON_COMMAND_DONE, [this](ToolboxButtonEvent& event)
@@ -90,8 +102,8 @@ namespace app
 
     Bind(TOOLBOX_BUTTTON_DISABLED, [this](ToolboButtonStateUpdateEvent& event)
       {
-        auto buttonsToDisable = event.GetDisabledButtons();
-        auto buttonsToEnable = event.GetEnabledButtons();
+        auto& buttonsToDisable = event.GetDisabledButtons();
+        auto& buttonsToEnable = event.GetEnabledButtons();
         for (auto buttonType : buttonsToDisable)
         {
           auto button = m_buttons.find(buttonType);
@@ -118,13 +130,21 @@ namespace app
         }
       });
 
-    topSizer->Add(toolboxPaneSizer, 0, wxALL, FromDIP(5));
+    topSizer->Add(liveCameraSizer,  wxSizerFlags(0).Border(wxALL, FromDIP(5)));
+    topSizer->Add(snapshotSizer, wxSizerFlags(2).Border(wxALL, FromDIP(5)));
+    topSizer->Add(drawToolSizer, wxSizerFlags(0).Border(wxALL, FromDIP(5)));
+    topSizer->Add(zoomPanelSizer, wxSizerFlags(0).Border(wxALL, FromDIP(5)));
     SetSizer(topSizer);
+
+    SetScrollRate(FromDIP(100), FromDIP(100));
+    auto minSize = topSizer->CalcMin();
+    SetVirtualSize(20,100);
+    //SetVirtualSize(FromDIP(minSize.x), FromDIP(minSize.y)); 
   }
 
   void Toolbox::SelectPane(BitmapPane* pane)
   {
-    for (auto buttons : m_buttons)
+    for (auto& buttons : m_buttons)
     {
       buttons.second.pane->m_selected = (buttons.second.pane == pane);
       buttons.second.pane->Refresh();
@@ -134,7 +154,7 @@ namespace app
   void Toolbox::OnScreenshot()
   {
     ToolboxButtonEvent event(TOOLBOX_BUTTON_PUSHED, GetId());
-    event.SetType(ButtonType::SCREENSHOT_BUTTON);
+    event.SetType(ButtonType::SNAPSHOT_BUTTON);
     ProcessWindowEvent(event);
   }
 
@@ -155,14 +175,14 @@ namespace app
   void Toolbox::OnUndo()
   {
     ToolboxButtonEvent event(TOOLBOX_BUTTON_PUSHED, GetId());
-    event.SetType(ButtonType::UNDO_BUTTON);
+    event.SetType(ButtonType::LIVE_CAMERA_BUTTON);
     ProcessWindowEvent(event);
   }
 
   void Toolbox::OnCancel()
   {
     ToolboxButtonEvent event(TOOLBOX_BUTTON_PUSHED, GetId());
-    event.SetType(ButtonType::CANCEL_BUTTON);
+    event.SetType(ButtonType::SELECT_BUTTON);
     ProcessWindowEvent(event);
   }
 

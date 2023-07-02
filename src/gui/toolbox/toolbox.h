@@ -18,7 +18,7 @@ struct BitmapButton
   std::function<void()> handlerFn;
 };
 
-class Toolbox : public wxPanel
+class Toolbox : public wxScrolled<wxPanel>
 {
 public:
   Toolbox(wxWindow* parent, wxWindowID id = wxID_ANY, const wxPoint& pos = wxDefaultPosition, const wxSize& size = wxDefaultSize);

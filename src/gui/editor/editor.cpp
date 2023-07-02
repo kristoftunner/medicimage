@@ -86,6 +86,7 @@ static std::optional<ButtonType> MapDrawCommandToButton(DrawCommand command)
       return ButtonType::DRAW_SKIN_TEMPLATE_BUTTON;
     case DrawCommand::DO_NOTHING:
     case DrawCommand::OBJECT_SELECT:
+    default:
       return std::nullopt;
   }
 }
@@ -279,9 +280,9 @@ void Editor::OnUndo()
   }
 }
 
-bool Editor::CanUndo() 
+bool Editor::CanGoBackToLiveCam() 
 {
-  return (m_state == EditorState::EDITING || m_state == EditorState::IMAGE_SELECTION) && m_drawingSheet.HasAnnotated();
+  return (m_state == EditorState::EDITING || m_state == EditorState::IMAGE_SELECTION);
 }
 
 void Editor::OnCancel()
@@ -325,8 +326,8 @@ std::optional<ToolboButtonStateUpdateEvent> Editor::GetDisabledButtons() const
   {
     disabledButtons.push_back(ButtonType::SAVE_BUTTON);
     disabledButtons.push_back(ButtonType::DELETE_BUTTON);
-    disabledButtons.push_back(ButtonType::UNDO_BUTTON);
-    disabledButtons.push_back(ButtonType::CANCEL_BUTTON);
+    disabledButtons.push_back(ButtonType::LIVE_CAMERA_BUTTON);
+    disabledButtons.push_back(ButtonType::SELECT_BUTTON);
     disabledButtons.push_back(ButtonType::DRAW_TEXT_BUTTON);
     disabledButtons.push_back(ButtonType::DRAW_LETTERS_BUTTON);
     disabledButtons.push_back(ButtonType::DRAW_ARROW_BUTTON);
@@ -335,16 +336,16 @@ std::optional<ToolboButtonStateUpdateEvent> Editor::GetDisabledButtons() const
     disabledButtons.push_back(ButtonType::DRAW_MULTILINE_BUTTON);
     disabledButtons.push_back(ButtonType::DRAW_RECTANGLE_BUTTON);
     disabledButtons.push_back(ButtonType::DRAW_SKIN_TEMPLATE_BUTTON);
+    disabledButtons.push_back(ButtonType::SNAPSHOT_BUTTON);
   
-    enabledButtons.push_back(ButtonType::SCREENSHOT_BUTTON);
     enabledButtons.push_back(ButtonType::ZOOM_IN_BUTTON);
     enabledButtons.push_back(ButtonType::ZOOM_OUT_BUTTON);
   }
   else if(m_state == EditorState::IMAGE_SELECTION)
   {
-    disabledButtons.push_back(ButtonType::SCREENSHOT_BUTTON);
+    disabledButtons.push_back(ButtonType::SNAPSHOT_BUTTON);
     disabledButtons.push_back(ButtonType::SAVE_BUTTON);
-    disabledButtons.push_back(ButtonType::CANCEL_BUTTON);
+    disabledButtons.push_back(ButtonType::SELECT_BUTTON);
     disabledButtons.push_back(ButtonType::ZOOM_IN_BUTTON);
     disabledButtons.push_back(ButtonType::ZOOM_OUT_BUTTON);
 
@@ -356,19 +357,19 @@ std::optional<ToolboButtonStateUpdateEvent> Editor::GetDisabledButtons() const
     enabledButtons.push_back(ButtonType::DRAW_MULTILINE_BUTTON);
     enabledButtons.push_back(ButtonType::DRAW_RECTANGLE_BUTTON);
     enabledButtons.push_back(ButtonType::DRAW_SKIN_TEMPLATE_BUTTON);
-    enabledButtons.push_back(ButtonType::UNDO_BUTTON);
+    enabledButtons.push_back(ButtonType::LIVE_CAMERA_BUTTON);
     enabledButtons.push_back(ButtonType::DELETE_BUTTON);
   }
   else if(m_state == EditorState::EDITING)
   {
-    disabledButtons.push_back(ButtonType::SCREENSHOT_BUTTON);
+    disabledButtons.push_back(ButtonType::SNAPSHOT_BUTTON);
     disabledButtons.push_back(ButtonType::DELETE_BUTTON);
     disabledButtons.push_back(ButtonType::ZOOM_IN_BUTTON);
     disabledButtons.push_back(ButtonType::ZOOM_OUT_BUTTON);
 
     enabledButtons.push_back(ButtonType::SAVE_BUTTON);
-    enabledButtons.push_back(ButtonType::UNDO_BUTTON);
-    enabledButtons.push_back(ButtonType::CANCEL_BUTTON);
+    enabledButtons.push_back(ButtonType::LIVE_CAMERA_BUTTON);
+    enabledButtons.push_back(ButtonType::SELECT_BUTTON);
     enabledButtons.push_back(ButtonType::DRAW_TEXT_BUTTON);
     enabledButtons.push_back(ButtonType::DRAW_LETTERS_BUTTON);
     enabledButtons.push_back(ButtonType::DRAW_ARROW_BUTTON);
@@ -388,8 +389,8 @@ std::optional<ToolboButtonStateUpdateEvent> Editor::GetDisabledButtons() const
 void Editor::ChangeZoomLevel(float scale)
 {
   double level = m_zoomLevel * scale;
-  level = std::clamp(level, 1.0, 10.0);
-  m_zoomLevel = static_cast<int>(level);
+  level = std::clamp(level, 1.0, 15.0);
+  m_zoomLevel = static_cast<float>(level);
 }
 
 std::unique_ptr<Image2D> Editor::Draw()

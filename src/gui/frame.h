@@ -6,6 +6,7 @@
 #include <wx/log.h>
 #include <string>
 #include <wx/print.h>
+#include <wx/custombgwin.h>
 
 #include "gui/editor/canvas.h"
 
@@ -21,6 +22,7 @@ private:
   void OnExit(wxCommandEvent& event);
   void OnAbout(wxCommandEvent& event);
   void OnPrint(wxCommandEvent& event);
+  void OnPaint(wxPaintEvent& event);
 
   wxPanel* m_panel;
   wxGridBagSizer* m_gbs;

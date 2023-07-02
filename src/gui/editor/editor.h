@@ -56,7 +56,8 @@ public:
   bool CanDelete();
   void OnUndo();
   void OnCancel();
-  bool CanUndo();
+  bool CanGoBackToLiveCam();
+  bool HasAnnotations(){ return m_drawingSheet.HasAnnotated(); }
   void OnDocumentPicked(const ImageDocument& document);
 
   std::optional<ToolboButtonStateUpdateEvent> GetDisabledButtons() const;
@@ -103,7 +104,7 @@ private:
   std::atomic<float> m_cameraFrameRate = 0.0f;
   std::atomic<bool> m_newFrameAvailable = false;
   std::atomic<bool> m_closeRequested = false;
-  std::atomic<int> m_zoomLevel = 1;
+  std::atomic<float> m_zoomLevel = 1;
   std::thread m_cameraUpdateThread;
 };
 

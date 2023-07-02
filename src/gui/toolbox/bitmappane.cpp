@@ -21,7 +21,7 @@ void SelectablePane::OnPaint(wxPaintEvent &event)
     gc->SetCompositionMode(wxCOMPOSITION_OVER);
     if (gc)
     {
-      wxRect selectionRect{ 0, 0, GetSize().GetWidth(), GetSize().GetWidth() };
+      wxRect selectionRect{ 0, 0, GetSize().GetWidth(), GetSize().GetHeight() };
       selectionRect.Deflate(FromDIP(1));
 
       wxRect contentRect = selectionRect;
