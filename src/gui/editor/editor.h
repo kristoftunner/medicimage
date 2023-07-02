@@ -6,6 +6,7 @@
 #include <thread>
 #include <optional>
 #include <atomic>
+#include <algorithm>
 
 #include "input/key_codes.h"
 #include "renderer/texture.h"
@@ -78,6 +79,7 @@ public:
   void UpdatedDrawing() { 
     m_newDrawingAvailable = false; 
   }
+  void ChangeZoomLevel(float scale); 
 
   CameraAPI* GetCamera() { return &m_camera; }
   std::mutex& GetCameraMutex() { return m_cameraMutex; }
@@ -101,6 +103,7 @@ private:
   std::atomic<float> m_cameraFrameRate = 0.0f;
   std::atomic<bool> m_newFrameAvailable = false;
   std::atomic<bool> m_closeRequested = false;
+  std::atomic<int> m_zoomLevel = 1;
   std::thread m_cameraUpdateThread;
 };
 

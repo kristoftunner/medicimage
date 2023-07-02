@@ -59,8 +59,8 @@ CameraAPI::Frame OpenCvCamera::CaptureFrame()
     return CameraAPI::Frame();
   }
 
-  int width = 1920;
-  int height = 1080; 
+  int width = 1280;
+  int height = 720; 
   cv::Mat frame;
   
   if(m_cap.read(frame))

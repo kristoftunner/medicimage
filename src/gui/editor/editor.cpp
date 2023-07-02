@@ -38,7 +38,17 @@ void Editor::Init()
           {
             std::lock_guard<std::mutex> lock(this->m_cameraFrameMutex);
             m_cameraFrame = std::move(frame.value());
-            wxBitmap::Rescale(m_cameraFrame->GetBitmap(), {1280, 720});
+            // Create a new bitmap for the region of interest
+            auto zoomWidth = m_cameraFrame->GetWidth() / m_zoomLevel;
+            auto zoomHeight = m_cameraFrame->GetHeight() / m_zoomLevel;
+            float diffx = (m_cameraFrame->GetWidth() - zoomWidth) / 2;
+            float diffy = (m_cameraFrame->GetHeight() - zoomHeight) / 2;
+            wxBitmap roiBitmap(zoomWidth, zoomHeight);
+            wxMemoryDC dc;
+            dc.SelectObject(roiBitmap);
+            dc.DrawBitmap(m_cameraFrame->GetBitmap(), -diffx, -diffy, false);
+            dc.SelectObject(wxNullBitmap);
+            m_cameraFrame->SetBitmap(roiBitmap);
             m_newFrameAvailable = true;
           }
           frame.reset();
@@ -327,12 +337,16 @@ std::optional<ToolboButtonStateUpdateEvent> Editor::GetDisabledButtons() const
     disabledButtons.push_back(ButtonType::DRAW_SKIN_TEMPLATE_BUTTON);
   
     enabledButtons.push_back(ButtonType::SCREENSHOT_BUTTON);
+    enabledButtons.push_back(ButtonType::ZOOM_IN_BUTTON);
+    enabledButtons.push_back(ButtonType::ZOOM_OUT_BUTTON);
   }
   else if(m_state == EditorState::IMAGE_SELECTION)
   {
     disabledButtons.push_back(ButtonType::SCREENSHOT_BUTTON);
     disabledButtons.push_back(ButtonType::SAVE_BUTTON);
     disabledButtons.push_back(ButtonType::CANCEL_BUTTON);
+    disabledButtons.push_back(ButtonType::ZOOM_IN_BUTTON);
+    disabledButtons.push_back(ButtonType::ZOOM_OUT_BUTTON);
 
     enabledButtons.push_back(ButtonType::DRAW_TEXT_BUTTON);
     enabledButtons.push_back(ButtonType::DRAW_LETTERS_BUTTON);
@@ -349,6 +363,8 @@ std::optional<ToolboButtonStateUpdateEvent> Editor::GetDisabledButtons() const
   {
     disabledButtons.push_back(ButtonType::SCREENSHOT_BUTTON);
     disabledButtons.push_back(ButtonType::DELETE_BUTTON);
+    disabledButtons.push_back(ButtonType::ZOOM_IN_BUTTON);
+    disabledButtons.push_back(ButtonType::ZOOM_OUT_BUTTON);
 
     enabledButtons.push_back(ButtonType::SAVE_BUTTON);
     enabledButtons.push_back(ButtonType::UNDO_BUTTON);
@@ -363,15 +379,17 @@ std::optional<ToolboButtonStateUpdateEvent> Editor::GetDisabledButtons() const
     enabledButtons.push_back(ButtonType::DRAW_SKIN_TEMPLATE_BUTTON);
   }
 
-  if(disabledButtons.size() > 0)
-  {
-    ToolboButtonStateUpdateEvent event(TOOLBOX_BUTTTON_DISABLED, wxID_ANY);
-    event.SetDisabledButtons(disabledButtons);
-    event.SetEnabledButtons(enabledButtons);
-    return event;
-  }
-  else
-    return std::nullopt;
+  ToolboButtonStateUpdateEvent event(TOOLBOX_BUTTTON_DISABLED, wxID_ANY);
+  event.SetDisabledButtons(disabledButtons);
+  event.SetEnabledButtons(enabledButtons);
+  return event;
+}
+
+void Editor::ChangeZoomLevel(float scale)
+{
+  double level = m_zoomLevel * scale;
+  level = std::clamp(level, 1.0, 10.0);
+  m_zoomLevel = static_cast<int>(level);
 }
 
 std::unique_ptr<Image2D> Editor::Draw()

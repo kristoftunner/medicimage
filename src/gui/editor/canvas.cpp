@@ -224,6 +224,9 @@ void Canvas::Draw(wxDC &dc)
   m_canvasBorder = (glm::vec2{size.x, size.y} - glm::vec2(newWidth, newHeight)) / 2.0f;
 
   dc.SetUserScale(m_canvasScale, m_canvasScale);
+  //wxAffineMatrix2D scaleMatrix;
+  //scaleMatrix.Scale(scale, scale);
+  //dc.SetTransformMatrix(scaleMatrix);
   dc.SetDeviceOrigin(static_cast<int>(m_canvasBorder.x), static_cast<int>(m_canvasBorder.y)); 
   dc.DrawBitmap(image->GetBitmap(), 0, 0);
 }
@@ -429,6 +432,15 @@ void Canvas::OnDrawSkinTemplate(wxCommandEvent &event)
   m_dialog->OnUpdate();
 }
 
+void Canvas::OnChangeZoomLevel(float scale)
+{
+  m_editor.ChangeZoomLevel(scale);
+  ToolboxButtonEvent toolboxEvent(TOOLBOX_BUTTON_COMMAND_DONE, GetId());
+  toolboxEvent.SetType(scale > 1.0f ? ButtonType::ZOOM_IN_BUTTON : ButtonType::ZOOM_OUT_BUTTON);
+  ProcessWindowEvent(toolboxEvent);
+  Refresh();
+}
+
 void Canvas::UpdateAttributeEditor()
 {
   auto entities = m_editor.GetSelectedEntities();
@@ -548,6 +560,12 @@ EditorPanel::EditorPanel(wxWindow *parent, wxWindowID id, const wxPoint &pos, co
         break;
       case ButtonType::DRAW_SKIN_TEMPLATE_BUTTON:
         m_canvas->OnDrawSkinTemplate(event);
+        break;
+      case ButtonType::ZOOM_IN_BUTTON:
+        m_canvas->OnChangeZoomLevel(2);
+        break;
+      case ButtonType::ZOOM_OUT_BUTTON:
+        m_canvas->OnChangeZoomLevel(0.5);
         break;
       default:
         wxLogError("Unknown button type");

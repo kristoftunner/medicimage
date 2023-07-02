@@ -97,7 +97,7 @@ public:
   void OnDrawMultiline(wxCommandEvent &event);
   void OnDrawRectangle(wxCommandEvent &event);
   void OnDrawSkinTemplate(wxCommandEvent &event);
-
+  void OnChangeZoomLevel(float scale);
   void Draw(wxDC& dc);
   CameraAPI* GetCamera() { return m_editor.GetCamera(); }
   std::mutex& GetCameraMutex() { return m_editor.GetCameraMutex(); }

@@ -43,8 +43,8 @@ private:
   std::unordered_map<ButtonType, BitmapButton> m_buttons;
   AttributeEditor* m_attributeEditor = nullptr;
 
-  const std::string m_lightBackground = "#f4f3f3";
-  const std::string m_darkBackground = "#2c2828";
+  static constexpr std::string s_lightBackground = "#f4f3f3";
+  static constexpr std::string s_darkBackground = "#2c2828";
   static constexpr int s_buttonSize = 60;
 };
 

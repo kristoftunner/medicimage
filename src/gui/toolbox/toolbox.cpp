@@ -18,31 +18,43 @@ namespace app
     : wxPanel(parent, id, pos, size)
   {
     m_buttons.insert({ ButtonType::SCREENSHOT_BUTTON, 
-      BitmapButton(new BitmapPane(wxBitmap("screenshot.png", wxBITMAP_TYPE_PNG), this, wxID_ANY, wxColour(m_lightBackground), true, wxDefaultPosition, {s_buttonSize, s_buttonSize}), [this]() { OnScreenshot(); }) });
+      BitmapButton(new BitmapPane(wxBitmap("screenshot.png", wxBITMAP_TYPE_PNG), this, wxID_ANY, wxColour(s_lightBackground), true, wxDefaultPosition, {s_buttonSize, s_buttonSize}), [this]() { OnScreenshot(); }) });
     m_buttons.insert({ ButtonType::SAVE_BUTTON,   
-      BitmapButton(new BitmapPane(wxBitmap("save.png", wxBITMAP_TYPE_PNG), this, wxID_ANY, wxColour(m_lightBackground), true, wxDefaultPosition, {s_buttonSize, s_buttonSize}), [this]() { OnSave(); }) });
+      BitmapButton(new BitmapPane(wxBitmap("save.png", wxBITMAP_TYPE_PNG), this, wxID_ANY, wxColour(s_lightBackground), true, wxDefaultPosition, {s_buttonSize, s_buttonSize}), [this]() { OnSave(); }) });
     m_buttons.insert({ ButtonType::DELETE_BUTTON, 
-      BitmapButton(new BitmapPane(wxBitmap("delete.png", wxBITMAP_TYPE_PNG), this, wxID_ANY, wxColour(m_lightBackground), true, wxDefaultPosition, {s_buttonSize, s_buttonSize}), [this]() { OnDelete(); }) });
+      BitmapButton(new BitmapPane(wxBitmap("delete.png", wxBITMAP_TYPE_PNG), this, wxID_ANY, wxColour(s_lightBackground), true, wxDefaultPosition, {s_buttonSize, s_buttonSize}), [this]() { OnDelete(); }) });
     m_buttons.insert({ ButtonType::UNDO_BUTTON, 
-      BitmapButton(new BitmapPane(wxBitmap("undo.png", wxBITMAP_TYPE_PNG), this, wxID_ANY, wxColour(m_lightBackground), true, wxDefaultPosition, {s_buttonSize, s_buttonSize}), [this]() { OnUndo(); }) });
+      BitmapButton(new BitmapPane(wxBitmap("undo.png", wxBITMAP_TYPE_PNG), this, wxID_ANY, wxColour(s_lightBackground), true, wxDefaultPosition, {s_buttonSize, s_buttonSize}), [this]() { OnUndo(); }) });
     m_buttons.insert({ ButtonType::CANCEL_BUTTON, 
-      BitmapButton(new BitmapPane(wxBitmap("cancel.png", wxBITMAP_TYPE_PNG), this, wxID_ANY, wxColour(m_lightBackground), true, wxDefaultPosition, {s_buttonSize, s_buttonSize}), [this]() { OnCancel(); }) });
+      BitmapButton(new BitmapPane(wxBitmap("cancel.png", wxBITMAP_TYPE_PNG), this, wxID_ANY, wxColour(s_lightBackground), true, wxDefaultPosition, {s_buttonSize, s_buttonSize}), [this]() { OnCancel(); }) });
     m_buttons.insert({ ButtonType::DRAW_TEXT_BUTTON, 
-      BitmapButton(new BitmapPane(wxBitmap("add-text.png", wxBITMAP_TYPE_PNG), this, wxID_ANY, wxColour(m_lightBackground), true, wxDefaultPosition, {s_buttonSize, s_buttonSize}), [this]() { OnDrawText(); }) });
+      BitmapButton(new BitmapPane(wxBitmap("add-text.png", wxBITMAP_TYPE_PNG), this, wxID_ANY, wxColour(s_lightBackground), true, wxDefaultPosition, {s_buttonSize, s_buttonSize}), [this]() { OnDrawText(); }) });
     m_buttons.insert({ ButtonType::DRAW_LETTERS_BUTTON, 
-      BitmapButton(new BitmapPane(wxBitmap("add-incremental-letters.png", wxBITMAP_TYPE_PNG), this, wxID_ANY, wxColour(m_lightBackground), true, wxDefaultPosition, {s_buttonSize, s_buttonSize}), [this]() { OnDrawIncrementalLetters(); }) });
+      BitmapButton(new BitmapPane(wxBitmap("add-incremental-letters.png", wxBITMAP_TYPE_PNG), this, wxID_ANY, wxColour(s_lightBackground), true, wxDefaultPosition, {s_buttonSize, s_buttonSize}), [this]() { OnDrawIncrementalLetters(); }) });
     m_buttons.insert({ ButtonType::DRAW_ARROW_BUTTON,  
-      BitmapButton(new BitmapPane(wxBitmap("arrow.png", wxBITMAP_TYPE_PNG), this, wxID_ANY, wxColour(m_lightBackground), true, wxDefaultPosition, {s_buttonSize, s_buttonSize}), [this]() { OnDrawArrow(); }) });
+      BitmapButton(new BitmapPane(wxBitmap("arrow.png", wxBITMAP_TYPE_PNG), this, wxID_ANY, wxColour(s_lightBackground), true, wxDefaultPosition, {s_buttonSize, s_buttonSize}), [this]() { OnDrawArrow(); }) });
     m_buttons.insert({ ButtonType::DRAW_CIRCLE_BUTTON, 
-      BitmapButton(new BitmapPane(wxBitmap("circle.png", wxBITMAP_TYPE_PNG), this, wxID_ANY, wxColour(m_lightBackground), true, wxDefaultPosition, {s_buttonSize, s_buttonSize}), [this]() { OnDrawCircle(); }) });
+      BitmapButton(new BitmapPane(wxBitmap("circle.png", wxBITMAP_TYPE_PNG), this, wxID_ANY, wxColour(s_lightBackground), true, wxDefaultPosition, {s_buttonSize, s_buttonSize}), [this]() { OnDrawCircle(); }) });
     m_buttons.insert({ ButtonType::DRAW_LINE_BUTTON, 
-      BitmapButton(new BitmapPane(wxBitmap("line.png", wxBITMAP_TYPE_PNG), this, wxID_ANY, wxColour(m_lightBackground), true, wxDefaultPosition, {s_buttonSize, s_buttonSize}), [this]() { OnDrawLine(); }) });
+      BitmapButton(new BitmapPane(wxBitmap("line.png", wxBITMAP_TYPE_PNG), this, wxID_ANY, wxColour(s_lightBackground), true, wxDefaultPosition, {s_buttonSize, s_buttonSize}), [this]() { OnDrawLine(); }) });
     m_buttons.insert({ ButtonType::DRAW_MULTILINE_BUTTON, 
-      BitmapButton(new BitmapPane(wxBitmap("multiline.png", wxBITMAP_TYPE_PNG), this, wxID_ANY, wxColour(m_lightBackground), true, wxDefaultPosition, {s_buttonSize, s_buttonSize}), [this]() { OnDrawMultiline(); }) });
+      BitmapButton(new BitmapPane(wxBitmap("multiline.png", wxBITMAP_TYPE_PNG), this, wxID_ANY, wxColour(s_lightBackground), true, wxDefaultPosition, {s_buttonSize, s_buttonSize}), [this]() { OnDrawMultiline(); }) });
     m_buttons.insert({ ButtonType::DRAW_RECTANGLE_BUTTON, 
-      BitmapButton(new BitmapPane(wxBitmap("rectangle.png", wxBITMAP_TYPE_PNG), this, wxID_ANY, wxColour(m_lightBackground), true, wxDefaultPosition, {s_buttonSize, s_buttonSize}), [this]() { OnDrawRectangle(); }) });
+      BitmapButton(new BitmapPane(wxBitmap("rectangle.png", wxBITMAP_TYPE_PNG), this, wxID_ANY, wxColour(s_lightBackground), true, wxDefaultPosition, {s_buttonSize, s_buttonSize}), [this]() { OnDrawRectangle(); }) });
     m_buttons.insert({ ButtonType::DRAW_SKIN_TEMPLATE_BUTTON, 
-      BitmapButton(new BitmapPane(wxBitmap("skin-template.png", wxBITMAP_TYPE_PNG), this, wxID_ANY, wxColour(m_lightBackground), true, wxDefaultPosition, {s_buttonSize, s_buttonSize}), [this]() { OnDrawSkinTemplate(); }) });
+      BitmapButton(new BitmapPane(wxBitmap("skin-template.png", wxBITMAP_TYPE_PNG), this, wxID_ANY, wxColour(s_lightBackground), true, wxDefaultPosition, {s_buttonSize, s_buttonSize}), [this]() { OnDrawSkinTemplate(); }) });
+    m_buttons.insert({ ButtonType::ZOOM_IN_BUTTON, 
+      BitmapButton(new BitmapPane(wxBitmap("zoom-in.png", wxBITMAP_TYPE_PNG), this, wxID_ANY, wxColour(s_lightBackground), true, wxDefaultPosition, {s_buttonSize, s_buttonSize}), [this]() { 
+        ToolboxButtonEvent event(TOOLBOX_BUTTON_PUSHED, GetId());
+        event.SetType(ButtonType::ZOOM_IN_BUTTON);
+        ProcessWindowEvent(event);
+      }) });
+    m_buttons.insert({ ButtonType::ZOOM_OUT_BUTTON, 
+      BitmapButton(new BitmapPane(wxBitmap("zoom-out.png", wxBITMAP_TYPE_PNG), this, wxID_ANY, wxColour(s_lightBackground), true, wxDefaultPosition, {s_buttonSize, s_buttonSize}), [this]() { 
+        ToolboxButtonEvent event(TOOLBOX_BUTTON_PUSHED, GetId());
+        event.SetType(ButtonType::ZOOM_OUT_BUTTON);
+        ProcessWindowEvent(event);
+      }) });
 
     auto topSizer = new wxBoxSizer(wxVERTICAL);
     auto text = new wxStaticText(this, wxID_ANY, "Toolbox");
@@ -130,7 +142,6 @@ namespace app
   {
     ToolboxButtonEvent event(TOOLBOX_BUTTON_PUSHED, GetId());
     event.SetType(ButtonType::SAVE_BUTTON);
-
     ProcessWindowEvent(event);
   }
 

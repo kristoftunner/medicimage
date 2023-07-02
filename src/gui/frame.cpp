@@ -29,7 +29,7 @@ enum
 
 // TODO REFACTOR: refactor this ctor
 MyFrame::MyFrame()
-  : wxFrame(NULL, wxID_ANY, "Hello World")
+  : wxFrame(NULL, wxID_ANY, "")
 {
   m_logger = new wxLogWindow(this, "Log", true, false);
   wxLog::SetActiveTarget(m_logger);
@@ -39,9 +39,9 @@ MyFrame::MyFrame()
   auto mainSplitter = new wxSplitterWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxSP_LIVE_UPDATE | wxSP_3DSASH);
   auto nestedSplitter = new wxSplitterWindow(mainSplitter, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxSP_LIVE_UPDATE | wxSP_3DSASH);
   auto toolboxSplitter = new wxSplitterWindow(nestedSplitter, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxSP_LIVE_UPDATE | wxSP_3DSASH);
-  mainSplitter->SetSashSize(FromDIP(10));
-  nestedSplitter->SetSashSize(FromDIP(10));
-  toolboxSplitter->SetSashSize(FromDIP(10));
+  mainSplitter->SetSashSize(FromDIP(50));
+  nestedSplitter->SetSashSize(FromDIP(50));
+  toolboxSplitter->SetSashSize(FromDIP(50));
 
   auto toolbox = new Toolbox(toolboxSplitter, wxID_ANY);
   m_editorPanel = new EditorPanel(nestedSplitter, wxID_ANY);
@@ -50,19 +50,19 @@ MyFrame::MyFrame()
 
   toolboxSplitter->SplitHorizontally(toolbox, attributeEditor, 200);
   toolboxSplitter->SetMinimumPaneSize(200);
-  toolboxSplitter->SetDoubleBuffered(true);
+  //toolboxSplitter->SetDoubleBuffered(true);
   toolboxSplitter->SetSashGravity(0.5);
   
   nestedSplitter->SplitVertically(toolboxSplitter, m_editorPanel, 200);
   nestedSplitter->SetMinimumPaneSize(200);
-  nestedSplitter->SetDoubleBuffered(true);
-  nestedSplitter->SetSashGravity(0.1);
+  //nestedSplitter->SetDoubleBuffered(true);
+  nestedSplitter->SetSashGravity(0.15);
   
   thumbnails->SetBackgroundColour(wxColour(isDark ? m_darkBackground : m_lightBackground));
   
   mainSplitter->SplitVertically(nestedSplitter, thumbnails, 400);
   mainSplitter->SetMinimumPaneSize(200);
-  mainSplitter->SetDoubleBuffered(true);
+  //mainSplitter->SetDoubleBuffered(true);
   mainSplitter->SetSashGravity(0.8);
 
   wxBoxSizer *topsizer = new wxBoxSizer( wxHORIZONTAL );
