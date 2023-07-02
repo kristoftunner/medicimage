@@ -4,8 +4,8 @@
 #endif
 #include "ImFileDialog.h"
 
-#include <fstream>
 #include <algorithm>
+#include <fstream>
 #include <sys/stat.h>
 #define IMGUI_DEFINE_MATH_OPERATORS
 #include <imgui.h>
@@ -13,13 +13,13 @@
 
 #ifdef _WIN32
 #define NOMINMAX
-#include <windows.h>
-#include <shellapi.h>
 #include <lmcons.h>
+#include <shellapi.h>
+#include <windows.h>
 #pragma comment(lib, "Shell32.lib")
 #else
-#include <unistd.h>
 #include <pwd.h>
+#include <unistd.h>
 #endif
 
 #define ICON_SIZE ImGui::GetFont()->FontSize + 3

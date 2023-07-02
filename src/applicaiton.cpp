@@ -1,7 +1,7 @@
 #if 0
 #include "application.h"
-#include "renderer/texture.h"
 #include "core/log.h"
+#include "renderer/texture.h"
 
 #include <ctime>
 namespace medicimage

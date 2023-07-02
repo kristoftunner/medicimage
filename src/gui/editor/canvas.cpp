@@ -330,7 +330,7 @@ void Canvas::OnUndo(wxCommandEvent &event)
                 ProcessWindowEvent(toolboxEvent);
                 auto buttonDisableEvent = m_editor.GetDisabledButtons();
                 if (buttonDisableEvent)
-                  ProcessWindowEvent(buttonDisableEvent.value());
+                    ProcessWindowEvent(buttonDisableEvent.value());
             }
             else
             {
@@ -339,7 +339,7 @@ void Canvas::OnUndo(wxCommandEvent &event)
                 ProcessWindowEvent(toolboxEvent);
                 auto buttonDisableEvent = m_editor.GetDisabledButtons();
                 if (buttonDisableEvent)
-                  ProcessWindowEvent(buttonDisableEvent.value());
+                    ProcessWindowEvent(buttonDisableEvent.value());
             }
         }
         else
@@ -595,23 +595,23 @@ EditorPanel::EditorPanel(wxWindow *parent, wxWindowID id, const wxPoint &pos, co
         }
         UpdateStatusBar();
     });
-    Bind(EVT_THUMBNAILS_DOCUMENT_PICK, [this](ImageDocumentEvent &event) { 
-      m_canvas->OnDocumentPicked(event); 
-      UpdateStatusBar();
-      });
+    Bind(EVT_THUMBNAILS_DOCUMENT_PICK, [this](ImageDocumentEvent &event) {
+        m_canvas->OnDocumentPicked(event);
+        UpdateStatusBar();
+    });
 
     Bind(EVT_ENTITY_ATTRIBUTE_EDITED, [this](EntityEvent &event) { wxPostEvent(this->m_canvas, event); });
 }
 
 void EditorPanel::UpdateStatusBar()
 {
-  std::optional<std::string> documentName = m_canvas->GetActiveDocumentName();
-  std::optional<float> zoomLevel = m_canvas->GetZoomLevel();
-  auto documentText = documentName ? std::format("Patient ID:{}", *documentName) : "";
-  auto zoomText = zoomLevel ? std::format("Zoom level:{:.2f}", *zoomLevel) : "";
+    std::optional<std::string> documentName = m_canvas->GetActiveDocumentName();
+    std::optional<float> zoomLevel = m_canvas->GetZoomLevel();
+    auto documentText = documentName ? std::format("Patient ID:{}", *documentName) : "";
+    auto zoomText = zoomLevel ? std::format("Zoom level:{:.2f}", *zoomLevel) : "";
 
-  m_documentName->SetLabel(documentText);
-  m_zoomLevel->SetLabel(zoomText);
-  Layout();
+    m_documentName->SetLabel(documentText);
+    m_zoomLevel->SetLabel(zoomText);
+    Layout();
 }
 } // namespace app

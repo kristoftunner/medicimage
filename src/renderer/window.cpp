@@ -1,8 +1,8 @@
 #if 0
-#include "renderer/renderer.h"
 #include "renderer/window.h"
-#include <iostream>
+#include "renderer/renderer.h"
 #include <SDL_syswm.h>
+#include <iostream>
 
 namespace medicimage
 {

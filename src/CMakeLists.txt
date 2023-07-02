@@ -1,5 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 
+include(${PROJECT_SOURCE_DIR}/cmake/clangformat.cmake)
+
 find_package(glm REQUIRED)
 find_package(entt REQUIRED)
 find_package(wxWidgets CONFIG REQUIRED)
@@ -21,3 +23,5 @@ set_property(TARGET spdlog PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFI
 if(POLICY CMP0091)
   cmake_policy(SET CMP0091 NEW) 
 endif()
+
+target_clangformat_setup(medicimage)

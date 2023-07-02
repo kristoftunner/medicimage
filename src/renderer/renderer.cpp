@@ -7,10 +7,10 @@
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
 
-#include <iostream>
+#include "core/log.h"
 #include <d3dcompiler.h>
 #include <dxgi1_6.h>
-#include "core/log.h"
+#include <iostream>
 
 namespace medicimage
 {
