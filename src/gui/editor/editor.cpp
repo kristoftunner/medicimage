@@ -336,8 +336,8 @@ std::optional<ToolboButtonStateUpdateEvent> Editor::GetDisabledButtons() const
     disabledButtons.push_back(ButtonType::DRAW_MULTILINE_BUTTON);
     disabledButtons.push_back(ButtonType::DRAW_RECTANGLE_BUTTON);
     disabledButtons.push_back(ButtonType::DRAW_SKIN_TEMPLATE_BUTTON);
-    disabledButtons.push_back(ButtonType::SNAPSHOT_BUTTON);
   
+    enabledButtons.push_back(ButtonType::SNAPSHOT_BUTTON);
     enabledButtons.push_back(ButtonType::ZOOM_IN_BUTTON);
     enabledButtons.push_back(ButtonType::ZOOM_OUT_BUTTON);
   }
@@ -427,6 +427,26 @@ std::string Editor::GetStateName() const
     case EditorState::EDITING: return "EDITING";
     default: return "UNKNOWN";
   }
+}
+
+std::optional<std::string> Editor::GetActiveDocumentName() const
+{
+  if(m_state == EditorState::EDITING || m_state == EditorState::IMAGE_SELECTION)
+  {
+    return m_activeDocument.documentId;
+  }
+  else
+    return std::nullopt;
+}
+
+std::optional<float> Editor::GetZoomLevel() const
+{
+  if(m_state == EditorState::SHOW_CAMERA || m_state == EditorState::SCREENSHOT)
+  {
+    return m_zoomLevel;
+  }
+  else
+    return std::nullopt;
 }
 
 glm::vec2 Editor::ClampMousePosition(const glm::vec2 &pos)

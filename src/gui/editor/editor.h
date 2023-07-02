@@ -89,6 +89,8 @@ public:
   std::unique_ptr<Image2D> Draw();
   DrawingSheet& GetDrawingSheet() { return m_drawingSheet; } // Getter for the debug dialog box
   std::string GetStateName() const;
+  std::optional<std::string> GetActiveDocumentName() const;
+  std::optional<float> GetZoomLevel() const; 
 private:
   glm::vec2 ClampMousePosition(const glm::vec2& pos);
   bool m_mouseDown = false;

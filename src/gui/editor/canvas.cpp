@@ -30,7 +30,7 @@ Canvas::Canvas(wxWindow *parent, wxWindowID id, const wxPoint &pos, const wxSize
 
     m_editor.Init();
     m_dialog = new InfoDialog(this, "Info", m_editor.GetDrawingSheet(), m_editor);
-    m_dialog->Show();
+    m_dialog->Show(false);
 
     Bind(wxEVT_PAINT, &Canvas::OnPaint, this);
     Bind(wxEVT_LEFT_DOWN, &Canvas::OnMousePressed, this);
@@ -513,6 +513,8 @@ EditorPanel::EditorPanel(wxWindow *parent, wxWindowID id, const wxPoint &pos, co
     m_canvas = new Canvas(this, wxID_ANY, wxDefaultPosition, wxDefaultSize);
 
     auto patientIdInput = new wxTextCtrl(this, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER);
+    wxFont font(20, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
+    patientIdInput->SetFont(font);
     patientIdInput->Bind(wxEVT_TEXT_ENTER, [this, patientIdInput](wxCommandEvent &event) {
         auto id = patientIdInput->GetValue().ToStdString();
         PatientSelectedEvent patientEvent(EVT_THUMBNAILS_ADD_PATIENT, wxID_ANY);
@@ -521,6 +523,18 @@ EditorPanel::EditorPanel(wxWindow *parent, wxWindowID id, const wxPoint &pos, co
         patientIdInput->Clear();
     });
 
+    std::optional<std::string> documentName = m_canvas->GetActiveDocumentName();
+    std::optional<float> zoomLevel = m_canvas->GetZoomLevel();
+    auto documentText = documentName ? std::format("Patient ID:{}", *documentName) : "";
+    auto zoomText = zoomLevel ? std::format("Zoom level:{:.2f}", *zoomLevel) : "";
+
+    m_documentName = new wxStaticText(this, wxID_ANY, documentText);
+    m_zoomLevel = new wxStaticText(this, wxID_ANY, zoomText);
+    auto statusSizer = new wxBoxSizer(wxHORIZONTAL);
+    statusSizer->Add(m_documentName, wxSizerFlags(0).Expand().Border(wxALL, FromDIP(5)));
+    statusSizer->Add(m_zoomLevel, wxSizerFlags(0).Expand().Border(wxALL, FromDIP(5)));
+
+    sizer->Add(statusSizer, wxSizerFlags(0).Expand().Border(wxALL, FromDIP(5)));
     sizer->Add(m_canvas, wxSizerFlags(1).Expand().Border(wxALL, FromDIP(5)));
     sizer->Add(patientIdInput, wxSizerFlags(0).Expand().Border(wxALL, FromDIP(5)));
     SetSizerAndFit(sizer);
@@ -579,9 +593,25 @@ EditorPanel::EditorPanel(wxWindow *parent, wxWindowID id, const wxPoint &pos, co
             wxLogError("Unknown button type");
             break;
         }
+        UpdateStatusBar();
     });
-    Bind(EVT_THUMBNAILS_DOCUMENT_PICK, [this](ImageDocumentEvent &event) { this->m_canvas->OnDocumentPicked(event); });
+    Bind(EVT_THUMBNAILS_DOCUMENT_PICK, [this](ImageDocumentEvent &event) { 
+      m_canvas->OnDocumentPicked(event); 
+      UpdateStatusBar();
+      });
 
     Bind(EVT_ENTITY_ATTRIBUTE_EDITED, [this](EntityEvent &event) { wxPostEvent(this->m_canvas, event); });
+}
+
+void EditorPanel::UpdateStatusBar()
+{
+  std::optional<std::string> documentName = m_canvas->GetActiveDocumentName();
+  std::optional<float> zoomLevel = m_canvas->GetZoomLevel();
+  auto documentText = documentName ? std::format("Patient ID:{}", *documentName) : "";
+  auto zoomText = zoomLevel ? std::format("Zoom level:{:.2f}", *zoomLevel) : "";
+
+  m_documentName->SetLabel(documentText);
+  m_zoomLevel->SetLabel(zoomText);
+  Layout();
 }
 } // namespace app

@@ -83,7 +83,7 @@ void Thumbnails::UpdateLayout()
       }});
     }
 
-    int panelWidth = GetSize().GetWidth();
+    int panelWidth = static_cast<int>(GetSize().GetWidth() * 0.9);
     for(auto& buttonHandler : m_buttonHandlers)
     {
       auto pane = new BitmapPane(buttonHandler.first, this, wxID_ANY, wxColour(m_lightBackground), false, wxDefaultPosition, {panelWidth, panelWidth});
@@ -93,7 +93,7 @@ void Thumbnails::UpdateLayout()
         buttonHandler.second();
       });
       m_colorPanes.push_back(pane);
-      m_sizer->Add(pane, 1, wxALL, FromDIP(5));
+      m_sizer->Add(pane, 0, wxALL, FromDIP(5));
     }
   }
   auto size = m_sizer->CalcMin();

@@ -104,6 +104,8 @@ public:
   wxPoint GetMousePoint() { return m_mousePoint; }
   wxSize GetCanvasSize() { return m_canvasSize; }
   float GetFPS() { return m_fpsCounter.GetAverageFPS(); }
+  std::optional<std::string> GetActiveDocumentName() { return m_editor.GetActiveDocumentName();}
+  std::optional<float> GetZoomLevel() { return m_editor.GetZoomLevel(); }
 private:
   std::unique_ptr<Image2D> DummyDraw();
   void UpdateAttributeEditor();
@@ -131,6 +133,9 @@ public:
   std::mutex& GetCameraMutex() { return m_canvas->GetCameraMutex(); }
   Canvas* GetCanvas() { return m_canvas; }
 private:
+  void UpdateStatusBar();
+private:
+  wxStaticText* m_documentName, *m_zoomLevel;
   Canvas* m_canvas;
 };
 };

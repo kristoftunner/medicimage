@@ -31,7 +31,7 @@ enum
 MyFrame::MyFrame()
   : wxFrame(NULL, wxID_ANY, "")
 {
-  m_logger = new wxLogWindow(this, "Log", true, false);
+  m_logger = new wxLogWindow(this, "Log", false, false);
   wxLog::SetActiveTarget(m_logger);
   bool isDark = wxSystemSettings::GetAppearance().IsDark();
   const auto margin = FromDIP(5);
@@ -268,6 +268,6 @@ void Printout::DrawPage()
     wxCoord yoff = (fitRect.height - maxY) / 2;
     OffsetLogicalOrigin(xoff, yoff);
 
-    m_canvas->Draw(GetDC());
+    m_canvas->Draw(*GetDC());
 }
 }
