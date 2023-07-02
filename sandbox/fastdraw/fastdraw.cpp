@@ -3,6 +3,7 @@
 #include <wx/image.h>
 #include <wx/graphics.h>
 #include <wx/dcbuffer.h>
+#include <wx/custombgwin.h>
 #include <glm/glm.hpp>
 
 namespace app
@@ -57,7 +58,7 @@ public:
     m_mouseDown = false;
   }
 
-  wxBitmap DrawBitmap(wxBitmap bitmap)
+  void DrawBitmap(wxBitmap& bitmap)
   {
     wxMemoryDC memDC(bitmap);
     auto gc = wxGraphicsContext::Create(memDC);
@@ -70,28 +71,22 @@ public:
       auto width = m_secondPoint.x - m_firstPoint.x;
       auto height = m_secondPoint.y - m_firstPoint.y;
       gc->SetPen(*wxRED_PEN);
-      for(int i = 0; i < 10; ++i)
-      {
-        gc->DrawRectangle(m_firstPoint.x + i * 20, m_firstPoint.y + i * 20, width, height);
-      }
+      gc->DrawRectangle(m_firstPoint.x , m_firstPoint.y , width, height);
       delete gc;
     }
     memDC.SelectObject(wxNullBitmap);
-
-    return bitmap;
   }
   
   void OnPaint(wxPaintEvent& event)
   {
   #if 1
     wxBitmap bitmap(1280, 720);
-    auto bitmap2 = DrawBitmap(bitmap);
-    auto bitmap3 = DrawBitmap(bitmap2);
+    DrawBitmap(bitmap);
 
     wxPaintDC dc(this);
     dc.Clear();
     dc.SetUserScale(.5, .5);
-    dc.DrawBitmap(bitmap3, 0, 0);
+    dc.DrawBitmap(bitmap, 0, 0);
 #else
     wxPaintDC dc(this);
     auto gc = wxGraphicsContext::Create(dc);
@@ -117,20 +112,101 @@ private:
   bool m_mouseDown = false;
 };
  
-class MyFrame : public wxFrame
+class MyFrame : public wxCustomBackgroundWindow<wxFrame>
 {
 public:
-  MyFrame() : wxFrame(nullptr, wxID_ANY, "FastDraw")
+  MyFrame() 
   {
+    Create(nullptr, wxID_ANY, "FastDraw");
+      wxImage image("wallpaper.png", wxBITMAP_TYPE_PNG);
+      if (image.IsOk())
+      {
+        image.SetAlpha();
+        for(auto y = 0; y < image.GetHeight(); ++y)
+        {
+          for(auto x = 0; x < image.GetWidth(); ++x)
+          {
+            image.SetAlpha(x, y, 128);
+          }
+        }
+        wxBitmap bitmap(image);
+        SetBackgroundBitmap(bitmap);
+      }
+    //SetBackgroundStyle(wxBG_STYLE_PAINT);
     auto sizer = new wxBoxSizer(wxVERTICAL);
-    auto canvas = new DrawingPanel(this);
-    sizer->Add(canvas, 1, wxEXPAND);
+    //auto canvas = new DrawingPanel(this);
+    auto panel = new wxPanel(this, wxID_ANY, wxDefaultPosition, wxSize(800, 600));
+    panel->SetBackgroundStyle(wxBG_STYLE_TRANSPARENT);
+    panel->SetBackgroundColour(wxColor(0, 0, 0, 0));
+    panel->SetTransparent(255);
+    auto panelSizer = new wxBoxSizer(wxVERTICAL);
+    auto text = new wxStaticText(this, wxID_ANY, "Hello World");
+    text->SetTransparent(128);
+    auto button = new wxButton(this, wxID_ANY, "Click Me");
+    button->SetTransparent(128);
+    panelSizer->Add(text, wxSizerFlags(0));
+    panelSizer->Add(button, wxSizerFlags(0));
+    sizer->Add(panelSizer, wxSizerFlags(0));
+    //Bind(wxEVT_PAINT, &MyFrame::OnPaint, this);
+    Bind(wxEVT_LEFT_DOWN, &MyFrame::OnMousePressed, this);
+    Bind(wxEVT_LEFT_UP, &MyFrame::OnMouseReleased, this);
+    Bind(wxEVT_MOTION, &MyFrame::OnMouseMoved, this);
+
     SetSizer(sizer);
   }
+  void OnPaint(wxPaintEvent& event)
+  {
+    wxPaintDC dc(this);
+    //dc.Clear();
+    auto gc = wxGraphicsContext::Create(dc);
+    if(gc)
+    {
+      auto width = m_secondPoint.x - m_firstPoint.x;
+      auto height = m_secondPoint.y - m_firstPoint.y;
+      gc->SetPen(*wxRED_PEN);
+      gc->SetBrush(*wxTRANSPARENT_BRUSH);
+      gc->DrawRectangle(m_firstPoint.x , m_firstPoint.y , width, height);
+      delete gc;
+    }
+  } 
+  void OnMouseMoved(wxMouseEvent &event)
+  {
+    if(m_mouseDown)
+    {
+      wxClientDC dc(this);
+      PrepareDC(dc);
+      m_secondPoint = wxPoint(event.GetLogicalPosition(dc));
+      Refresh();
+    }
+  }
+
+  void OnMousePressed(wxMouseEvent &event)
+  {
+    wxClientDC dc(this);
+    PrepareDC(dc);
+    m_firstPoint = wxPoint(event.GetLogicalPosition(dc));
+    Refresh();
+    m_mouseDown = true;
+  }
+
+  void OnMouseReleased(wxMouseEvent &event)
+  {
+    wxClientDC dc(this);
+    PrepareDC(dc);
+    m_secondPoint = wxPoint(event.GetLogicalPosition(dc));
+    Refresh();
+    m_mouseDown = false;
+  }
+
+private:
+  wxPoint m_firstPoint;
+  wxPoint m_secondPoint;
+  bool m_mouseDown = false;
 };
  
 bool MyApp::OnInit()
 {
+  wxInitAllImageHandlers();  
   auto frame = new MyFrame();
   frame->SetSize(0, 0, 800, 600);
   frame->Show(true);

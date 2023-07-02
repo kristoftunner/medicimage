@@ -40,15 +40,6 @@ MyFrame::MyFrame()
   icon.LoadFile("icon.png", wxBITMAP_TYPE_PNG);
   SetIcon(icon);
 
-  //wxImage image("wallpaper.png", wxBITMAP_TYPE_PNG);
-  //if (image.IsOk())
-  //{
-  //  image.SetAlpha();
-  //  wxBitmap bitmap(image);
-  //  SetBackgroundStyle(wxBG_STYLE_CUSTOM);
-  //  SetBackgroundBitmap(bitmap);
-  //}
-
   auto mainSplitter = new wxSplitterWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxSP_LIVE_UPDATE | wxSP_3DSASH);
   auto nestedSplitter = new wxSplitterWindow(mainSplitter, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxSP_LIVE_UPDATE | wxSP_3DSASH);
   auto toolboxSplitter = new wxSplitterWindow(nestedSplitter, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxSP_LIVE_UPDATE | wxSP_3DSASH);
@@ -175,16 +166,8 @@ MyFrame::MyFrame()
   Bind(EVT_PATIENT_UPDATED, [this, attributeEditor](UpdatePatientsEvent& event) {
     wxPostEvent(attributeEditor, event);
     });
-  //Bind(EVT_PAINT, &MyFrame::OnPaint, this);
 }
 
-void MyFrame::OnPaint(wxPaintEvent& event)
-{
-  wxPaintDC dc(this);
-  auto bitmap = wxBitmap("wallpapper.png", wxBITMAP_TYPE_PNG);
-  dc.DrawBitmap(bitmap, 0, 0);
-}
- 
 void MyFrame::OnExit(wxCommandEvent& event)
 {
     Close(true);
@@ -285,6 +268,6 @@ void Printout::DrawPage()
     wxCoord yoff = (fitRect.height - maxY) / 2;
     OffsetLogicalOrigin(xoff, yoff);
 
-    //m_canvas->Draw(GetDC());
+    m_canvas->Draw(GetDC());
 }
 }

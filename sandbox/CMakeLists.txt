@@ -39,3 +39,7 @@ set_property(TARGET printing PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CON
 add_executable(fastdraw WIN32 fastdraw/fastdraw.cpp)
 target_link_libraries(fastdraw PUBLIC wx::core wx::base wx::wxgl OpenGL::GL medicimage)
 set_property(TARGET fastdraw PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
+
+add_executable(shaped WIN32 shaped/shaped.cpp)
+target_link_libraries(shaped PUBLIC wx::core wx::base wx::wxgl OpenGL::GL medicimage)
+set_property(TARGET shaped PROPERTY MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>")
