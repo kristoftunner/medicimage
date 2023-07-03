@@ -513,8 +513,8 @@ EditorPanel::EditorPanel(wxWindow *parent, wxWindowID id, const wxPoint &pos, co
     m_canvas = new Canvas(this, wxID_ANY, wxDefaultPosition, wxDefaultSize);
 
     auto patientIdInput = new wxTextCtrl(this, wxID_ANY, "", wxDefaultPosition, wxDefaultSize, wxTE_PROCESS_ENTER);
-    wxFont font(20, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
-    patientIdInput->SetFont(font);
+    wxFont patientIdFont(30, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
+    patientIdInput->SetFont(patientIdFont);
     patientIdInput->Bind(wxEVT_TEXT_ENTER, [this, patientIdInput](wxCommandEvent &event) {
         auto id = patientIdInput->GetValue().ToStdString();
         PatientSelectedEvent patientEvent(EVT_THUMBNAILS_ADD_PATIENT, wxID_ANY);
@@ -525,16 +525,23 @@ EditorPanel::EditorPanel(wxWindow *parent, wxWindowID id, const wxPoint &pos, co
 
     std::optional<std::string> documentName = m_canvas->GetActiveDocumentName();
     std::optional<float> zoomLevel = m_canvas->GetZoomLevel();
-    auto documentText = documentName ? std::format("Patient ID:{}", *documentName) : "";
-    auto zoomText = zoomLevel ? std::format("Zoom level:{:.2f}", *zoomLevel) : "";
+    m_statusSizer = new wxBoxSizer(wxVERTICAL);
+    if(documentName)
+    {
+      auto formattedText = std::format("Patient ID:{}", *documentName);
+      auto documentText = new wxStaticText(this, wxID_ANY, formattedText);
+      documentText->SetFont(wxFont(20, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL));
+      m_statusSizer->Add(documentText, wxSizerFlags(0).Align(wxALIGN_CENTER).Border(wxALL, FromDIP(5)));
+    }
+    if(zoomLevel)
+    {
+      auto formattedText = std::format("Zoom Level:{:.2f}%", (*zoomLevel) * 100.0f);
+      auto zoomText = new wxStaticText(this, wxID_ANY, formattedText);
+      zoomText->SetFont(wxFont(20, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL));
+      m_statusSizer->Add(zoomText, wxSizerFlags(0).Align(wxALIGN_CENTER).Border(wxALL, FromDIP(5)));
+    }
 
-    m_documentName = new wxStaticText(this, wxID_ANY, documentText);
-    m_zoomLevel = new wxStaticText(this, wxID_ANY, zoomText);
-    auto statusSizer = new wxBoxSizer(wxHORIZONTAL);
-    statusSizer->Add(m_documentName, wxSizerFlags(0).Expand().Border(wxALL, FromDIP(5)));
-    statusSizer->Add(m_zoomLevel, wxSizerFlags(0).Expand().Border(wxALL, FromDIP(5)));
-
-    sizer->Add(statusSizer, wxSizerFlags(0).Expand().Border(wxALL, FromDIP(5)));
+    sizer->Add(m_statusSizer, wxSizerFlags(0).Expand().Border(wxALL, FromDIP(5)));
     sizer->Add(m_canvas, wxSizerFlags(1).Expand().Border(wxALL, FromDIP(5)));
     sizer->Add(patientIdInput, wxSizerFlags(0).Expand().Border(wxALL, FromDIP(5)));
     SetSizerAndFit(sizer);
@@ -607,11 +614,22 @@ void EditorPanel::UpdateStatusBar()
 {
     std::optional<std::string> documentName = m_canvas->GetActiveDocumentName();
     std::optional<float> zoomLevel = m_canvas->GetZoomLevel();
-    auto documentText = documentName ? std::format("Patient ID:{}", *documentName) : "";
-    auto zoomText = zoomLevel ? std::format("Zoom level:{:.2f}", *zoomLevel) : "";
-
-    m_documentName->SetLabel(documentText);
-    m_zoomLevel->SetLabel(zoomText);
+    m_statusSizer->Clear(true);
+    if(documentName)
+    {
+      auto formattedText = std::format("Patient ID:{}", *documentName);
+      auto documentText = new wxStaticText(this, wxID_ANY, formattedText);
+      documentText->SetFont(wxFont(20, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL));
+      m_statusSizer->Add(documentText, wxSizerFlags(0).Align(wxALIGN_CENTER).Border(wxALL, FromDIP(5)));
+    }
+    if(zoomLevel)
+    {
+      auto formattedText = std::format("Zoom Level:{:.2f}%", (*zoomLevel) * 100.0f);
+      auto zoomText = new wxStaticText(this, wxID_ANY, formattedText);
+      zoomText->SetFont(wxFont(20, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL));
+      m_statusSizer->Add(zoomText, wxSizerFlags(0).Align(wxALIGN_CENTER).Border(wxALL, FromDIP(5)));
+    }
+    m_statusSizer->Layout();
     Layout();
 }
 } // namespace app

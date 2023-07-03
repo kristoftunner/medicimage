@@ -13,7 +13,7 @@
 namespace app
 {
 
-class MyFrame : public wxFrame
+class MyFrame : public wxCustomBackgroundWindow<wxFrame>
 {
 public:
   MyFrame();

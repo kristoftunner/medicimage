@@ -27,8 +27,9 @@ enum
 };
 
 // TODO REFACTOR: refactor this ctor
-MyFrame::MyFrame() : wxFrame(NULL, wxID_ANY, "")
+MyFrame::MyFrame() 
 {
+    Create(nullptr, wxID_ANY, "Frame");
     m_logger = new wxLogWindow(this, "Log", false, false);
     wxLog::SetActiveTarget(m_logger);
     bool isDark = wxSystemSettings::GetAppearance().IsDark();
@@ -38,6 +39,8 @@ MyFrame::MyFrame() : wxFrame(NULL, wxID_ANY, "")
     icon.LoadFile("icon.png", wxBITMAP_TYPE_PNG);
     SetIcon(icon);
 
+    auto bitmap = wxBitmap("wallpaper.png", wxBITMAP_TYPE_PNG);
+    SetBackgroundBitmap(bitmap);
     auto mainSplitter =
         new wxSplitterWindow(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxSP_LIVE_UPDATE | wxSP_3DSASH);
     auto nestedSplitter =
@@ -64,7 +67,7 @@ MyFrame::MyFrame() : wxFrame(NULL, wxID_ANY, "")
     nestedSplitter->SetDoubleBuffered(true);
     nestedSplitter->SetSashGravity(0.0);
 
-    thumbnails->SetBackgroundColour(wxColour(isDark ? m_darkBackground : m_lightBackground));
+    //thumbnails->SetBackgroundColour(wxColour(isDark ? m_darkBackground : m_lightBackground));
 
     mainSplitter->SplitVertically(nestedSplitter, thumbnails, -200);
     mainSplitter->SetMinimumPaneSize(200);

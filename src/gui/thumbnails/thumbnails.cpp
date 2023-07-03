@@ -12,7 +12,7 @@ namespace app
 Thumbnails::Thumbnails(wxWindow *parent, wxWindowID, const wxPoint &pos, const wxSize &size)
     : wxScrolled<wxPanel>(parent)
 {
-    SetBackgroundColour(wxColour(100, 200, 100));
+    //SetBackgroundColour(wxColour(100, 200, 100));
     m_sizer = new wxBoxSizer(wxVERTICAL);
     m_panelName = new wxStaticText(this, wxID_ANY, "Thumbnails");
 

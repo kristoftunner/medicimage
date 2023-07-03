@@ -136,6 +136,7 @@ private:
   void UpdateStatusBar();
 private:
   wxStaticText* m_documentName, *m_zoomLevel;
+  wxBoxSizer* m_statusSizer = nullptr;
   Canvas* m_canvas;
 };
 };
