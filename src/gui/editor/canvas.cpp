@@ -16,6 +16,7 @@
 #include "gui/toolbox/toolbox_events.h"
 #include <image_handling/image_editor.h>
 #include <renderer/texture.h>
+#include "gui/toolbox/bitmappane.h"
 
 using namespace medicimage;
 namespace app
@@ -453,7 +454,7 @@ void Canvas::OnChangeZoomLevel(float scale)
 void Canvas::UpdateAttributeEditor()
 {
     auto entities = m_editor.GetSelectedEntities();
-    EntityEvent event(EVT_EDITOR_ENTITY_CHANGED, wxID_ANY);
+    EntityEvent event(EDITOR_ENTITY_CHANGED, wxID_ANY);
     if (!entities.empty())
         event.SetData(entities[0]);
 
@@ -523,24 +524,22 @@ EditorPanel::EditorPanel(wxWindow *parent, wxWindowID id, const wxPoint &pos, co
         patientIdInput->Clear();
     });
 
-    std::optional<std::string> documentName = m_canvas->GetActiveDocumentName();
-    std::optional<float> zoomLevel = m_canvas->GetZoomLevel();
     m_statusSizer = new wxBoxSizer(wxVERTICAL);
-    if(documentName)
+    m_statusFirstRowSizer = new wxBoxSizer(wxHORIZONTAL);
+    std::optional<float> zoomLevel = m_canvas->GetZoomLevel();
+    m_patientIdText = new wxStaticText(this, wxID_ANY, "");
+    m_patientIdText->SetFont(wxFont(20, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL));
+    auto logo = new BitmapPane(wxBitmap("assets/macroshot.png", wxBITMAP_TYPE_PNG), this, wxID_ANY,
+      wxTransparentColor, false, {0,0}, {160, 40});
+    m_statusSizer->Add(logo, wxSizerFlags(0).Align(wxALIGN_CENTER).Border(wxALL, FromDIP(5)));
+    m_statusSizer->Add(m_patientIdText, wxSizerFlags(0).Align(wxALIGN_LEFT).Border(wxALL, FromDIP(5)));
+    if (zoomLevel)
     {
-      auto formattedText = std::format("Patient ID:{}", *documentName);
-      auto documentText = new wxStaticText(this, wxID_ANY, formattedText);
-      documentText->SetFont(wxFont(20, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL));
-      m_statusSizer->Add(documentText, wxSizerFlags(0).Align(wxALIGN_CENTER).Border(wxALL, FromDIP(5)));
+        auto formattedText = std::format("Zoom Level:{:.0f}%", (*zoomLevel) * 100.0f);
+        m_zoomLevelText = new wxStaticText(this, wxID_ANY, formattedText);
+        m_zoomLevelText->SetFont(wxFont(20, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL));
+        m_statusSizer->Add(m_zoomLevelText, wxSizerFlags(0).Border(wxALL, FromDIP(5)));
     }
-    if(zoomLevel)
-    {
-      auto formattedText = std::format("Zoom Level:{:.2f}%", (*zoomLevel) * 100.0f);
-      auto zoomText = new wxStaticText(this, wxID_ANY, formattedText);
-      zoomText->SetFont(wxFont(20, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL));
-      m_statusSizer->Add(zoomText, wxSizerFlags(0).Align(wxALIGN_CENTER).Border(wxALL, FromDIP(5)));
-    }
-
     sizer->Add(m_statusSizer, wxSizerFlags(0).Expand().Border(wxALL, FromDIP(5)));
     sizer->Add(m_canvas, wxSizerFlags(1).Expand().Border(wxALL, FromDIP(5)));
     sizer->Add(patientIdInput, wxSizerFlags(0).Expand().Border(wxALL, FromDIP(5)));
@@ -600,36 +599,39 @@ EditorPanel::EditorPanel(wxWindow *parent, wxWindowID id, const wxPoint &pos, co
             wxLogError("Unknown button type");
             break;
         }
-        UpdateStatusBar();
+        UpdateZoomLevel();
     });
-    Bind(EVT_THUMBNAILS_DOCUMENT_PICK, [this](ImageDocumentEvent &event) {
-        m_canvas->OnDocumentPicked(event);
-        UpdateStatusBar();
-    });
+    Bind(EVT_THUMBNAILS_DOCUMENT_PICK, [this](ImageDocumentEvent &event) { m_canvas->OnDocumentPicked(event); });
 
     Bind(EVT_ENTITY_ATTRIBUTE_EDITED, [this](EntityEvent &event) { wxPostEvent(this->m_canvas, event); });
+    Bind(EVT_PATIENT_SELECTED, [this](PatientSelectedEvent &event) {
+        auto patientId = event.GetPatientId();
+        UpdatePatientId(patientId);
+    });
+}
+void EditorPanel::UpdatePatientId(const std::string &patientId)
+{
+    if (patientId != "")
+    {
+        auto formattedText = std::format("Patient: {}", patientId);
+        m_patientIdText->SetFont(wxFont(20, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL));
+        m_patientIdText->SetLabel(formattedText);
+        m_statusSizer->Layout();
+        Refresh();
+    }
+}
+void EditorPanel::UpdateZoomLevel()
+{
+    std::optional<float> zoomLevel = m_canvas->GetZoomLevel();
+    if (zoomLevel)
+    {
+        auto formattedText = std::format("Zoom Level:{:.0f}%", (*zoomLevel) * 100.0f);
+
+        m_zoomLevelText->SetFont(wxFont(20, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL));
+        m_zoomLevelText->SetLabel(formattedText);
+        m_statusSizer->Layout();
+        Refresh();
+    }
 }
 
-void EditorPanel::UpdateStatusBar()
-{
-    std::optional<std::string> documentName = m_canvas->GetActiveDocumentName();
-    std::optional<float> zoomLevel = m_canvas->GetZoomLevel();
-    m_statusSizer->Clear(true);
-    if(documentName)
-    {
-      auto formattedText = std::format("Patient ID:{}", *documentName);
-      auto documentText = new wxStaticText(this, wxID_ANY, formattedText);
-      documentText->SetFont(wxFont(20, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL));
-      m_statusSizer->Add(documentText, wxSizerFlags(0).Align(wxALIGN_CENTER).Border(wxALL, FromDIP(5)));
-    }
-    if(zoomLevel)
-    {
-      auto formattedText = std::format("Zoom Level:{:.2f}%", (*zoomLevel) * 100.0f);
-      auto zoomText = new wxStaticText(this, wxID_ANY, formattedText);
-      zoomText->SetFont(wxFont(20, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL));
-      m_statusSizer->Add(zoomText, wxSizerFlags(0).Align(wxALIGN_CENTER).Border(wxALL, FromDIP(5)));
-    }
-    m_statusSizer->Layout();
-    Layout();
-}
 } // namespace app

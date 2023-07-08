@@ -18,73 +18,73 @@ Toolbox::Toolbox(wxWindow *parent, wxWindowID id, const wxPoint &pos, const wxSi
     : wxScrolled<wxPanel>(parent, id, pos, size)
 {
     m_buttons.insert({ButtonType::LIVE_CAMERA_BUTTON,
-                      BitmapButton(new BitmapPane(wxBitmap("live-camera.png", wxBITMAP_TYPE_PNG), this, wxID_ANY,
+                      BitmapButton(new BitmapPane(wxBitmap("assets/live-camera.png", wxBITMAP_TYPE_PNG), this, wxID_ANY,
                                                   wxColour(s_lightBackground), true, wxDefaultPosition,
                                                   {s_buttonSize * 2, s_buttonSize * 2}),
                                    [this]() { OnUndo(); })});
     m_buttons.insert(
-        {ButtonType::SNAPSHOT_BUTTON, BitmapButton(new BitmapPane(wxBitmap("snapshot.png", wxBITMAP_TYPE_PNG), this,
-                                                                  wxID_ANY, wxColour(s_lightBackground), true,
+        {ButtonType::SNAPSHOT_BUTTON, BitmapButton(new BitmapPane(wxBitmap("assets/snapshot.png", wxBITMAP_TYPE_PNG),
+                                                                  this, wxID_ANY, wxColour(s_lightBackground), true,
                                                                   wxDefaultPosition, {s_buttonSize * 2, s_buttonSize}),
                                                    [this]() { OnScreenshot(); })});
     m_buttons.insert(
-        {ButtonType::SAVE_BUTTON, BitmapButton(new BitmapPane(wxBitmap("save.png", wxBITMAP_TYPE_PNG), this, wxID_ANY,
-                                                              wxColour(s_lightBackground), true, wxDefaultPosition,
-                                                              {s_buttonSize, s_buttonSize}),
+        {ButtonType::SAVE_BUTTON, BitmapButton(new BitmapPane(wxBitmap("assets/save.png", wxBITMAP_TYPE_PNG), this,
+                                                              wxID_ANY, wxColour(s_lightBackground), true,
+                                                              wxDefaultPosition, {s_buttonSize, s_buttonSize}),
                                                [this]() { OnSave(); })});
     m_buttons.insert(
-        {ButtonType::DELETE_BUTTON, BitmapButton(new BitmapPane(wxBitmap("delete.png", wxBITMAP_TYPE_PNG), this,
+        {ButtonType::DELETE_BUTTON, BitmapButton(new BitmapPane(wxBitmap("assets/delete.png", wxBITMAP_TYPE_PNG), this,
                                                                 wxID_ANY, wxColour(s_lightBackground), true,
                                                                 wxDefaultPosition, {s_buttonSize, s_buttonSize}),
                                                  [this]() { OnDelete(); })});
     m_buttons.insert(
-        {ButtonType::SELECT_BUTTON, BitmapButton(new BitmapPane(wxBitmap("select.png", wxBITMAP_TYPE_PNG), this,
+        {ButtonType::SELECT_BUTTON, BitmapButton(new BitmapPane(wxBitmap("assets/select.png", wxBITMAP_TYPE_PNG), this,
                                                                 wxID_ANY, wxColour(s_lightBackground), true,
                                                                 wxDefaultPosition, {s_buttonSize, s_buttonSize}),
                                                  [this]() { OnCancel(); })});
     m_buttons.insert(
-        {ButtonType::DRAW_TEXT_BUTTON, BitmapButton(new BitmapPane(wxBitmap("add-text.png", wxBITMAP_TYPE_PNG), this,
-                                                                   wxID_ANY, wxColour(s_lightBackground), true,
+        {ButtonType::DRAW_TEXT_BUTTON, BitmapButton(new BitmapPane(wxBitmap("assets/add-text.png", wxBITMAP_TYPE_PNG),
+                                                                   this, wxID_ANY, wxColour(s_lightBackground), true,
                                                                    wxDefaultPosition, {s_buttonSize, s_buttonSize}),
                                                     [this]() { OnDrawText(); })});
     m_buttons.insert({ButtonType::DRAW_LETTERS_BUTTON,
-                      BitmapButton(new BitmapPane(wxBitmap("add-incremental-letters.png", wxBITMAP_TYPE_PNG), this,
-                                                  wxID_ANY, wxColour(s_lightBackground), true, wxDefaultPosition,
+                      BitmapButton(new BitmapPane(wxBitmap("assets/add-incremental-letters.png", wxBITMAP_TYPE_PNG),
+                                                  this, wxID_ANY, wxColour(s_lightBackground), true, wxDefaultPosition,
                                                   {s_buttonSize, s_buttonSize}),
                                    [this]() { OnDrawIncrementalLetters(); })});
     m_buttons.insert(
-        {ButtonType::DRAW_ARROW_BUTTON, BitmapButton(new BitmapPane(wxBitmap("arrow.png", wxBITMAP_TYPE_PNG), this,
-                                                                    wxID_ANY, wxColour(s_lightBackground), true,
+        {ButtonType::DRAW_ARROW_BUTTON, BitmapButton(new BitmapPane(wxBitmap("assets/arrow.png", wxBITMAP_TYPE_PNG),
+                                                                    this, wxID_ANY, wxColour(s_lightBackground), true,
                                                                     wxDefaultPosition, {s_buttonSize, s_buttonSize}),
                                                      [this]() { OnDrawArrow(); })});
     m_buttons.insert(
-        {ButtonType::DRAW_CIRCLE_BUTTON, BitmapButton(new BitmapPane(wxBitmap("circle.png", wxBITMAP_TYPE_PNG), this,
-                                                                     wxID_ANY, wxColour(s_lightBackground), true,
+        {ButtonType::DRAW_CIRCLE_BUTTON, BitmapButton(new BitmapPane(wxBitmap("assets/circle.png", wxBITMAP_TYPE_PNG),
+                                                                     this, wxID_ANY, wxColour(s_lightBackground), true,
                                                                      wxDefaultPosition, {s_buttonSize, s_buttonSize}),
                                                       [this]() { OnDrawCircle(); })});
     m_buttons.insert(
-        {ButtonType::DRAW_LINE_BUTTON, BitmapButton(new BitmapPane(wxBitmap("line.png", wxBITMAP_TYPE_PNG), this,
+        {ButtonType::DRAW_LINE_BUTTON, BitmapButton(new BitmapPane(wxBitmap("assets/line.png", wxBITMAP_TYPE_PNG), this,
                                                                    wxID_ANY, wxColour(s_lightBackground), true,
                                                                    wxDefaultPosition, {s_buttonSize, s_buttonSize}),
                                                     [this]() { OnDrawLine(); })});
     m_buttons.insert({ButtonType::DRAW_MULTILINE_BUTTON,
-                      BitmapButton(new BitmapPane(wxBitmap("multiline.png", wxBITMAP_TYPE_PNG), this, wxID_ANY,
+                      BitmapButton(new BitmapPane(wxBitmap("assets/multiline.png", wxBITMAP_TYPE_PNG), this, wxID_ANY,
                                                   wxColour(s_lightBackground), true, wxDefaultPosition,
                                                   {s_buttonSize, s_buttonSize}),
                                    [this]() { OnDrawMultiline(); })});
     m_buttons.insert({ButtonType::DRAW_RECTANGLE_BUTTON,
-                      BitmapButton(new BitmapPane(wxBitmap("rectangle.png", wxBITMAP_TYPE_PNG), this, wxID_ANY,
+                      BitmapButton(new BitmapPane(wxBitmap("assets/rectangle.png", wxBITMAP_TYPE_PNG), this, wxID_ANY,
                                                   wxColour(s_lightBackground), true, wxDefaultPosition,
                                                   {s_buttonSize, s_buttonSize}),
                                    [this]() { OnDrawRectangle(); })});
     m_buttons.insert({ButtonType::DRAW_SKIN_TEMPLATE_BUTTON,
-                      BitmapButton(new BitmapPane(wxBitmap("skin-template.png", wxBITMAP_TYPE_PNG), this, wxID_ANY,
-                                                  wxColour(s_lightBackground), true, wxDefaultPosition,
+                      BitmapButton(new BitmapPane(wxBitmap("assets/skin-template.png", wxBITMAP_TYPE_PNG), this,
+                                                  wxID_ANY, wxColour(s_lightBackground), true, wxDefaultPosition,
                                                   {s_buttonSize, s_buttonSize}),
                                    [this]() { OnDrawSkinTemplate(); })});
     m_buttons.insert(
-        {ButtonType::ZOOM_IN_BUTTON, BitmapButton(new BitmapPane(wxBitmap("zoom-in.png", wxBITMAP_TYPE_PNG), this,
-                                                                 wxID_ANY, wxColour(s_lightBackground), true,
+        {ButtonType::ZOOM_IN_BUTTON, BitmapButton(new BitmapPane(wxBitmap("assets/zoom-in.png", wxBITMAP_TYPE_PNG),
+                                                                 this, wxID_ANY, wxColour(s_lightBackground), true,
                                                                  wxDefaultPosition, {s_buttonSize, s_buttonSize}),
                                                   [this]() {
                                                       ToolboxButtonEvent event(TOOLBOX_BUTTON_PUSHED, GetId());
@@ -92,8 +92,8 @@ Toolbox::Toolbox(wxWindow *parent, wxWindowID id, const wxPoint &pos, const wxSi
                                                       ProcessWindowEvent(event);
                                                   })});
     m_buttons.insert(
-        {ButtonType::ZOOM_OUT_BUTTON, BitmapButton(new BitmapPane(wxBitmap("zoom-out.png", wxBITMAP_TYPE_PNG), this,
-                                                                  wxID_ANY, wxColour(s_lightBackground), true,
+        {ButtonType::ZOOM_OUT_BUTTON, BitmapButton(new BitmapPane(wxBitmap("assets/zoom-out.png", wxBITMAP_TYPE_PNG),
+                                                                  this, wxID_ANY, wxColour(s_lightBackground), true,
                                                                   wxDefaultPosition, {s_buttonSize, s_buttonSize}),
                                                    [this]() {
                                                        ToolboxButtonEvent event(TOOLBOX_BUTTON_PUSHED, GetId());
@@ -173,7 +173,7 @@ Toolbox::Toolbox(wxWindow *parent, wxWindowID id, const wxPoint &pos, const wxSi
     });
 
     topSizer->Add(liveCameraSizer, wxSizerFlags(0).Border(wxALL, FromDIP(5)));
-    topSizer->Add(snapshotSizer, wxSizerFlags(2).Border(wxALL, FromDIP(5)));
+    topSizer->Add(snapshotSizer, wxSizerFlags(0).Border(wxALL, FromDIP(5)));
     topSizer->Add(drawToolSizer, wxSizerFlags(0).Border(wxALL, FromDIP(5)));
     topSizer->Add(zoomPanelSizer, wxSizerFlags(0).Border(wxALL, FromDIP(5)));
     SetSizer(topSizer);

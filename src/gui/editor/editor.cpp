@@ -12,7 +12,7 @@ using namespace medicimage;
 
 void Editor::Init()
 {
-    m_cameraFrame = std::make_unique<Image2D>("Checkerboard.png");
+    m_cameraFrame = std::make_unique<Image2D>("assets/Checkerboard.png");
     m_camera.Init();
     m_camera.Open(0);
 
@@ -211,7 +211,7 @@ std::optional<ImageDocumentEvent> Editor::OnScreenshot()
             this->OnScreenshotDone();
         });
         t.detach();
-        ImageDocumentEvent event(EVT_EDITOR_ADD_DOCUMENT, wxID_ANY);
+        ImageDocumentEvent event(EDITOR_ADD_DOCUMENT, wxID_ANY);
         {
             std::lock_guard<std::mutex> lock(m_cameraFrameMutex);
             event.SetData(ImageDocument(std::make_unique<Image2D>(*(m_cameraFrame.get()))));
@@ -239,7 +239,7 @@ std::optional<ImageDocumentEvent> Editor::OnSave()
         m_drawingSheet.SetDrawCommand(DrawCommand::DO_NOTHING);
 
         // TODO: send the image to the image saver
-        ImageDocumentEvent event(EVT_EDITOR_SAVE_DOCUMENT, wxID_ANY);
+        ImageDocumentEvent event(EDITOR_SAVE_DOCUMENT, wxID_ANY);
         auto imageWithFooter = Draw();
         auto image = ImageEditor::RemoveFooter(*(imageWithFooter.get()));
         event.SetData(ImageDocument(std::move(image)));
@@ -258,7 +258,7 @@ std::optional<ImageDocumentEvent> Editor::OnDelete()
         m_state = EditorState::SHOW_CAMERA;
         m_drawingSheet.SetDrawCommand(DrawCommand::DO_NOTHING);
 
-        ImageDocumentEvent event(EVT_EDITOR_DELETE_DOCUMENT, wxID_ANY);
+        ImageDocumentEvent event(EDITOR_DELETE_DOCUMENT, wxID_ANY);
         event.SetData(m_activeDocument);
         return event;
     }
@@ -441,10 +441,8 @@ std::string Editor::GetStateName() const
 
 std::optional<std::string> Editor::GetActiveDocumentName() const
 {
-    if (m_state == EditorState::EDITING || m_state == EditorState::IMAGE_SELECTION)
-    {
+    if (m_activeDocument.documentId != "")
         return m_activeDocument.documentId;
-    }
     else
         return std::nullopt;
 }

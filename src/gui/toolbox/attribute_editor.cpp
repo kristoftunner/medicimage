@@ -48,7 +48,7 @@ AttributeEditor::AttributeEditor(wxWindow *parent, DocumentController &controlle
         wxLogDebug("Thumbnails::OnPatientSelected: %s", selectedItem);
         ProcessWindowEvent(patientEvent);
     });
-    Bind(EVT_EDITOR_ENTITY_CHANGED, &AttributeEditor::OnEntityAttributeChange, this);
+    Bind(EDITOR_ENTITY_CHANGED, &AttributeEditor::OnEntityAttributeChange, this);
     Bind(EVT_PATIENT_UPDATED, [this](UpdatePatientsEvent &event) {
         this->m_patientList->DeleteAllItems();
         auto patients = event.GetPatients();

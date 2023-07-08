@@ -1,6 +1,7 @@
 #include <wx/wxprec.h>
 #include <wx/wx.h>
 #include <wx/image.h>
+#include <wx/window.h>
 
 #include "core/log.h"
 #include "gui/editor/canvas.h"
@@ -23,7 +24,7 @@ bool MyApp::OnInit()
   Logger::Init();
   wxInitAllImageHandlers();  
   MyFrame *frame = new MyFrame();
-  frame->SetSize(0, 0, 800, 600);
+  frame->SetSize(0, 0, 1400, 900);
   frame->Show(true);
   return true;
 }

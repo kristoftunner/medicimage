@@ -51,6 +51,7 @@ private:
     std::string m_patientId = "";
 };
 
+
 class UpdatePatientsEvent : public wxCommandEvent
 {
 public:

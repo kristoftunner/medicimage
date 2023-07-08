@@ -133,10 +133,11 @@ public:
   std::mutex& GetCameraMutex() { return m_canvas->GetCameraMutex(); }
   Canvas* GetCanvas() { return m_canvas; }
 private:
-  void UpdateStatusBar();
+  void UpdatePatientId(const std::string& patientId);
+  void UpdateZoomLevel();
 private:
-  wxStaticText* m_documentName, *m_zoomLevel;
-  wxBoxSizer* m_statusSizer = nullptr;
+  wxStaticText  *m_patientIdText = nullptr, *m_zoomLevelText = nullptr;
+  wxBoxSizer  *m_statusSizer = nullptr, *m_statusFirstRowSizer = nullptr;
   Canvas* m_canvas;
 };
 };

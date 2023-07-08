@@ -12,7 +12,7 @@ namespace app
 Thumbnails::Thumbnails(wxWindow *parent, wxWindowID, const wxPoint &pos, const wxSize &size)
     : wxScrolled<wxPanel>(parent)
 {
-    //SetBackgroundColour(wxColour(100, 200, 100));
+    // SetBackgroundColour(wxColour(100, 200, 100));
     m_sizer = new wxBoxSizer(wxVERTICAL);
     m_panelName = new wxStaticText(this, wxID_ANY, "Thumbnails");
 
@@ -20,9 +20,9 @@ Thumbnails::Thumbnails(wxWindow *parent, wxWindowID, const wxPoint &pos, const w
 
     Bind(EVT_PATIENT_SELECTED, &Thumbnails::OnPatientSelected, this);
     Bind(EVT_THUMBNAILS_ADD_PATIENT, &Thumbnails::OnAddPatient, this);
-    Bind(EVT_EDITOR_SAVE_DOCUMENT, &Thumbnails::OnAddDocument, this);
-    Bind(EVT_EDITOR_DELETE_DOCUMENT, &Thumbnails::OnDeleteDocument, this);
-    Bind(EVT_EDITOR_ADD_DOCUMENT, &Thumbnails::OnAddDocument, this);
+    Bind(EDITOR_SAVE_DOCUMENT, &Thumbnails::OnAddDocument, this);
+    Bind(EDITOR_DELETE_DOCUMENT, &Thumbnails::OnDeleteDocument, this);
+    Bind(EDITOR_ADD_DOCUMENT, &Thumbnails::OnAddDocument, this);
     Bind(EVT_THUMBNAILS_APP_FOLDER_UPDATE, &Thumbnails::OnUpdateAppFolder, this);
     Bind(wxEVT_SIZE, &Thumbnails::OnResize, this);
 
