@@ -21,9 +21,9 @@ AttributeEditor::AttributeEditor(wxWindow *parent, DocumentController &controlle
     auto panelName = new wxStaticText(this, wxID_ANY, "Properties");
     m_patientList = new wxListCtrl(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxLC_REPORT | wxLC_SINGLE_SEL);
     m_patientList->InsertColumn(0, "Patient IDs");
-    m_gridSizer = new wxGridSizer(2, {0, 0});
+    m_sizer = new wxBoxSizer(wxVERTICAL);
     m_topSizer->Add(panelName, wxSizerFlags(0).Border(wxALL, FromDIP(5)));
-    m_topSizer->Add(m_gridSizer, wxSizerFlags(0).Border(wxALL, FromDIP(5)).Align(wxALIGN_TOP));
+    m_topSizer->Add(m_sizer, wxSizerFlags(0).Border(wxALL, FromDIP(5)).Align(wxALIGN_TOP));
     m_topSizer->Add(m_patientList, wxSizerFlags(0).Expand().Border(wxALL, FromDIP(5)));
 
     std::vector<UpdatePatientsEvent::Patient> patients;
@@ -80,19 +80,21 @@ void AttributeEditor::Draw(wxPaintEvent &event)
 void AttributeEditor::OnEntityAttributeChange(EntityEvent &event)
 {
     wxLogDebug("AttributeEditor:OnEntityAttributeChange");
-    m_gridSizer->Clear(true);
+    m_sizer->Clear(true);
     auto optionalEntity = event.GetData();
     if (optionalEntity.has_value())
     {
         auto entity = optionalEntity.value();
         if (entity.HasComponent<ColorComponent>())
         {
+            auto tmpSizer = new wxBoxSizer(wxHORIZONTAL);
             auto &color = entity.GetComponent<ColorComponent>();
             auto colorText = new wxStaticText(this, wxID_ANY, "Color");
-            m_gridSizer->Add(colorText, wxSizerFlags(1).Align(wxALIGN_RIGHT | wxALIGN_TOP).Border(wxALL, FromDIP(2)));
+            tmpSizer->Add(colorText, wxSizerFlags(0).Align(wxALIGN_LEFT).Border(wxALL, FromDIP(2)));
             auto colorPicker =
                 new wxColourPickerCtrl(this, wxID_ANY, wxColour(color.color.r, color.color.g, color.color.b));
-            m_gridSizer->Add(colorPicker, wxSizerFlags(1).Align(wxALIGN_LEFT | wxALIGN_TOP).Border(wxALL, FromDIP(2)));
+            tmpSizer->Add(colorPicker, wxSizerFlags(0).Align(wxALIGN_LEFT).Border(wxALL, FromDIP(2)));
+            m_sizer->Add(tmpSizer, wxSizerFlags(1).Align(wxALIGN_LEFT).Border(wxALL, FromDIP(2)));
             colorPicker->Bind(wxEVT_COLOURPICKER_CHANGED, [&color, entity, this](wxColourPickerEvent &event) {
                 color.color.r = event.GetColour().Red() / 255.0f;
                 color.color.g = event.GetColour().Green() / 255.0f;
@@ -112,15 +114,15 @@ void AttributeEditor::OnEntityAttributeChange(EntityEvent &event)
         }
         if (entity.HasComponent<ThicknessComponent>())
         {
+            auto tmpSizer = new wxBoxSizer(wxHORIZONTAL);
             auto &thickness = entity.GetComponent<ThicknessComponent>().thickness;
             auto thicknessText = new wxStaticText(this, wxID_ANY, "Thickness");
-            m_gridSizer->Add(thicknessText,
-                             wxSizerFlags(0).Align(wxALIGN_RIGHT | wxALIGN_TOP).Border(wxALL, FromDIP(2)));
+            tmpSizer->Add(thicknessText, wxSizerFlags(0).Align(wxALIGN_LEFT).Border(wxALL, FromDIP(2)));
             // TODO: add min-max values
             auto thicknessPicker = new wxSpinCtrl(this, wxID_ANY, wxString::Format("%d", thickness), wxDefaultPosition,
                                                   wxDefaultSize, wxSP_ARROW_KEYS, 1, 100);
-            m_gridSizer->Add(thicknessPicker,
-                             wxSizerFlags(1).Align(wxALIGN_LEFT | wxALIGN_TOP).Border(wxALL, FromDIP(2)));
+            tmpSizer->Add(thicknessPicker, wxSizerFlags(0).Align(wxALIGN_LEFT).Border(wxALL, FromDIP(2)));
+            m_sizer->Add(tmpSizer, wxSizerFlags(1).Align(wxALIGN_LEFT).Border(wxALL, FromDIP(2)));
             thicknessPicker->Bind(wxEVT_SPINCTRL, [&thickness, entity, this](wxSpinEvent &event) {
                 auto copyEntity = Entity(entity);
                 thickness = event.GetValue();
@@ -138,15 +140,15 @@ void AttributeEditor::OnEntityAttributeChange(EntityEvent &event)
 
         if (entity.HasComponent<TextComponent>())
         {
+            auto tmpSizer = new wxBoxSizer(wxHORIZONTAL);
             auto &fontSize = entity.GetComponent<TextComponent>().fontSize;
             auto fontSizeText = new wxStaticText(this, wxID_ANY, "Font size");
-            m_gridSizer->Add(fontSizeText,
-                             wxSizerFlags(0).Align(wxALIGN_RIGHT | wxALIGN_TOP).Border(wxALL, FromDIP(2)));
+            tmpSizer->Add(fontSizeText, wxSizerFlags(0).Align(wxALIGN_LEFT).Border(wxALL, FromDIP(2)));
             // TODO: add min-max values
             auto fontSizePicker = new wxSpinCtrl(this, wxID_ANY, wxString::Format("%d", fontSize), wxDefaultPosition,
                                                  wxDefaultSize, wxSP_ARROW_KEYS, 1, 100);
-            m_gridSizer->Add(fontSizePicker,
-                             wxSizerFlags(1).Align(wxALIGN_LEFT | wxALIGN_TOP).Border(wxALL, FromDIP(2)));
+            tmpSizer->Add(fontSizePicker, wxSizerFlags(0).Align(wxALIGN_LEFT).Border(wxALL, FromDIP(2)));
+            m_sizer->Add(tmpSizer, wxSizerFlags(1).Align(wxALIGN_LEFT).Border(wxALL, FromDIP(2)));
             fontSizePicker->Bind(wxEVT_SPINCTRL, [&fontSize, entity, this](wxSpinEvent &event) {
                 auto copyEntity = Entity(entity);
                 fontSize = event.GetValue();
@@ -164,6 +166,7 @@ void AttributeEditor::OnEntityAttributeChange(EntityEvent &event)
 
         if (entity.HasComponent<SkinTemplateComponent>())
         {
+            auto verticalSliceSizer = new wxBoxSizer(wxHORIZONTAL);
             SkinTemplateComponentWrapper st(entity);
             auto verticalSliceCountBounds = st.GetVerticalSliceCountBounds();
             auto leftHorSliceCountBounds = st.GetLeftHorizontalSliceCountBounds();
@@ -174,13 +177,14 @@ void AttributeEditor::OnEntityAttributeChange(EntityEvent &event)
             auto &rightHorSliceCount = entity.GetComponent<SkinTemplateComponent>().rightHorSliceCount;
 
             auto verticalSliceCountText = new wxStaticText(this, wxID_ANY, "Vertical slices");
-            m_gridSizer->Add(verticalSliceCountText,
-                             wxSizerFlags(0).Align(wxALIGN_RIGHT | wxALIGN_TOP).Border(wxALL, FromDIP(2)));
+            verticalSliceSizer->Add(verticalSliceCountText,
+                                    wxSizerFlags(0).Align(wxALIGN_LEFT).Border(wxALL, FromDIP(2)));
             auto verticalSliceCountPicker =
                 new wxSpinCtrl(this, wxID_ANY, wxString::Format("%d", vertSliceCount), wxDefaultPosition, wxDefaultSize,
                                wxSP_ARROW_KEYS, verticalSliceCountBounds.x, verticalSliceCountBounds.y);
-            m_gridSizer->Add(verticalSliceCountPicker,
-                             wxSizerFlags(1).Align(wxALIGN_LEFT | wxALIGN_TOP).Border(wxALL, FromDIP(2)));
+            verticalSliceSizer->Add(verticalSliceCountPicker,
+                                    wxSizerFlags(0).Align(wxALIGN_LEFT).Border(wxALL, FromDIP(2)));
+            m_sizer->Add(verticalSliceSizer, wxSizerFlags(1).Align(wxALIGN_LEFT).Border(wxALL, FromDIP(2)));
             verticalSliceCountPicker->Bind(wxEVT_SPINCTRL, [&vertSliceCount, entity, this](wxSpinEvent &event) {
                 vertSliceCount = event.GetValue();
                 SkinTemplateComponentWrapper st(entity);
@@ -191,14 +195,16 @@ void AttributeEditor::OnEntityAttributeChange(EntityEvent &event)
                 ProcessWindowEvent(entityEvent);
             });
 
+            auto leftHorSliceSizer = new wxBoxSizer(wxHORIZONTAL);
             auto leftHorSliceCountText = new wxStaticText(this, wxID_ANY, "Left slices");
-            m_gridSizer->Add(leftHorSliceCountText,
-                             wxSizerFlags(0).Align(wxALIGN_RIGHT | wxALIGN_TOP).Border(wxALL, FromDIP(2)));
+            leftHorSliceSizer->Add(leftHorSliceCountText,
+                                   wxSizerFlags(0).Align(wxALIGN_LEFT).Border(wxALL, FromDIP(2)));
             auto leftHorSliceCountPicker =
                 new wxSpinCtrl(this, wxID_ANY, wxString::Format("%d", leftHorSliceCount), wxDefaultPosition,
                                wxDefaultSize, wxSP_ARROW_KEYS, leftHorSliceCountBounds.x, leftHorSliceCountBounds.y);
-            m_gridSizer->Add(leftHorSliceCountPicker,
-                             wxSizerFlags(1).Align(wxALIGN_LEFT | wxALIGN_TOP).Border(wxALL, FromDIP(2)));
+            leftHorSliceSizer->Add(leftHorSliceCountPicker,
+                                   wxSizerFlags(0).Align(wxALIGN_LEFT).Border(wxALL, FromDIP(2)));
+            m_sizer->Add(leftHorSliceSizer, wxSizerFlags(1).Align(wxALIGN_LEFT).Border(wxALL, FromDIP(2)));
             leftHorSliceCountPicker->Bind(wxEVT_SPINCTRL, [&leftHorSliceCount, entity, this](wxSpinEvent &event) {
                 leftHorSliceCount = event.GetValue();
                 SkinTemplateComponentWrapper st(entity);
@@ -209,14 +215,14 @@ void AttributeEditor::OnEntityAttributeChange(EntityEvent &event)
                 this->ProcessWindowEvent(entityEvent);
             });
 
+            auto tmpSizer3 = new wxBoxSizer(wxHORIZONTAL);
             auto rightHorSliceCountText = new wxStaticText(this, wxID_ANY, "Right slices");
-            m_gridSizer->Add(rightHorSliceCountText,
-                             wxSizerFlags(0).Align(wxALIGN_RIGHT | wxALIGN_TOP).Border(wxALL, FromDIP(2)));
+            tmpSizer3->Add(rightHorSliceCountText, wxSizerFlags(0).Align(wxALIGN_LEFT).Border(wxALL, FromDIP(2)));
             auto rightHorSliceCountPicker =
                 new wxSpinCtrl(this, wxID_ANY, wxString::Format("%d", rightHorSliceCount), wxDefaultPosition,
                                wxDefaultSize, wxSP_ARROW_KEYS, rightHorSliceCountBounds.x, rightHorSliceCountBounds.y);
-            m_gridSizer->Add(rightHorSliceCountPicker,
-                             wxSizerFlags(1).Align(wxALIGN_LEFT | wxALIGN_TOP).Border(wxALL, FromDIP(2)));
+            tmpSizer3->Add(rightHorSliceCountPicker, wxSizerFlags(0).Align(wxALIGN_LEFT).Border(wxALL, FromDIP(2)));
+            m_sizer->Add(tmpSizer3, wxSizerFlags(1).Align(wxALIGN_LEFT).Border(wxALL, FromDIP(2)));
             rightHorSliceCountPicker->Bind(wxEVT_SPINCTRL, [&rightHorSliceCount, entity, this](wxSpinEvent &event) {
                 rightHorSliceCount = event.GetValue();
                 SkinTemplateComponentWrapper st(entity);
@@ -230,7 +236,7 @@ void AttributeEditor::OnEntityAttributeChange(EntityEvent &event)
 
         auto minSize = m_topSizer->CalcMin();
         SetVirtualSize(FromDIP(minSize.x), FromDIP(minSize.y));
-        m_gridSizer->Layout();
+        m_sizer->Layout();
         Refresh();
     }
 }

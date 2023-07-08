@@ -13,10 +13,10 @@
 #include "gui/editor/editor_events.h"
 #include "gui/thumbnails/thumbnail_events.h"
 #include "gui/toolbox/attribute_editor_events.h"
+#include "gui/toolbox/bitmappane.h"
 #include "gui/toolbox/toolbox_events.h"
 #include <image_handling/image_editor.h>
 #include <renderer/texture.h>
-#include "gui/toolbox/bitmappane.h"
 
 using namespace medicimage;
 namespace app
@@ -529,8 +529,8 @@ EditorPanel::EditorPanel(wxWindow *parent, wxWindowID id, const wxPoint &pos, co
     std::optional<float> zoomLevel = m_canvas->GetZoomLevel();
     m_patientIdText = new wxStaticText(this, wxID_ANY, "");
     m_patientIdText->SetFont(wxFont(20, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL));
-    auto logo = new BitmapPane(wxBitmap("assets/macroshot.png", wxBITMAP_TYPE_PNG), this, wxID_ANY,
-      wxTransparentColor, false, {0,0}, {160, 40});
+    auto logo = new BitmapPane(wxBitmap("assets/macroshot.png", wxBITMAP_TYPE_PNG), this, wxID_ANY, wxTransparentColor,
+                               false, {0, 0}, {160, 40});
     m_statusSizer->Add(logo, wxSizerFlags(0).Align(wxALIGN_CENTER).Border(wxALL, FromDIP(5)));
     m_statusSizer->Add(m_patientIdText, wxSizerFlags(0).Align(wxALIGN_LEFT).Border(wxALL, FromDIP(5)));
     if (zoomLevel)

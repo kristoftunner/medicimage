@@ -25,7 +25,7 @@ private:
   void OnEntityAttributeChange(EntityEvent& event);
   void Draw(wxPaintEvent& event);
 private:
-  wxGridSizer* m_gridSizer;
+  wxBoxSizer* m_sizer;
   wxBoxSizer* m_topSizer;
   wxListCtrl* m_patientList;
   DocumentController& m_documentController;
