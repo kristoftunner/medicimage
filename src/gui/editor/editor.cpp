@@ -419,6 +419,8 @@ std::unique_ptr<Image2D> Editor::Draw()
         auto image = m_drawingSheet.Draw();
         return std::move(image);
     }
+    default:
+        return nullptr;
     }
 }
 

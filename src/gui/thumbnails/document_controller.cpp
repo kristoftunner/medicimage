@@ -52,11 +52,11 @@ void DocumentController::AddPatient(const std::string &patientId)
     }
     catch (std::invalid_argument const &ex)
     {
-        APP_CORE_WARN("Please write only numbers for a viable uuid!");
+        APP_CORE_WARN("Please write only numbers for a viable uuid, ex:{}!", ex.what());
     }
     catch (std::out_of_range const &ex)
     {
-        APP_CORE_WARN("Please add a number smaller for uuid!");
+        APP_CORE_WARN("Please add a number smaller for uuid, ex:{}!", ex.what());
     }
 }
 void DocumentController::AddDocument(const ImageDocument &document)

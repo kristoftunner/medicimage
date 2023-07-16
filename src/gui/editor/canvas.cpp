@@ -533,13 +533,7 @@ EditorPanel::EditorPanel(wxWindow *parent, wxWindowID id, const wxPoint &pos, co
                                false, {0, 0}, {160, 40});
     m_statusSizer->Add(logo, wxSizerFlags(0).Align(wxALIGN_CENTER).Border(wxALL, FromDIP(5)));
     m_statusSizer->Add(m_patientIdText, wxSizerFlags(0).Align(wxALIGN_LEFT).Border(wxALL, FromDIP(5)));
-    if (zoomLevel)
-    {
-        auto formattedText = std::format("Zoom Level:{:.0f}%", (*zoomLevel) * 100.0f);
-        m_zoomLevelText = new wxStaticText(this, wxID_ANY, formattedText);
-        m_zoomLevelText->SetFont(wxFont(20, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL));
-        m_statusSizer->Add(m_zoomLevelText, wxSizerFlags(0).Border(wxALL, FromDIP(5)));
-    }
+
     sizer->Add(m_statusSizer, wxSizerFlags(0).Expand().Border(wxALL, FromDIP(5)));
     sizer->Add(m_canvas, wxSizerFlags(1).Expand().Border(wxALL, FromDIP(5)));
     sizer->Add(patientIdInput, wxSizerFlags(0).Expand().Border(wxALL, FromDIP(5)));
@@ -590,10 +584,10 @@ EditorPanel::EditorPanel(wxWindow *parent, wxWindowID id, const wxPoint &pos, co
             m_canvas->OnDrawSkinTemplate(event);
             break;
         case ButtonType::ZOOM_IN_BUTTON:
-            m_canvas->OnChangeZoomLevel(1.2);
+            m_canvas->OnChangeZoomLevel(1.2f);
             break;
         case ButtonType::ZOOM_OUT_BUTTON:
-            m_canvas->OnChangeZoomLevel(1 / 1.2);
+            m_canvas->OnChangeZoomLevel(1.0f / 1.2f);
             break;
         default:
             wxLogError("Unknown button type");
@@ -605,7 +599,7 @@ EditorPanel::EditorPanel(wxWindow *parent, wxWindowID id, const wxPoint &pos, co
 
     Bind(EVT_ENTITY_ATTRIBUTE_EDITED, [this](EntityEvent &event) { wxPostEvent(this->m_canvas, event); });
     Bind(EVT_PATIENT_SELECTED, [this](PatientSelectedEvent &event) {
-        auto patientId = event.GetPatientId();
+        auto &patientId = event.GetPatientId();
         UpdatePatientId(patientId);
     });
 }
@@ -625,12 +619,9 @@ void EditorPanel::UpdateZoomLevel()
     std::optional<float> zoomLevel = m_canvas->GetZoomLevel();
     if (zoomLevel)
     {
-        auto formattedText = std::format("Zoom Level:{:.0f}%", (*zoomLevel) * 100.0f);
-
-        m_zoomLevelText->SetFont(wxFont(20, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL));
-        m_zoomLevelText->SetLabel(formattedText);
-        m_statusSizer->Layout();
-        Refresh();
+        ZoomLevelEvent event(EDITOR_ZOOM_LEVEL_CHANGED, wxID_ANY);
+        event.SetZoomLevel(*zoomLevel);
+        ProcessWindowEvent(event);
     }
 }
 

@@ -1,3 +1,5 @@
+#include <format>
+#include <string>
 #include <wx/bitmap.h>
 #include <wx/button.h>
 #include <wx/debug.h>
@@ -101,9 +103,9 @@ Toolbox::Toolbox(wxWindow *parent, wxWindowID id, const wxPoint &pos, const wxSi
                                                        ProcessWindowEvent(event);
                                                    })});
 
-    auto topSizer = new wxBoxSizer(wxVERTICAL);
+    m_topSizer = new wxBoxSizer(wxVERTICAL);
     auto text = new wxStaticText(this, wxID_ANY, "Toolbox");
-    topSizer->Add(text, 0, wxALL, FromDIP(5));
+    m_topSizer->Add(text, 0, wxALL, FromDIP(5));
 
     auto drawToolSizer = new wxGridSizer(2, 0, 0);
     auto liveCameraSizer = new wxBoxSizer(wxVERTICAL);
@@ -130,6 +132,10 @@ Toolbox::Toolbox(wxWindow *parent, wxWindowID id, const wxPoint &pos, const wxSi
         else
             drawToolSizer->Add(button.pane, wxSizerFlags(1));
     }
+
+    auto formattedText = std::format("Zoom Level:{:.0f}%", 100.0f);
+    m_zoomLevelText = new wxStaticText(this, wxID_ANY, formattedText);
+    m_zoomLevelText->SetFont(wxFont(12, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL));
 
     Bind(TOOLBOX_BUTTON_COMMAND_DONE, [this](ToolboxButtonEvent &event) {
         auto buttonType = event.GetButtonType();
@@ -172,14 +178,25 @@ Toolbox::Toolbox(wxWindow *parent, wxWindowID id, const wxPoint &pos, const wxSi
         }
     });
 
-    topSizer->Add(liveCameraSizer, wxSizerFlags(0).Border(wxALL, FromDIP(5)));
-    topSizer->Add(snapshotSizer, wxSizerFlags(0).Border(wxALL, FromDIP(5)));
-    topSizer->Add(drawToolSizer, wxSizerFlags(0).Border(wxALL, FromDIP(5)));
-    topSizer->Add(zoomPanelSizer, wxSizerFlags(0).Border(wxALL, FromDIP(5)));
-    SetSizer(topSizer);
+    Bind(EDITOR_ZOOM_LEVEL_CHANGED, [this](ZoomLevelEvent &event) {
+        auto zoomlevel = event.GetZoomlevel();
+        auto formattedText = std::format("Zoom Level:{:.0f}%", zoomlevel * 100.0f);
+
+        m_zoomLevelText->SetFont(wxFont(12, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL));
+        m_zoomLevelText->SetLabel(formattedText);
+        m_topSizer->Layout();
+        Refresh();
+    });
+
+    m_topSizer->Add(liveCameraSizer, wxSizerFlags(0).Border(wxALL, FromDIP(5)));
+    m_topSizer->Add(snapshotSizer, wxSizerFlags(0).Border(wxALL, FromDIP(5)));
+    m_topSizer->Add(drawToolSizer, wxSizerFlags(0).Border(wxALL, FromDIP(5)));
+    m_topSizer->Add(zoomPanelSizer, wxSizerFlags(0).Border(wxALL, FromDIP(5)));
+    m_topSizer->Add(m_zoomLevelText, wxSizerFlags(0).Border(wxALL, FromDIP(5)));
+    SetSizer(m_topSizer);
 
     SetScrollRate(FromDIP(100), FromDIP(100));
-    auto minSize = topSizer->CalcMin();
+    auto minSize = m_topSizer->CalcMin();
     SetVirtualSize(20, 100);
     // SetVirtualSize(FromDIP(minSize.x), FromDIP(minSize.y));
 }

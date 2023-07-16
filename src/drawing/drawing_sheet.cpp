@@ -242,7 +242,7 @@ std::optional<Entity> DrawingSheet::GetHoveredEntity(const glm::vec2 pos)
     for (auto e : view)
     {
         Entity entity(e);
-        auto boundingContour = entity.GetComponent<BoundingContourComponent>().cornerPoints;
+        auto &boundingContour = entity.GetComponent<BoundingContourComponent>().cornerPoints;
         if (boundingContour.size() == 0)
             continue;
 
@@ -276,7 +276,7 @@ std::vector<Entity> DrawingSheet::GetSelectedEntities()
 }
 bool DrawingSheet::IsUnderSelectArea(Entity entity, glm::vec2 pos)
 {
-    auto boundingContour = entity.GetComponent<BoundingContourComponent>().cornerPoints;
+    auto &boundingContour = entity.GetComponent<BoundingContourComponent>().cornerPoints;
     auto translation = entity.GetComponent<TransformComponent>().translation;
     for (auto &c : boundingContour)
         c += translation;
@@ -309,14 +309,14 @@ bool DrawingSheet::IsUnderSelectArea(Entity entity, glm::vec2 pos)
 
 bool DrawingSheet::IsPickpointSelected(Entity entity, glm::vec2 pos)
 {
-    auto pickPoints = entity.GetComponent<PickPointsComponent>().pickPoints;
+    auto &pickPoints = entity.GetComponent<PickPointsComponent>().pickPoints;
     assert(pickPoints.size() != 0);
     auto translation = entity.GetComponent<TransformComponent>().translation;
     for (auto &p : pickPoints)
         p += translation;
     for (int i = 0; i < pickPoints.size(); i++)
     {
-        auto point = pickPoints[i];
+        auto &point = pickPoints[i];
         std::vector<cv::Point2f> contour{{point.x - s_pickPointBoxSize / 2, point.y - s_pickPointBoxSize / 2},
                                          {point.x + s_pickPointBoxSize / 2, point.y - s_pickPointBoxSize / 2},
                                          {point.x + s_pickPointBoxSize / 2, point.y + s_pickPointBoxSize / 2},
@@ -332,7 +332,7 @@ bool DrawingSheet::IsPickpointSelected(Entity entity, glm::vec2 pos)
 
 bool DrawingSheet::IsDragAreaSelected(Entity entity, glm::vec2 pos)
 {
-    auto boundingContour = entity.GetComponent<BoundingContourComponent>().cornerPoints;
+    auto &boundingContour = entity.GetComponent<BoundingContourComponent>().cornerPoints;
     assert(boundingContour.size() != 0);
     auto translation = entity.GetComponent<TransformComponent>().translation;
     for (auto &c : boundingContour)
@@ -775,7 +775,7 @@ DrawCommandReturn ObjectSelectedState::OnKeyPressed(KeyCode key)
     auto selectedEntities = m_sheet->GetSelectedEntities();
     if (key == Key::MDIK_DELETE)
     {
-        for (auto entity : selectedEntities)
+        for (auto &entity : selectedEntities)
         {
             Entity::DestroyEntity(entity);
         }
@@ -811,7 +811,10 @@ static std::unique_ptr<BaseDrawComponentWrapper> CreateDrawComponentWrapper(Enti
         return std::make_unique<TextComponentWrapper>(entity);
     }
     else
+    {
         APP_CORE_ERR("WTF this component");
+        return nullptr;
+    }
 }
 
 DrawCommandReturn PickPointSelectedState::OnMouseButtonDown(const glm::vec2 pos)

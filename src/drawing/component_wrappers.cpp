@@ -234,7 +234,7 @@ void ArrowComponentWrapper::UpdateShapeAttributes()
 
     glm::vec2 vec = arrow.begin - arrow.end;
     glm::vec2 perp = glm::normalize(glm::vec2{-vec.y, vec.x});
-    glm::vec2 offset = perp * glm::vec2(0.01);
+    glm::vec2 offset = perp * glm::vec2(0.01f);
     boundingBox.cornerPoints = {offset, arrow.end + offset, arrow.end - offset, -offset, offset};
     pickPoints.pickPoints = {arrow.begin, arrow.end};
 }
@@ -273,7 +273,7 @@ void ArrowComponentWrapper::Draw()
     auto &thickness = m_entity.GetComponent<ThicknessComponent>();
     auto begin = arrow.begin + transform.translation;
     auto end = arrow.end + transform.translation;
-    ImageEditor::DrawArrow(begin, end, color, thickness.thickness, 0.1);
+    ImageEditor::DrawArrow(begin, end, color, thickness.thickness);
 
     if (commonAttributes.selected)
     {
@@ -314,7 +314,7 @@ void LineComponentWrapper::UpdateShapeAttributes()
 
     glm::vec2 vec = line.begin - line.end;
     glm::vec2 perp = glm::normalize(glm::vec2{-vec.y, vec.x});
-    glm::vec2 offset = perp * glm::vec2(0.01);
+    glm::vec2 offset = perp * glm::vec2(0.01f);
     boundingBox.cornerPoints = {offset, line.end + offset, line.end - offset, -offset, offset};
     pickPoints.pickPoints = {line.begin, line.end};
 }
@@ -353,7 +353,7 @@ void LineComponentWrapper::Draw()
     auto &thickness = m_entity.GetComponent<ThicknessComponent>();
     auto begin = line.begin + transform.translation;
     auto end = line.end + transform.translation;
-    ImageEditor::DrawLine(begin, end, color, thickness.thickness, 0.1);
+    ImageEditor::DrawLine(begin, end, color, thickness.thickness);
 
     if (commonAttributes.selected)
     {
@@ -412,7 +412,7 @@ void TextComponentWrapper::Draw()
     auto &text = m_entity.GetComponent<TextComponent>();
     ImageEditor::DrawText(transform.translation, text.text, text.fontSize,
                           thickness.thickness); // TODO: add thickness component
-    auto boundingBox = m_entity.GetComponent<BoundingContourComponent>();
+    auto &boundingBox = m_entity.GetComponent<BoundingContourComponent>();
     for (auto &c : boundingBox.cornerPoints)
     {
         c += transform.translation;
@@ -467,8 +467,8 @@ Entity SkinTemplateComponentWrapper::CreateSkinTemplate(glm::vec2 firstPoint, gl
     auto &thickness = entity.AddComponent<ThicknessComponent>();
     auto &color = entity.AddComponent<ColorComponent>();
 
-    static constexpr float minBoundingWidth = 0.1;
-    static constexpr float minBoundingHeight = 0.1;
+    static constexpr float minBoundingWidth = 0.1f;
+    static constexpr float minBoundingHeight = 0.1f;
     auto diff = secondPoint - firstPoint;
     if (abs(diff.x) >= minBoundingWidth && abs(diff.y) >= minBoundingHeight)
     {
@@ -732,21 +732,18 @@ void SkinTemplateComponentWrapper::OnPickPointDrag(glm::vec2 diff, int selectedP
     {
     case static_cast<int>(SkinTemplatePickPoints::RIGHT): {
         auto &skinTemplate = m_entity.GetComponent<SkinTemplateComponent>();
-        float xScale = diff.x / skinTemplate.boundingRectSize.x;
         skinTemplate.boundingRectSize.x += diff.x;
         GenerateSlices(m_entity);
         break;
     }
     case static_cast<int>(SkinTemplatePickPoints::BOTTOM): {
         auto &skinTemplate = m_entity.GetComponent<SkinTemplateComponent>();
-        float yScale = diff.y / skinTemplate.boundingRectSize.y;
         skinTemplate.boundingRectSize.y += diff.y;
         GenerateSlices(m_entity);
         break;
     }
     case static_cast<int>(SkinTemplatePickPoints::LEFT): {
         auto &skinTemplate = m_entity.GetComponent<SkinTemplateComponent>();
-        float xScale = (-diff.x) / skinTemplate.boundingRectSize.x;
         skinTemplate.boundingRectSize.x += -diff.x;
         m_entity.GetComponent<TransformComponent>().translation += glm::vec2{diff.x, 0};
         GenerateSlices(m_entity);
@@ -754,7 +751,6 @@ void SkinTemplateComponentWrapper::OnPickPointDrag(glm::vec2 diff, int selectedP
     }
     case static_cast<int>(SkinTemplatePickPoints::TOP): {
         auto &skinTemplate = m_entity.GetComponent<SkinTemplateComponent>();
-        float yScale = (-diff.y) / skinTemplate.boundingRectSize.y;
         skinTemplate.boundingRectSize.y += -diff.y;
         m_entity.GetComponent<TransformComponent>().translation += glm::vec2{0, diff.y};
         GenerateSlices(m_entity);
@@ -870,7 +866,7 @@ void SkinTemplateComponentWrapper::Draw()
         sw.Draw();
     }
 
-    auto commonAttributes = m_entity.GetComponent<CommonAttributesComponent>();
+    auto &commonAttributes = m_entity.GetComponent<CommonAttributesComponent>();
     if (commonAttributes.selected)
     {
         auto &pickPoints = m_entity.GetComponent<PickPointsComponent>().pickPoints;

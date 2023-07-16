@@ -42,6 +42,8 @@ private:
   void SelectPane(BitmapPane* pane);
   std::unordered_map<ButtonType, BitmapButton> m_buttons;
   AttributeEditor* m_attributeEditor = nullptr;
+  wxBoxSizer *m_topSizer = nullptr;
+  wxStaticText *m_zoomLevelText = nullptr;
 
   static constexpr std::string s_lightBackground = "#f4f3f3";
   static constexpr std::string s_darkBackground = "#2c2828";

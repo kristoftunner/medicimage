@@ -1,12 +1,12 @@
 #pragma once
 
-#include <wx/gbsizer.h>
-#include <wx/frame.h>
-#include <wx/panel.h>
-#include <wx/log.h>
 #include <string>
-#include <wx/print.h>
 #include <wx/custombgwin.h>
+#include <wx/frame.h>
+#include <wx/gbsizer.h>
+#include <wx/log.h>
+#include <wx/panel.h>
+#include <wx/print.h>
 
 #include "gui/editor/canvas.h"
 
@@ -15,39 +15,39 @@ namespace app
 
 class MyFrame : public wxCustomBackgroundWindow<wxFrame>
 {
-public:
-  MyFrame();
-private:
-  void OnHello(wxCommandEvent& event);
-  void OnExit(wxCommandEvent& event);
-  void OnAbout(wxCommandEvent& event);
-  void OnPrint(wxCommandEvent& event);
+  public:
+    MyFrame();
 
-  wxPanel* m_panel;
-  wxGridBagSizer* m_gbs;
-  wxGBPosition m_lastPos;
-  wxLog* m_logger;
-  EditorPanel* m_editorPanel;
+  private:
+    void OnHello(wxCommandEvent &event);
+    void OnExit(wxCommandEvent &event);
+    void OnAbout(wxCommandEvent &event);
+    void OnPrint(wxCommandEvent &event);
 
-  const std::string m_lightBackground = "#f4f3f3";
-  const std::string m_darkBackground = "#2c2828";
+    wxGBPosition m_lastPos;
+    wxLog *m_logger;
+    EditorPanel *m_editorPanel;
 
+    const std::string m_lightBackground = "#f4f3f3";
+    const std::string m_darkBackground = "#2c2828";
 };
 
-class Printout: public wxPrintout
+class Printout : public wxPrintout
 {
-public:
-  Printout(Canvas* canvas, const wxString &title = "My printout")
-      : wxPrintout(title) { m_canvas=canvas; }
+  public:
+    Printout(Canvas *canvas, const wxString &title = "My printout") : wxPrintout(title)
+    {
+        m_canvas = canvas;
+    }
 
-  virtual bool OnPrintPage(int page) wxOVERRIDE;
-  virtual bool HasPage(int page) wxOVERRIDE;
-  virtual bool OnBeginDocument(int startPage, int endPage) wxOVERRIDE;
-  virtual void GetPageInfo(int *minPage, int *maxPage, int *selPageFrom, int *selPageTo) wxOVERRIDE;
+    virtual bool OnPrintPage(int page) wxOVERRIDE;
+    virtual bool HasPage(int page) wxOVERRIDE;
+    virtual bool OnBeginDocument(int startPage, int endPage) wxOVERRIDE;
+    virtual void GetPageInfo(int *minPage, int *maxPage, int *selPageFrom, int *selPageTo) wxOVERRIDE;
 
-  void DrawPage();
+    void DrawPage();
 
-private:
-  Canvas *m_canvas;
+  private:
+    Canvas *m_canvas;
 };
-}
+} // namespace app

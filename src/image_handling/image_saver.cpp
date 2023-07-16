@@ -168,7 +168,6 @@ std::vector<ImageDocument>::iterator ImageDocContainer::AddImage(Image2D &image,
     std::string footerText = doc.GenerateFooterText();
     std::unique_ptr<Image2D> borderedImage;
     borderedImage = ImageEditor::AddImageFooter(footerText, *doc.image.get());
-    auto width = borderedImage->GetWidth();
 
     borderedImage->GetBitmap().SaveFile(imagePath.string(), wxBITMAP_TYPE_PNG);
     auto resizedBitmap = borderedImage->GetBitmap().ConvertToImage().Rescale(640, 360);

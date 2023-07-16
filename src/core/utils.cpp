@@ -46,7 +46,6 @@ bool AppConfig::UpdateAppFolder(const std::filesystem::path &path)
     m_appFolderPath = path;
     m_loadedPatientFolders.clear();
 
-    json config;
     std::filesystem::path configFilePath = m_appFolderPath;
     configFilePath /= std::filesystem::path("config.json");
     std::ifstream configFile(configFilePath.string());
@@ -67,11 +66,11 @@ bool AppConfig::UpdateAppFolder(const std::filesystem::path &path)
     else
     {
         // APP_CORE_INFO("Log file not created for {}, creating log file", configFilename.c_str());
-        std::ofstream configFile(configFilePath.string());
+        std::ofstream outputConfigFile(configFilePath.string());
         json config;
         config = {{"appPath", m_appFolderPath.string()}};
-        configFile << config;
-        configFile.close();
+        outputConfigFile << config;
+        outputConfigFile.close();
     }
 
     return true;

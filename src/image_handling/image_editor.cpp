@@ -93,7 +93,7 @@ void ImageEditor::DrawRectangle(glm::vec2 topleft, glm::vec2 bottomright, glm::v
     // TODO: add rotation
 }
 
-void ImageEditor::DrawArrow(glm::vec2 begin, glm::vec2 end, glm::vec4 color, float thickness, double tipLength)
+void ImageEditor::DrawArrow(glm::vec2 begin, glm::vec2 end, glm::vec4 color, float thickness)
 {
     glm::vec2 imageSize = {s_image->GetWidth(), s_image->GetHeight()};
     begin *= imageSize;
@@ -123,7 +123,7 @@ void ImageEditor::DrawArrow(glm::vec2 begin, glm::vec2 end, glm::vec4 color, flo
     s_dc->DrawPolygon(3, arrowPoints);
     // TODO: add rotation
 }
-void ImageEditor::DrawLine(glm::vec2 begin, glm::vec2 end, glm::vec4 color, float thickness, double tipLengith)
+void ImageEditor::DrawLine(glm::vec2 begin, glm::vec2 end, glm::vec4 color, float thickness)
 {
     glm::vec2 imageSize = {s_image->GetWidth(), s_image->GetHeight()};
     begin *= imageSize;
