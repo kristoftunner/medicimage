@@ -90,7 +90,7 @@ void ImageDocContainer::LoadPatientsFolder()
         // iterate trough the files and load the conained images
         for (auto const &dirEntry : std::filesystem::directory_iterator(m_dirPath))
         {
-            if (dirEntry.path().extension() == ".png")
+            if (dirEntry.path().extension() == ".jpeg")
             {
                 std::string name = dirEntry.path().stem().string();
                 auto it = std::find_if(files.begin(), files.end(), [&](auto fileDesc) {
@@ -161,7 +161,7 @@ std::vector<ImageDocument>::iterator ImageDocContainer::AddImage(Image2D &image,
         doc.image = ImageEditor::RemoveFooter(*doc.image.get());
     m_savedImages.push_back(doc);
 
-    name += ".png";
+    name += ".jpeg";
     std::filesystem::path imagePath = m_dirPath / name;
     std::filesystem::path thumbImagePath = m_dirPath / "thumbs" / name;
 
@@ -169,9 +169,9 @@ std::vector<ImageDocument>::iterator ImageDocContainer::AddImage(Image2D &image,
     std::unique_ptr<Image2D> borderedImage;
     borderedImage = ImageEditor::AddImageFooter(footerText, *doc.image.get());
 
-    borderedImage->GetBitmap().SaveFile(imagePath.string(), wxBITMAP_TYPE_PNG);
+    borderedImage->GetBitmap().SaveFile(imagePath.string(), wxBITMAP_TYPE_JPEG);
     auto resizedBitmap = borderedImage->GetBitmap().ConvertToImage().Rescale(640, 360);
-    resizedBitmap.SaveFile(thumbImagePath.string(), wxBITMAP_TYPE_PNG);
+    resizedBitmap.SaveFile(thumbImagePath.string(), wxBITMAP_TYPE_JPEG);
     m_fileLogger->LogFileOperation(name, FileLogger::FileOperation::FILE_SAVE);
     UpdateDocListFile();
     return m_savedImages.end();
@@ -183,15 +183,15 @@ void ImageDocContainer::DeleteImage(const ImageDocument &document)
                            [&document](const ImageDocument &doc) { return doc.documentId == document.documentId; });
     if (it != m_savedImages.end())
     {
-        std::filesystem::path imagePath = m_dirPath / (it->documentId + ".png");
+        std::filesystem::path imagePath = m_dirPath / (it->documentId + ".jpeg");
         ;
-        std::filesystem::path thumbImagePath = m_dirPath / "thumbs" / (it->documentId + ".png");
+        std::filesystem::path thumbImagePath = m_dirPath / "thumbs" / (it->documentId + ".jpeg");
         ;
         if (!std::filesystem::remove(imagePath) || !(std::filesystem::remove(thumbImagePath)))
             APP_CORE_ERR("Something went wrong deleting this image:{}", imagePath.string());
         else
         {
-            m_fileLogger->LogFileOperation(it->documentId + ".png", FileLogger::FileOperation::FILE_DELETE);
+            m_fileLogger->LogFileOperation(it->documentId + ".jpeg", FileLogger::FileOperation::FILE_DELETE);
             m_savedImages.erase(it);
             UpdateDocListFile();
             APP_CORE_INFO("Image: {} deleted", imagePath.string());

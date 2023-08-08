@@ -242,7 +242,7 @@ std::optional<Entity> DrawingSheet::GetHoveredEntity(const glm::vec2 pos)
     for (auto e : view)
     {
         Entity entity(e);
-        auto &boundingContour = entity.GetComponent<BoundingContourComponent>().cornerPoints;
+        auto boundingContour = entity.GetComponent<BoundingContourComponent>().cornerPoints;
         if (boundingContour.size() == 0)
             continue;
 
@@ -276,7 +276,7 @@ std::vector<Entity> DrawingSheet::GetSelectedEntities()
 }
 bool DrawingSheet::IsUnderSelectArea(Entity entity, glm::vec2 pos)
 {
-    auto &boundingContour = entity.GetComponent<BoundingContourComponent>().cornerPoints;
+    auto boundingContour = entity.GetComponent<BoundingContourComponent>().cornerPoints;
     auto translation = entity.GetComponent<TransformComponent>().translation;
     for (auto &c : boundingContour)
         c += translation;
@@ -309,7 +309,7 @@ bool DrawingSheet::IsUnderSelectArea(Entity entity, glm::vec2 pos)
 
 bool DrawingSheet::IsPickpointSelected(Entity entity, glm::vec2 pos)
 {
-    auto &pickPoints = entity.GetComponent<PickPointsComponent>().pickPoints;
+    auto pickPoints = entity.GetComponent<PickPointsComponent>().pickPoints;
     assert(pickPoints.size() != 0);
     auto translation = entity.GetComponent<TransformComponent>().translation;
     for (auto &p : pickPoints)
@@ -332,7 +332,7 @@ bool DrawingSheet::IsPickpointSelected(Entity entity, glm::vec2 pos)
 
 bool DrawingSheet::IsDragAreaSelected(Entity entity, glm::vec2 pos)
 {
-    auto &boundingContour = entity.GetComponent<BoundingContourComponent>().cornerPoints;
+    auto boundingContour = entity.GetComponent<BoundingContourComponent>().cornerPoints;
     assert(boundingContour.size() != 0);
     auto translation = entity.GetComponent<TransformComponent>().translation;
     for (auto &c : boundingContour)
@@ -765,8 +765,9 @@ DrawCommandReturn ObjectSelectedState::OnMouseButtonPressed(const glm::vec2 pos)
         return ret;
     }
     // clicking outside of the pickpoints and drage area, clear selection and go back to initial state
+    ret = {DrawCommandReturn::State::IN_COMMAND, m_sheet->m_currentDrawCommand};
     m_sheet->ChangeDrawState(std::make_unique<ObjectSelectInitialState>(m_sheet));
-    return {DrawCommandReturn::State::IN_COMMAND, m_sheet->m_currentDrawCommand};
+    return ret;
 }
 
 DrawCommandReturn ObjectSelectedState::OnKeyPressed(KeyCode key)
@@ -775,7 +776,7 @@ DrawCommandReturn ObjectSelectedState::OnKeyPressed(KeyCode key)
     auto selectedEntities = m_sheet->GetSelectedEntities();
     if (key == Key::MDIK_DELETE)
     {
-        for (auto &entity : selectedEntities)
+        for (auto entity : selectedEntities)
         {
             Entity::DestroyEntity(entity);
         }

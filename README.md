@@ -115,3 +115,9 @@ Store the document with all the metadata (drawn objects and it's attributes) - t
 - figure out how the event system works, especially keys and mouse event on the canvas
 - implement annotation on a single canvas
 - implement camera feed into the annotation
+
+## Found bugs: 2023.08.06.
+- selecting for the second time does not work...  -- FIXED
+- printing is weird - FIXED
+- use jpeg instead of png -- FIXED
+- end date: end of september -- FIXED

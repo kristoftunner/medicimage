@@ -207,22 +207,35 @@ std::unique_ptr<Image2D> Canvas::DummyDraw()
 
     return std::move(image);
 }
-void Canvas::Draw(wxDC &dc)
-{
-    dc.SetBackground(*wxGREY_BRUSH);
-    dc.Clear();
-    auto image = m_editor.Draw();
-    // calculate new size of the image, so that it will fit into the window
-    auto size = GetSize();
-    auto imageSize = glm::vec2{image->GetWidth(), image->GetHeight()};
-    m_canvasScale = std::min((float)size.x / image->GetWidth(), (float)size.y / image->GetHeight());
-    auto newWidth = image->GetWidth() * m_canvasScale;
-    auto newHeight = image->GetHeight() * m_canvasScale;
-    m_canvasBorder = (glm::vec2{size.x, size.y} - glm::vec2(newWidth, newHeight)) / 2.0f;
 
-    dc.SetUserScale(m_canvasScale, m_canvasScale);
-    dc.SetDeviceOrigin(static_cast<int>(m_canvasBorder.x), static_cast<int>(m_canvasBorder.y));
-    dc.DrawBitmap(image->GetBitmap(), 0, 0);
+void Canvas::Draw(wxDC &dc, bool print)
+{
+    if (print)
+    {
+        // dc.SetBackground(*wxGREY_BRUSH);
+        //  dc.Clear();
+        auto image = m_editor.Draw();
+        auto imageSize = glm::vec2{image->GetWidth(), image->GetHeight()};
+        dc.SetUserScale(5.3, 5.3);
+        dc.DrawBitmap(image->GetBitmap(), 0, 0);
+    }
+    else
+    {
+        dc.SetBackground(*wxGREY_BRUSH);
+        dc.Clear();
+        auto image = m_editor.Draw();
+        // calculate new size of the image, so that it will fit into the window
+        auto size = GetSize();
+        auto imageSize = glm::vec2{image->GetWidth(), image->GetHeight()};
+        m_canvasScale = std::min((float)size.x / image->GetWidth(), (float)size.y / image->GetHeight());
+        auto newWidth = image->GetWidth() * m_canvasScale;
+        auto newHeight = image->GetHeight() * m_canvasScale;
+        m_canvasBorder = (glm::vec2{size.x, size.y} - glm::vec2(newWidth, newHeight)) / 2.0f;
+
+        dc.SetUserScale(m_canvasScale, m_canvasScale);
+        dc.SetDeviceOrigin(static_cast<int>(m_canvasBorder.x), static_cast<int>(m_canvasBorder.y));
+        dc.DrawBitmap(image->GetBitmap(), 0, 0);
+    }
 }
 
 void Canvas::OnPaint(wxPaintEvent &event)
@@ -526,7 +539,6 @@ EditorPanel::EditorPanel(wxWindow *parent, wxWindowID id, const wxPoint &pos, co
 
     m_statusSizer = new wxBoxSizer(wxVERTICAL);
     m_statusFirstRowSizer = new wxBoxSizer(wxHORIZONTAL);
-    std::optional<float> zoomLevel = m_canvas->GetZoomLevel();
     m_patientIdText = new wxStaticText(this, wxID_ANY, "");
     m_patientIdText->SetFont(wxFont(20, wxFONTFAMILY_DEFAULT, wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL));
     auto logo = new BitmapPane(wxBitmap("assets/macroshot.png", wxBITMAP_TYPE_PNG), this, wxID_ANY, wxTransparentColor,

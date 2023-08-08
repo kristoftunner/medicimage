@@ -103,7 +103,7 @@ class Canvas : public wxWindow
     void OnDrawRectangle(wxCommandEvent &event);
     void OnDrawSkinTemplate(wxCommandEvent &event);
     void OnChangeZoomLevel(float scale);
-    void Draw(wxDC &dc);
+    void Draw(wxDC &dc, bool print = false);
     CameraAPI *GetCamera()
     {
         return m_editor.GetCamera();

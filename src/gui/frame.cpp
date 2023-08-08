@@ -226,7 +226,7 @@ bool Printout::OnPrintPage(int page)
 
         // Draw page numbers at top left corner of printable area, sized so that
         // screen size of text matches paper size.
-        MapScreenSizeToPage();
+        // MapScreenSizeToPage();
         return true;
     }
     else
@@ -258,21 +258,23 @@ void Printout::DrawPage()
 {
     // We know the graphic is 230x350. If we didn't know this, we'd need to
     // calculate it.
-    wxCoord maxX = GetDC()->FromDIP(800);
-    wxCoord maxY = GetDC()->FromDIP(600);
+    // wxCoord maxX = GetDC()->FromDIP(1280);
+    // wxCoord maxY = GetDC()->FromDIP(720);
+    auto size = m_canvas->GetSize();
 
     // This sets the user scale and origin of the DC so that the image fits
-    // within the page rectangle, which is the printable area on Mac and MSW
+    // within the page rectangle, which is the printable area on Mac and MS  W
     // and is the entire page on other platforms.
-    FitThisSizeToPage(wxSize(maxX, maxY));
-    wxRect fitRect = GetLogicalPageRect();
+    FitThisSizeToPage(size);
+    // MapScreenSizeToPaper();
+    // wxRect fitRect = GetLogicalPaperRect();
 
     // This offsets the image so that it is centered within the reference
     // rectangle defined above.
-    wxCoord xoff = (fitRect.width - maxX) / 2;
-    wxCoord yoff = (fitRect.height - maxY) / 2;
-    OffsetLogicalOrigin(xoff, yoff);
+    // wxCoord xoff = (fitRect.width - size.x) / 2;
+    // wxCoord yoff = (fitRect.height - size.y) / 2;
+    // OffsetLogicalOrigin(xoff, yoff);
 
-    m_canvas->Draw(*GetDC());
+    m_canvas->Draw(*GetDC(), true);
 }
 } // namespace app
