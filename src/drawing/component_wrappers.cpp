@@ -412,7 +412,7 @@ void TextComponentWrapper::Draw()
     auto &text = m_entity.GetComponent<TextComponent>();
     ImageEditor::DrawText(transform.translation, text.text, text.fontSize,
                           thickness.thickness); // TODO: add thickness component
-    auto &boundingBox = m_entity.GetComponent<BoundingContourComponent>();
+    auto boundingBox = m_entity.GetComponent<BoundingContourComponent>();
     for (auto &c : boundingBox.cornerPoints)
     {
         c += transform.translation;

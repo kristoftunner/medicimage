@@ -111,6 +111,20 @@ void ImageDocContainer::LoadPatientsFolder()
             }
         }
     }
+    else
+    {
+      for(auto const &dirEntry : std::filesystem::directory_iterator(m_dirPath))
+      {
+        if(dirEntry.path().extension() == ".jpeg")
+        {
+                std::string name = dirEntry.path().stem().string();
+                auto time = std::chrono::system_clock::now();
+                std::time_t timestamp = std::chrono::system_clock::to_time_t(time);
+                ImageLoad(name, dirEntry.path(), timestamp);
+                APP_CORE_TRACE("Picture {} is loaded", dirEntry.path().string());
+        }
+      }
+    }
 }
 
 void ImageDocContainer::CreatePatientDir()

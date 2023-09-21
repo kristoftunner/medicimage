@@ -94,10 +94,22 @@ bool AppConfig::UpdateAppFolder(const std::filesystem::path &path)
     else
     {
         // APP_CORE_INFO("Log file not created for {}, creating log file", configFilename.c_str());
-        std::ofstream outputConfigFile(patientConfigFilePath);
-        json patientConfig;
         json patients = json::array();
+
+        // load patient folders by listing out the directories
+        for (auto const &p : std::filesystem::directory_iterator(m_appFolderPath))
+        {
+            if (p.is_directory())
+            {
+                patients.emplace_back(p.path().string());
+                PushPatientFolder(p.path());
+            }
+        }
+
+        json patientConfig;
         patientConfig["patients"] = patients;
+
+        std::ofstream outputConfigFile(patientConfigFilePath);
         outputConfigFile << patientConfig;
         outputConfigFile.close();
     }
